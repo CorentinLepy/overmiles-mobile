@@ -6,7 +6,11 @@ import {
   timeoutError,
   type ApiErrorBody,
 } from "../api/api-error";
-import type { MobileSessionTokens, RefreshTransport } from "./auth-session-manager";
+import type {
+  LogoutTransport,
+  MobileSessionTokens,
+  RefreshTransport,
+} from "./auth-session-manager";
 
 const AUTH_TIMEOUT_MS = 10_000;
 
@@ -44,6 +48,7 @@ export type MobileRefreshResponse = MobileSessionTokens &
 export interface MobileAuthTransport {
   login(input: MobileLoginInput): Promise<MobileLoginResponse>;
   refresh: RefreshTransport;
+  logout: LogoutTransport;
 }
 
 export function createMobileAuthTransport(baseUrl: string): MobileAuthTransport {
@@ -58,6 +63,9 @@ export function createMobileAuthTransport(baseUrl: string): MobileAuthTransport 
         refreshToken,
       });
     },
+    logout(accessToken) {
+      return postNoContentWithBearer(normalizedBaseUrl, "/auth/mobile/logout", accessToken);
+    },
   };
 }
 
@@ -66,17 +74,48 @@ async function postJson<TResponse>(
   path: string,
   body: unknown,
 ): Promise<TResponse> {
+  const response = await authFetch(baseUrl, path, {
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  return (await response.json()) as TResponse;
+}
+
+async function postNoContentWithBearer(
+  baseUrl: string,
+  path: string,
+  accessToken: string,
+): Promise<void> {
+  if (!accessToken) throw new Error("Access Token manquant pour le logout mobile.");
+
+  await authFetch(baseUrl, path, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+}
+
+async function authFetch(
+  baseUrl: string,
+  path: string,
+  init: Readonly<{
+    headers: Readonly<Record<string, string>>;
+    body?: string;
+  }>,
+): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort("timeout"), AUTH_TIMEOUT_MS);
 
   try {
     const response = await fetch(`${baseUrl}${path}`, {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
+      headers: init.headers,
+      body: init.body,
       signal: controller.signal,
     });
 
@@ -85,7 +124,7 @@ async function postJson<TResponse>(
       throw mapHttpError(response.status, errorBody, response.headers.get("retry-after"));
     }
 
-    return (await response.json()) as TResponse;
+    return response;
   } catch (error) {
     if (error instanceof ApiError) throw error;
     if (controller.signal.aborted && controller.signal.reason === "timeout") {
