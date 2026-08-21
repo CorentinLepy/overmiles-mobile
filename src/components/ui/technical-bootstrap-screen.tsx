@@ -1,8 +1,10 @@
 import Constants from "expo-constants";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
+import { createSecureStoreTokenStore } from "@/src/lib/auth/secure-store-token-store";
 import { theme } from "@/src/theme/tokens";
 
 const CAPABILITIES = [
@@ -13,10 +15,33 @@ const CAPABILITIES = [
   "EAS development / preview / production",
 ] as const;
 
+type SecureStoreCheckState = "idle" | "running" | "pass" | "fail";
+
 export function TechnicalBootstrapScreen() {
   const insets = useSafeAreaInsets();
   const runtime = readPublicRuntimeConfig();
   const appVersion = Constants.expoConfig?.version ?? "0.1.0";
+  const [secureStoreCheck, setSecureStoreCheck] = useState<SecureStoreCheckState>("idle");
+
+  async function runSecureStoreCheck() {
+    setSecureStoreCheck("running");
+    const tokenStore = createSecureStoreTokenStore();
+    const probeToken = `omr1_${"S".repeat(43)}`;
+
+    try {
+      await tokenStore.clearRefreshToken();
+      await tokenStore.writeRefreshToken(probeToken);
+      const restored = await tokenStore.readRefreshToken();
+      if (restored !== probeToken) throw new Error("SecureStore read mismatch");
+      await tokenStore.clearRefreshToken();
+      const cleared = await tokenStore.readRefreshToken();
+      if (cleared !== null) throw new Error("SecureStore clear mismatch");
+      setSecureStoreCheck("pass");
+    } catch {
+      await tokenStore.clearRefreshToken().catch(() => undefined);
+      setSecureStoreCheck("fail");
+    }
+  }
 
   return (
     <ScrollView
@@ -62,6 +87,33 @@ export function TechnicalBootstrapScreen() {
           </Text>
         ))}
       </View>
+
+      {__DEV__ ? (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Diagnostic COR-55</Text>
+          <Text style={styles.value}>
+            Vérifie sur l’appareil physique l’écriture, la lecture puis la suppression d’un jeton
+            synthétique via Keychain/Keystore. Aucun identifiant ni vrai jeton n’est utilisé.
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Tester SecureStore"
+            disabled={secureStoreCheck === "running"}
+            onPress={runSecureStoreCheck}
+            style={styles.diagnosticButton}
+          >
+            <Text style={styles.diagnosticButtonText}>
+              {secureStoreCheck === "running" ? "TEST EN COURS…" : "TESTER SECURESTORE"}
+            </Text>
+          </Pressable>
+          <Text style={styles.diagnosticResult}>
+            {secureStoreCheck === "idle" && "État : non testé"}
+            {secureStoreCheck === "running" && "État : test en cours"}
+            {secureStoreCheck === "pass" && "État : PASS — write/read/delete validés"}
+            {secureStoreCheck === "fail" && "État : FAIL — SecureStore indisponible ou incohérent"}
+          </Text>
+        </View>
+      ) : null}
 
       <View style={styles.capabilities}>
         {CAPABILITIES.map((capability) => (
@@ -172,6 +224,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
     marginTop: theme.spacing.sm,
+  },
+  diagnosticButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 48,
+    marginTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.radius.pill,
+    backgroundColor: theme.color.ink,
+  },
+  diagnosticButtonText: {
+    color: theme.color.surface,
+    fontSize: 13,
+    fontWeight: "800",
+    letterSpacing: 0.7,
+  },
+  diagnosticResult: {
+    color: theme.color.muted,
+    fontSize: 14,
+    lineHeight: 21,
+    marginTop: theme.spacing.md,
   },
   capabilities: {
     flexDirection: "row",
