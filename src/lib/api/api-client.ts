@@ -1,5 +1,11 @@
 import { fetch } from "expo/fetch";
-import { ApiError, mapHttpError, networkError, timeoutError, type ApiErrorBody } from "./api-error";
+import {
+  ApiError,
+  mapHttpError,
+  networkError,
+  timeoutError,
+  type ApiErrorBody,
+} from "./api-error";
 import {
   isIdempotentMethod,
   retryDelayMs,
@@ -46,7 +52,11 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     },
   };
 
-  async function execute<TResponse>(request: ApiRequest, authReplayed: boolean, retryAttempt: number): Promise<TResponse> {
+  async function execute<TResponse>(
+    request: ApiRequest,
+    authReplayed: boolean,
+    retryAttempt: number,
+  ): Promise<TResponse> {
     const method = request.method ?? "GET";
     const authMode = request.auth ?? "required";
     const url = buildUrl(baseUrl, request.path);
@@ -77,7 +87,14 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       const requestId = response.headers.get("x-request-id") ?? undefined;
 
       if (response.ok) {
-        logger.log({ method, route: url, status: response.status, durationMs, requestId, outcome: "success" });
+        logger.log({
+          method,
+          route: url,
+          status: response.status,
+          durationMs,
+          requestId,
+          outcome: "success",
+        });
         if (response.status === 204) return undefined as TResponse;
         return (await readJson(response)) as TResponse;
       }
@@ -93,8 +110,19 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       }
 
       const errorBody = (await readJson(response)) as ApiErrorBody;
-      const error = mapHttpError(response.status, errorBody, response.headers.get("retry-after"));
-      logger.log({ method, route: url, status: response.status, durationMs, requestId, outcome: "http_error" });
+      const error = mapHttpError(
+        response.status,
+        errorBody,
+        response.headers.get("retry-after"),
+      );
+      logger.log({
+        method,
+        route: url,
+        status: response.status,
+        durationMs,
+        requestId,
+        outcome: "http_error",
+      });
 
       if (shouldRetry(method, error, retryAttempt)) {
         await sleep(retryDelayMs(retryAttempt));
@@ -125,7 +153,10 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
   }
 }
 
-async function resolveAccessToken(mode: ApiAuthMode, auth: AuthSessionManager): Promise<string | null> {
+async function resolveAccessToken(
+  mode: ApiAuthMode,
+  auth: AuthSessionManager,
+): Promise<string | null> {
   if (mode === "none") return null;
   if (mode === "optional") return auth.getAccessToken();
   return auth.getOrRefreshAccessToken();
