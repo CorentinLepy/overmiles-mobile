@@ -1,4 +1,6 @@
-const apiBaseUrl = (process.env.OVERMILES_SMOKE_API_URL ?? "https://overmiles.app/api/v1").replace(/\/$/, "");
+const apiBaseUrl = (
+  process.env.OVERMILES_SMOKE_API_URL ?? "https://overmiles.app/api/v1"
+).replace(/\/$/, "");
 const email = process.env.OVERMILES_SMOKE_EMAIL;
 const password = process.env.OVERMILES_SMOKE_PASSWORD;
 
@@ -47,7 +49,10 @@ try {
   });
   assert(login.response.status === 200, `login returned HTTP ${login.response.status}`);
   assert(tokenShape(login.body.accessToken, ""), "login did not return an access token");
-  assert(tokenShape(login.body.refreshToken, "omr1_"), "login did not return a valid refresh token");
+  assert(
+    tokenShape(login.body.refreshToken, "omr1_"),
+    "login did not return a valid refresh token",
+  );
   assert(typeof login.body.sessionId === "string", "login did not return a sessionId");
   firstRefreshToken = login.body.refreshToken;
   console.log("   PASS login/session issued (tokens redacted)");
@@ -60,7 +65,10 @@ try {
   });
   assert(refresh.response.status === 200, `refresh returned HTTP ${refresh.response.status}`);
   assert(tokenShape(refresh.body.accessToken, ""), "refresh did not return an access token");
-  assert(tokenShape(refresh.body.refreshToken, "omr1_"), "refresh did not return a successor refresh token");
+  assert(
+    tokenShape(refresh.body.refreshToken, "omr1_"),
+    "refresh did not return a successor refresh token",
+  );
   assert(refresh.body.refreshToken !== firstRefreshToken, "refresh token was not rotated");
   secondRefreshToken = refresh.body.refreshToken;
   refreshedAccessToken = refresh.body.accessToken;
@@ -88,11 +96,16 @@ try {
     headers: { Accept: "application/json", "Content-Type": "application/json" },
     body: JSON.stringify({ refreshToken: secondRefreshToken }),
   });
-  assert(afterLogout.response.status === 401, `revoked refresh returned HTTP ${afterLogout.response.status}, expected 401`);
+  assert(
+    afterLogout.response.status === 401,
+    `revoked refresh returned HTTP ${afterLogout.response.status}, expected 401`,
+  );
   console.log("   PASS revoked refresh rejected");
 
   console.log("COR-55 live auth smoke: PASS");
 } catch (error) {
-  console.error(`COR-55 live auth smoke: FAIL - ${error instanceof Error ? error.message : String(error)}`);
+  console.error(
+    `COR-55 live auth smoke: FAIL - ${error instanceof Error ? error.message : String(error)}`,
+  );
   process.exitCode = 1;
 }
