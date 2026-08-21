@@ -1,5 +1,11 @@
 import { fetch } from "expo/fetch";
-import { mapHttpError, networkError, timeoutError, type ApiErrorBody } from "../api/api-error";
+import {
+  ApiError,
+  mapHttpError,
+  networkError,
+  timeoutError,
+  type ApiErrorBody,
+} from "../api/api-error";
 import type { MobileSessionTokens, RefreshTransport } from "./auth-session-manager";
 
 const AUTH_TIMEOUT_MS = 10_000;
@@ -55,7 +61,11 @@ export function createMobileAuthTransport(baseUrl: string): MobileAuthTransport 
   };
 }
 
-async function postJson<TResponse>(baseUrl: string, path: string, body: unknown): Promise<TResponse> {
+async function postJson<TResponse>(
+  baseUrl: string,
+  path: string,
+  body: unknown,
+): Promise<TResponse> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort("timeout"), AUTH_TIMEOUT_MS);
 
@@ -77,8 +87,10 @@ async function postJson<TResponse>(baseUrl: string, path: string, body: unknown)
 
     return (await response.json()) as TResponse;
   } catch (error) {
-    if (error instanceof Error && error.name === "ApiError") throw error;
-    if (controller.signal.aborted && controller.signal.reason === "timeout") throw timeoutError();
+    if (error instanceof ApiError) throw error;
+    if (controller.signal.aborted && controller.signal.reason === "timeout") {
+      throw timeoutError();
+    }
     throw networkError();
   } finally {
     clearTimeout(timeoutId);
@@ -101,7 +113,9 @@ function validateBaseUrl(value: string): string {
       parsed.hostname.endsWith(".local"));
 
   if (parsed.protocol !== "https:" && !isLocalHttp) {
-    throw new Error("Le transport d’authentification refuse une API non HTTPS hors développement local.");
+    throw new Error(
+      "Le transport d’authentification refuse une API non HTTPS hors développement local.",
+    );
   }
 
   return parsed.toString().replace(/\/$/, "");
