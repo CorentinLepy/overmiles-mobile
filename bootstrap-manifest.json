@@ -1,0 +1,55 @@
+{
+  "ticket": "COR-54",
+  "artifact": "overmiles-mobile bootstrap",
+  "updatedAt": "2026-08-21",
+  "baseline": {
+    "expo": "~57.0.10",
+    "reactNative": "0.86.2",
+    "react": "19.2.3",
+    "node": ">=22.13.0",
+    "pnpm": "11.20.0"
+  },
+  "validation": {
+    "dependencyInstall": "pass",
+    "lockfileCommitted": true,
+    "structureCheck": "13/13 pass",
+    "typecheck": "pass",
+    "lint": "pass",
+    "nodeTests": "4/4 pass",
+    "formatCheck": "pass",
+    "secretPatterns": "pass",
+    "expoInstallCheck": "dependencies up to date",
+    "expoDoctor": "21/21 pass",
+    "gitDiffCheck": "pass",
+    "peerWarnings": [
+      "react-native-worklets",
+      "@react-native/metro-config",
+      "react-dom"
+    ],
+    "metro": "pass",
+    "androidDevelopmentBuild": "pass",
+    "androidBuildId": "79f78419-4835-495d-8c6f-0afae527ed84",
+    "androidBuildFingerprint": "cee079712e0ad98baaffb66bb5c2449b978ec5ce",
+    "androidPhysicalDeviceSmokeTest": "pass",
+    "finalPrReview": "pass",
+    "iosDevelopmentBuild": "not run"
+  },
+  "security": {
+    "dependencyBuildPolicy": {
+      "unrs-resolver": false
+    },
+    "realEnvironmentFilesIgnored": true,
+    "credentialsIgnored": true,
+    "androidKeystoreManagedByEas": true,
+    "expoTunnelToolingLocalOnly": true
+  },
+  "eas": {
+    "account": "corentinlpc",
+    "project": "@corentinlpc/overmiles-mobile",
+    "projectId": "2361a89e-a0e0-446b-be67-0e7f60bfee4d",
+    "updatesConfigured": true,
+    "developmentChannelCreated": true,
+    "androidVersionCode": 1
+  },
+  "next": ["merge COR-54"]
+}
