@@ -15,6 +15,10 @@ const secureStoreTokenStore = await readFile(
   new URL("../src/lib/auth/secure-store-token-store.ts", import.meta.url),
   "utf8",
 );
+const mobileAuthTransport = await readFile(
+  new URL("../src/lib/auth/mobile-auth-transport.ts", import.meta.url),
+  "utf8",
+);
 const logger = await readFile(
   new URL("../src/lib/api/safe-network-logger.ts", import.meta.url),
   "utf8",
@@ -50,6 +54,20 @@ test("refresh is single-flight and successor refresh is persisted before access 
   );
   const accessIndex = sessionManager.indexOf("this.accessToken = next.accessToken", writeIndex);
   assert.ok(writeIndex >= 0 && accessIndex > writeIndex);
+});
+
+test("mobile auth transport targets the real backend login and refresh endpoints", () => {
+  assert.match(mobileAuthTransport, /"\/auth\/mobile\/login"/);
+  assert.match(mobileAuthTransport, /"\/auth\/mobile\/refresh"/);
+  assert.match(mobileAuthTransport, /from "expo\/fetch"/);
+  assert.doesNotMatch(mobileAuthTransport, /cookie/i);
+  assert.doesNotMatch(mobileAuthTransport, /Authorization/);
+});
+
+test("auth POST transport has a bounded timeout and no automatic retry loop", () => {
+  assert.match(mobileAuthTransport, /AUTH_TIMEOUT_MS = 10_000/);
+  assert.match(mobileAuthTransport, /controller\.abort\("timeout"\)/);
+  assert.doesNotMatch(mobileAuthTransport, /retryDelayMs|shouldRetry|for\s*\(/);
 });
 
 test("automatic auth replay is restricted by idempotency or explicit opt-in", () => {
