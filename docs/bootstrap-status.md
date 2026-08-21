@@ -58,8 +58,10 @@ Le smoke test a été exécuté avec succès sur un appareil Android physique :
 - Expo SDK 57 / React Native 0.86 / Expo Router / TypeScript strict visibles ;
 - aucun crash observé.
 
+Le composant ngrok utilisé par Expo pour le tunnel reste un outil de développement local et n'est pas ajouté comme dépendance applicative au repository.
+
 ## État de merge
 
-Les critères techniques prévus pour COR-54 sont satisfaits côté bootstrap Android. Il reste uniquement la revue finale de la PR avant merge.
+Les critères techniques prévus pour COR-54 sont satisfaits côté bootstrap Android. La revue finale du diff est propre ; la PR peut être passée en Ready for review puis mergée.
 
 Les builds iOS/TestFlight et la publication stores sont traités dans le chantier release mobile dédié et ne bloquent pas ce bootstrap Android initial.
