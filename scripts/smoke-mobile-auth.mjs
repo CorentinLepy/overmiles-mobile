@@ -1,6 +1,7 @@
-const apiBaseUrl = (
-  process.env.OVERMILES_SMOKE_API_URL ?? "https://overmiles.app/api/v1"
-).replace(/\/$/, "");
+const apiBaseUrl = (process.env.OVERMILES_SMOKE_API_URL ?? "https://overmiles.app/api/v1").replace(
+  /\/$/,
+  "",
+);
 const email = process.env.OVERMILES_SMOKE_EMAIL;
 const password = process.env.OVERMILES_SMOKE_PASSWORD;
 
