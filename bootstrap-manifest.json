@@ -21,10 +21,14 @@
     "expoInstallCheck": "dependencies up to date",
     "expoDoctor": "21/21 pass",
     "gitDiffCheck": "pass",
-    "peerWarnings": ["react-native-worklets", "@react-native/metro-config", "react-dom"],
-    "easProjectLinked": true,
+    "peerWarnings": [
+      "react-native-worklets",
+      "@react-native/metro-config",
+      "react-dom"
+    ],
     "metro": "not run",
-    "androidDevelopmentBuild": "not run",
+    "androidDevelopmentBuild": "in progress",
+    "androidBuildId": "79f78419-4835-495d-8c6f-0afae527ed84",
     "iosDevelopmentBuild": "not run"
   },
   "security": {
@@ -32,11 +36,22 @@
       "unrs-resolver": false
     },
     "realEnvironmentFilesIgnored": true,
-    "credentialsIgnored": true
+    "credentialsIgnored": true,
+    "androidKeystoreManagedByEas": true
+  },
+  "eas": {
+    "account": "corentinlpc",
+    "project": "@corentinlpc/overmiles-mobile",
+    "projectId": "2361a89e-a0e0-446b-be67-0e7f60bfee4d",
+    "updatesConfigured": true,
+    "developmentChannelCreated": true,
+    "androidVersionCode": 1
   },
   "next": [
-    "commit EAS project link",
-    "create Android development build",
-    "install and smoke-test Android development build"
+    "wait for Android development build completion",
+    "install APK on physical Android device",
+    "start Metro with pnpm dev",
+    "connect development client",
+    "run Android smoke test"
   ]
 }
