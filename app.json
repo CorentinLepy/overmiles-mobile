@@ -39,6 +39,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2361a89e-a0e0-446b-be67-0e7f60bfee4d"
+      }
+    },
+    "owner": "corentinlpc"
   }
 }
