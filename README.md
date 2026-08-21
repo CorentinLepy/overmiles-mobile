@@ -38,16 +38,16 @@ En production, la cible canonique est `https://overmiles.app/api/v1`.
 
 ## Commandes
 
-| Commande | Rôle |
-| --- | --- |
-| `pnpm dev` | Démarrer Metro pour un development build |
+| Commande               | Rôle                                       |
+| ---------------------- | ------------------------------------------ |
+| `pnpm dev`             | Démarrer Metro pour un development build   |
 | `pnpm structure:check` | Vérifier les chemins structurants du socle |
-| `pnpm typecheck` | Vérifier TypeScript strict |
-| `pnpm lint` | Lancer ESLint sans avertissement toléré |
-| `pnpm test` | Vérifier les invariants du bootstrap |
-| `pnpm format:check` | Vérifier le formatage |
-| `pnpm security:check` | Détecter des motifs de secrets évidents |
-| `pnpm verify` | Exécuter la baseline qualité complète |
+| `pnpm typecheck`       | Vérifier TypeScript strict                 |
+| `pnpm lint`            | Lancer ESLint sans avertissement toléré    |
+| `pnpm test`            | Vérifier les invariants du bootstrap       |
+| `pnpm format:check`    | Vérifier le formatage                      |
+| `pnpm security:check`  | Détecter des motifs de secrets évidents    |
+| `pnpm verify`          | Exécuter la baseline qualité complète      |
 
 ## EAS
 

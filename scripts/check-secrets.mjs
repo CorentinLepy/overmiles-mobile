@@ -3,15 +3,32 @@ import path from "node:path";
 
 const ignoredDirectories = new Set([".git", ".expo", "node_modules", "android", "ios", "dist"]);
 const ignoredFiles = new Set(["pnpm-lock.yaml", "bootstrap-manifest.json"]);
-const sourceExtensions = new Set([".ts", ".tsx", ".js", ".mjs", ".json", ".md", ".yml", ".yaml", ".env", ""]);
+const sourceExtensions = new Set([
+  ".ts",
+  ".tsx",
+  ".js",
+  ".mjs",
+  ".json",
+  ".md",
+  ".yml",
+  ".yaml",
+  ".env",
+  "",
+]);
 const findings = [];
 
 const suspiciousPatterns = [
   { name: "private key", pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
   { name: "GitHub token", pattern: /gh[pousr]_[A-Za-z0-9_]{30,}/ },
   { name: "AWS access key", pattern: /AKIA[0-9A-Z]{16}/ },
-  { name: "bearer token literal", pattern: /Authorization["']?\s*[:=]\s*["']Bearer\s+[A-Za-z0-9._-]{20,}/i },
-  { name: "hard-coded password", pattern: /(?:password|passwd|pwd)["']?\s*[:=]\s*["'][^"']{8,}["']/i },
+  {
+    name: "bearer token literal",
+    pattern: /Authorization["']?\s*[:=]\s*["']Bearer\s+[A-Za-z0-9._-]{20,}/i,
+  },
+  {
+    name: "hard-coded password",
+    pattern: /(?:password|passwd|pwd)["']?\s*[:=]\s*["'][^"']{8,}["']/i,
+  },
 ];
 
 async function walk(directory) {

@@ -43,7 +43,9 @@ export function TechnicalBootstrapScreen() {
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Bootstrap v{appVersion}</Text>
-          <View style={[styles.statusPill, runtime.isValid ? styles.statusOk : styles.statusWarning]}>
+          <View
+            style={[styles.statusPill, runtime.isValid ? styles.statusOk : styles.statusWarning]}
+          >
             <Text style={styles.statusText}>{runtime.isValid ? "PRÊT" : "CONFIG À COMPLÉTER"}</Text>
           </View>
         </View>

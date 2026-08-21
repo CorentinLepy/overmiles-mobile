@@ -7,11 +7,7 @@ export type PublicRuntimeConfig = Readonly<{
   errors: readonly string[];
 }>;
 
-const VALID_ENVIRONMENTS = new Set<AppEnvironment>([
-  "development",
-  "preview",
-  "production",
-]);
+const VALID_ENVIRONMENTS = new Set<AppEnvironment>(["development", "preview", "production"]);
 
 function isAllowedDevelopmentHost(url: URL): boolean {
   return (
