@@ -31,6 +31,7 @@
     "androidBuildId": "79f78419-4835-495d-8c6f-0afae527ed84",
     "androidBuildFingerprint": "cee079712e0ad98baaffb66bb5c2449b978ec5ce",
     "androidPhysicalDeviceSmokeTest": "pass",
+    "finalPrReview": "pass",
     "iosDevelopmentBuild": "not run"
   },
   "security": {
@@ -39,7 +40,8 @@
     },
     "realEnvironmentFilesIgnored": true,
     "credentialsIgnored": true,
-    "androidKeystoreManagedByEas": true
+    "androidKeystoreManagedByEas": true,
+    "expoTunnelToolingLocalOnly": true
   },
   "eas": {
     "account": "corentinlpc",
@@ -49,8 +51,5 @@
     "developmentChannelCreated": true,
     "androidVersionCode": 1
   },
-  "next": [
-    "final PR review",
-    "merge COR-54 if review is clean"
-  ]
+  "next": ["merge COR-54"]
 }
