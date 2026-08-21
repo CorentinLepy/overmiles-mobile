@@ -115,8 +115,8 @@ async function authFetch(
     const response = await fetch(`${baseUrl}${path}`, {
       method: "POST",
       headers: init.headers,
-      body: init.body,
       signal: controller.signal,
+      ...(init.body === undefined ? {} : { body: init.body }),
     });
 
     if (!response.ok) {
