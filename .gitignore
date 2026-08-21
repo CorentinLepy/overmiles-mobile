@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+
+# Expo local state and build output
+.expo/
+dist/
+web-build/
+coverage/
+
+# Continuous Native Generation output
+/android/
+/ios/
+
+# Environment files: only the documented example is committed
+.env
+.env.*
+!.env.example
+
+# EAS / store credentials and signing material
+*.jks
+*.keystore
+*.p8
+*.p12
+*.pem
+*.key
+*.mobileprovision
+GoogleService-Info.plist
+google-services.json
+credentials.json
+
+# Local tooling
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Temporary artifacts
+*.tmp
+*.swp
+*.bundle
+*.zip
+*.sha256
