@@ -1,7 +1,7 @@
 {
   "ticket": "COR-54",
   "artifact": "overmiles-mobile bootstrap",
-  "generatedAt": "2026-08-21",
+  "updatedAt": "2026-08-21",
   "baseline": {
     "expo": "~57.0.10",
     "reactNative": "0.86.2",
@@ -10,265 +10,36 @@
     "pnpm": "11.20.0"
   },
   "validation": {
+    "dependencyInstall": "pass",
+    "lockfileCommitted": true,
+    "structureCheck": "13/13 pass",
+    "typecheck": "pass",
+    "lint": "pass",
     "nodeTests": "4/4 pass",
-    "structurePaths": "13/13 pass",
-    "jsonFiles": "8/8 parse",
+    "formatCheck": "pass",
     "secretPatterns": "pass",
-    "offlineTypeScriptContracts": "pass",
-    "connectedDependencyInstall": "not run",
-    "nativeBuilds": "not run"
+    "expoInstallCheck": "dependencies up to date",
+    "expoDoctor": "21/21 pass",
+    "gitDiffCheck": "pass",
+    "peerWarnings": [
+      "react-native-worklets",
+      "@react-native/metro-config",
+      "react-dom"
+    ],
+    "metro": "not run",
+    "androidDevelopmentBuild": "not run",
+    "iosDevelopmentBuild": "not run"
   },
-  "fileCount": 50,
-  "files": [
-    {
-      "path": ".editorconfig",
-      "size": 188,
-      "sha256": "a6b98ea7cb6d61ed8d430dd0dffa46c87012b5cf859d4ce7207898954951fdcd"
+  "security": {
+    "dependencyBuildPolicy": {
+      "unrs-resolver": false
     },
-    {
-      "path": ".env.example",
-      "size": 185,
-      "sha256": "623ba680e829711babc1a1ab55ac536942c39ef87f7b7ec18bb60aa5e4f1922b"
-    },
-    {
-      "path": ".gitattributes",
-      "size": 32,
-      "sha256": "23302dd90b8bb74b44d365fafef8df20f809b61cb347023951ecf60a88a29651"
-    },
-    {
-      "path": ".github/CODEOWNERS",
-      "size": 16,
-      "sha256": "fbd1aea9e75625f36285a7716de3fb55145718f692eaf4b501755da6d307aec4"
-    },
-    {
-      "path": ".github/pull_request_template.md",
-      "size": 415,
-      "sha256": "94cd3bb5bddf836b261fc1e4cc9fc0a2e5f5ae565755fbba2c36a56c5d9237f3"
-    },
-    {
-      "path": ".gitignore",
-      "size": 598,
-      "sha256": "020572636362ab99c6b91952e51eb435b212e400466be13d7db83eb1fcc77601"
-    },
-    {
-      "path": ".node-version",
-      "size": 8,
-      "sha256": "177d20030d4dcc37eae9ef92865ec54dadce60e8f19e9a34a5d4f37502195a36"
-    },
-    {
-      "path": ".nvmrc",
-      "size": 8,
-      "sha256": "177d20030d4dcc37eae9ef92865ec54dadce60e8f19e9a34a5d4f37502195a36"
-    },
-    {
-      "path": ".prettierignore",
-      "size": 60,
-      "sha256": "4353efff8093d5ec5772a55bff36677426d20a2210c656ea17cfa8029f17d3de"
-    },
-    {
-      "path": ".prettierrc.json",
-      "size": 90,
-      "sha256": "1ed88d3b99eced8dc3b6f58f26645466dd1ceaca6c5a9b818531c941ac28e55b"
-    },
-    {
-      "path": ".vscode/extensions.json",
-      "size": 120,
-      "sha256": "f9c506279fcfecda8e06aaf9ef6cc8a834314b708f54ef311033e713dc178581"
-    },
-    {
-      "path": ".vscode/settings.json",
-      "size": 217,
-      "sha256": "c8bbd6d9f08442908e276833b87c47de9d6ffd2f052666140758606ff679f1db"
-    },
-    {
-      "path": "AGENTS.md",
-      "size": 712,
-      "sha256": "79f2505f1dc29fd63ed5b683ad7089b66a190381a613bf95fe0844f3da672903"
-    },
-    {
-      "path": "CONTRIBUTING.md",
-      "size": 365,
-      "sha256": "051f1d00c12f63d0aeed6bfc988f6f202d9c9dd6d971a363a8521f4f6eb29768"
-    },
-    {
-      "path": "IMPORT.md",
-      "size": 727,
-      "sha256": "5cf2ff5117a9b825317e6aa98e93d93c6553de077eda014c1ce52e04015b6739"
-    },
-    {
-      "path": "README.md",
-      "size": 2872,
-      "sha256": "f3089eb8f34d05c2a28c63913cfa36065c91abe80d8dc07f06822be1e191ccc0"
-    },
-    {
-      "path": "app/(app)/.gitkeep",
-      "size": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    {
-      "path": "app/(auth)/.gitkeep",
-      "size": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    {
-      "path": "app/_layout.tsx",
-      "size": 342,
-      "sha256": "5c2c9a2edbec81b9155d8b5f37dda824590c82804b84f835b2f57fac9425c2b0"
-    },
-    {
-      "path": "app/index.tsx",
-      "size": 176,
-      "sha256": "c168052247953c714be61a604001ca5019e0e7a46ca24a8d0e64438c0491b8f4"
-    },
-    {
-      "path": "app.json",
-      "size": 1111,
-      "sha256": "63123ffd12c2d97823d88197c64148c73241eda1abec865d5491b4308f6cefc7"
-    },
-    {
-      "path": "assets/adaptive-icon.png",
-      "size": 7361,
-      "sha256": "9835c08bab281f6d17deee7af632b52741bdb2c4bde5da91597178daffa3045c"
-    },
-    {
-      "path": "assets/icon.png",
-      "size": 8090,
-      "sha256": "fde569b87c3493ae0b8a923000e08b98acb234bfded052deabc099ed36e9f085"
-    },
-    {
-      "path": "assets/splash-icon.png",
-      "size": 2684,
-      "sha256": "f12b7a397710efe2463ea1a055fc3794e4d2a0f54fb8a303b18d8835310e3c53"
-    },
-    {
-      "path": "docs/architecture.md",
-      "size": 1088,
-      "sha256": "d8d2b5f7bce37af10afae7519ef370cb8c9dbc432d3e5c4be6ee16bdc032de0e"
-    },
-    {
-      "path": "docs/bootstrap-status.md",
-      "size": 1095,
-      "sha256": "21062ca64f49c505fb77c76871ffc4b0e11b754633774a98bafc7331e6e3b078"
-    },
-    {
-      "path": "docs/mobile-auth-contract.md",
-      "size": 920,
-      "sha256": "b71088e1a9bd38cd3704e2c4e324d6f148bbfa1950bd0dcd039bb1f0b9837da9"
-    },
-    {
-      "path": "docs/offline-sync.md",
-      "size": 729,
-      "sha256": "ee9cf6e7cb478a52425e0b28c1e5a39b37900617d990eeb83ac358ec1c2c1055"
-    },
-    {
-      "path": "docs/security.md",
-      "size": 999,
-      "sha256": "c6c2a6d75b8ac2692c0fdc59aee606e67d32c7b55822401caf08fcdffdd3e409"
-    },
-    {
-      "path": "docs/validation-report.md",
-      "size": 1030,
-      "sha256": "ea99fcf337fc441d9db685b32b4024ffb5a03fe511052034dbbf8ff3f7fc0afc"
-    },
-    {
-      "path": "eas.json",
-      "size": 676,
-      "sha256": "f212109305a74fc7c5b78964684fa60d31528f24eac5f777da97f52799b42a52"
-    },
-    {
-      "path": "eslint.config.js",
-      "size": 430,
-      "sha256": "76ccdcaa4aa4f52696e95c508f8887804fa9ad57bde0b814b851eaf7468045c9"
-    },
-    {
-      "path": "expo-env.d.ts",
-      "size": 83,
-      "sha256": "8fa35f65513a4805cd52f9bda21b52f8a69c00378714c41b4b4d78063af2f4e1"
-    },
-    {
-      "path": "package.json",
-      "size": 1464,
-      "sha256": "869174ac487241ad2fabbaf32b6e18ab6295c59b8564effbe0508ef6be0b9636"
-    },
-    {
-      "path": "scripts/check-secrets.mjs",
-      "size": 1876,
-      "sha256": "948200c15aeed771e49f098f0b9dbc7dc73da8c725f687d40431f50db12da5b8"
-    },
-    {
-      "path": "scripts/check-structure.mjs",
-      "size": 797,
-      "sha256": "840327ed01ad33c142fdc237076e6349ec9dca2dd6de4296547a30880e511d6e"
-    },
-    {
-      "path": "src/components/ui/technical-bootstrap-screen.tsx",
-      "size": 4959,
-      "sha256": "2b5cb3a6e95f8febcc1e25d7cdf7cc4aecc0e6ff0130774275c408cbe8c560b7"
-    },
-    {
-      "path": "src/config/env.ts",
-      "size": 2112,
-      "sha256": "6a0553b1d191b0850de8bb48f25ce015f1f3ef2c3fe6f36390c98e0c61736e83"
-    },
-    {
-      "path": "src/features/.gitkeep",
-      "size": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    {
-      "path": "src/hooks/.gitkeep",
-      "size": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    {
-      "path": "src/lib/api/api-client.ts",
-      "size": 331,
-      "sha256": "2c090d938ba12e4fe404b4c978a838aa359362823b8ddf107ce0009e69f79945"
-    },
-    {
-      "path": "src/lib/auth/token-store.ts",
-      "size": 411,
-      "sha256": "05ba9de0e9f9685991994180be8a156c78bbddc866e229f58cc603ae8c192457"
-    },
-    {
-      "path": "src/lib/crypto/README.md",
-      "size": 169,
-      "sha256": "b46c274234aa4b705537d0f710bbf7a2022484e9a3ad0888ea2f2bf51e802a08"
-    },
-    {
-      "path": "src/lib/storage/local-database.ts",
-      "size": 195,
-      "sha256": "cc1048fad440b9d355068ab748a9ae657179ab538f1cd34ca7cd4ee276dfcf06"
-    },
-    {
-      "path": "src/lib/sync/sync-engine.ts",
-      "size": 257,
-      "sha256": "c205b13e79bb91122e6e9b52c2367e2a74d67e1e78210c98f286f6922b2b7a80"
-    },
-    {
-      "path": "src/providers/.gitkeep",
-      "size": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    {
-      "path": "src/theme/tokens.ts",
-      "size": 357,
-      "sha256": "aec80ebf520e465e77382841d1a26f908999244c38f5555626b46ab33b7903d8"
-    },
-    {
-      "path": "src/types/.gitkeep",
-      "size": 0,
-      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-    },
-    {
-      "path": "tests/bootstrap.test.mjs",
-      "size": 1695,
-      "sha256": "b92a1f326ae844afe4c2a56e672cc2a8014a92407148706f387a3d5ce9daf32d"
-    },
-    {
-      "path": "tsconfig.json",
-      "size": 422,
-      "sha256": "3b24b0b99819ceb685d4202f78be65b8c22dc559d29d23577ebaafa3eb6a218f"
-    }
+    "realEnvironmentFilesIgnored": true,
+    "credentialsIgnored": true
+  },
+  "next": [
+    "link Expo/EAS project",
+    "create Android development build",
+    "install and smoke-test Android development build"
   ]
 }
