@@ -7,6 +7,7 @@ export type MobileSessionTokens = Readonly<{
 }>;
 
 export type RefreshTransport = (refreshToken: string) => Promise<MobileSessionTokens>;
+export type LogoutTransport = (accessToken: string) => Promise<void>;
 
 export type AuthRestoreState = "anonymous" | "authenticated" | "offline_auth_pending";
 
@@ -17,6 +18,7 @@ export class AuthSessionManager {
   constructor(
     private readonly tokenStore: TokenStore,
     private readonly refreshTransport: RefreshTransport,
+    private readonly logoutTransport: LogoutTransport,
   ) {}
 
   getAccessToken(): string | null {
@@ -59,6 +61,18 @@ export class AuthSessionManager {
       });
     }
     return this.refreshPromise;
+  }
+
+  async logout(): Promise<void> {
+    try {
+      const accessToken = this.accessToken ?? (await this.getOrRefreshAccessToken());
+      await this.logoutTransport(accessToken);
+    } finally {
+      // A user-requested logout always removes local credentials, including
+      // when the server is temporarily unreachable. Server sessions still
+      // expire/revoke independently according to backend policy.
+      await this.clearLocalSession();
+    }
   }
 
   async clearLocalSession(): Promise<void> {
