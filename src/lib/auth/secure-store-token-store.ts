@@ -21,16 +21,18 @@ const SECURE_STORE_OPTIONS: SecureStore.SecureStoreOptions = {
 export class SecureStoreTokenStore implements TokenStore {
   async readRefreshToken(): Promise<string | null> {
     const token = await SecureStore.getItemAsync(REFRESH_TOKEN_KEY, SECURE_STORE_OPTIONS);
-    return token && token.length <= MAX_REFRESH_TOKEN_LENGTH ? token : null;
+    return token && token.length <= MAX_REFRESH_TOKEN_LENGTH && token === token.trim()
+      ? token
+      : null;
   }
 
   async writeRefreshToken(token: string): Promise<void> {
-    const normalized = token.trim();
-    if (!normalized || normalized.length > MAX_REFRESH_TOKEN_LENGTH) {
+    if (!token || token.length > MAX_REFRESH_TOKEN_LENGTH || token !== token.trim()) {
       throw new Error("Refresh Token invalide pour le stockage sécurisé.");
     }
 
-    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, normalized, SECURE_STORE_OPTIONS);
+    // Refresh tokens are opaque credentials: never normalize or mutate them.
+    await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, token, SECURE_STORE_OPTIONS);
   }
 
   async clearRefreshToken(): Promise<void> {
