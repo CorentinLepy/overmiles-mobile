@@ -21,11 +21,8 @@
     "expoInstallCheck": "dependencies up to date",
     "expoDoctor": "21/21 pass",
     "gitDiffCheck": "pass",
-    "peerWarnings": [
-      "react-native-worklets",
-      "@react-native/metro-config",
-      "react-dom"
-    ],
+    "peerWarnings": ["react-native-worklets", "@react-native/metro-config", "react-dom"],
+    "easProjectLinked": true,
     "metro": "not run",
     "androidDevelopmentBuild": "not run",
     "iosDevelopmentBuild": "not run"
@@ -38,7 +35,7 @@
     "credentialsIgnored": true
   },
   "next": [
-    "link Expo/EAS project",
+    "commit EAS project link",
     "create Android development build",
     "install and smoke-test Android development build"
   ]
