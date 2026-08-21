@@ -43,27 +43,68 @@ export type ApiErrorBody = Readonly<{
   message?: unknown;
 }>;
 
-export function mapHttpError(status: number, body: ApiErrorBody, retryAfterHeader?: string | null): ApiError {
+export function mapHttpError(
+  status: number,
+  body: ApiErrorBody,
+  retryAfterHeader?: string | null,
+): ApiError {
   const code = typeof body.code === "string" && body.code.length <= 120 ? body.code : undefined;
   const retryAfterMs = status === 429 ? parseRetryAfter(retryAfterHeader) : undefined;
 
   if (status === 401) {
-    return new ApiError({ kind: "unauthorized", status, code, retryable: false, userMessage: "Votre session doit être renouvelée." });
+    return new ApiError({
+      kind: "unauthorized",
+      status,
+      code,
+      retryable: false,
+      userMessage: "Votre session doit être renouvelée.",
+    });
   }
   if (status === 403) {
-    return new ApiError({ kind: "forbidden", status, code, retryable: false, userMessage: "Cette action n’est pas autorisée." });
+    return new ApiError({
+      kind: "forbidden",
+      status,
+      code,
+      retryable: false,
+      userMessage: "Cette action n’est pas autorisée.",
+    });
   }
   if (status === 404) {
-    return new ApiError({ kind: "not_found", status, code, retryable: false, userMessage: "La ressource demandée est introuvable." });
+    return new ApiError({
+      kind: "not_found",
+      status,
+      code,
+      retryable: false,
+      userMessage: "La ressource demandée est introuvable.",
+    });
   }
   if (status === 409) {
-    return new ApiError({ kind: "conflict", status, code, retryable: false, userMessage: "Les données ont changé. Actualisez puis réessayez." });
+    return new ApiError({
+      kind: "conflict",
+      status,
+      code,
+      retryable: false,
+      userMessage: "Les données ont changé. Actualisez puis réessayez.",
+    });
   }
   if (status === 422 || status === 400) {
-    return new ApiError({ kind: "validation", status, code, retryable: false, userMessage: "Certaines données envoyées sont invalides." });
+    return new ApiError({
+      kind: "validation",
+      status,
+      code,
+      retryable: false,
+      userMessage: "Certaines données envoyées sont invalides.",
+    });
   }
   if (status === 429) {
-    return new ApiError({ kind: "rate_limited", status, code, retryAfterMs, retryable: true, userMessage: "Trop de tentatives. Réessayez dans un instant." });
+    return new ApiError({
+      kind: "rate_limited",
+      status,
+      code,
+      retryAfterMs,
+      retryable: true,
+      userMessage: "Trop de tentatives. Réessayez dans un instant.",
+    });
   }
 
   return new ApiError({
@@ -76,17 +117,29 @@ export function mapHttpError(status: number, body: ApiErrorBody, retryAfterHeade
 }
 
 export function networkError(): ApiError {
-  return new ApiError({ kind: "network", status: 0, retryable: true, userMessage: "Connexion réseau indisponible." });
+  return new ApiError({
+    kind: "network",
+    status: 0,
+    retryable: true,
+    userMessage: "Connexion réseau indisponible.",
+  });
 }
 
 export function timeoutError(): ApiError {
-  return new ApiError({ kind: "timeout", status: 0, retryable: true, userMessage: "La requête a expiré. Réessayez." });
+  return new ApiError({
+    kind: "timeout",
+    status: 0,
+    retryable: true,
+    userMessage: "La requête a expiré. Réessayez.",
+  });
 }
 
 function parseRetryAfter(value?: string | null): number | undefined {
   if (!value) return undefined;
   const seconds = Number(value);
-  if (Number.isFinite(seconds) && seconds >= 0) return Math.min(seconds * 1000, 60 * 60 * 1000);
+  if (Number.isFinite(seconds) && seconds >= 0) {
+    return Math.min(seconds * 1000, 60 * 60 * 1000);
+  }
 
   const date = Date.parse(value);
   if (Number.isNaN(date)) return undefined;
