@@ -51,5 +51,7 @@
     "developmentChannelCreated": true,
     "androidVersionCode": 1
   },
-  "next": ["merge COR-54"]
+  "next": [
+    "merge COR-54"
+  ]
 }
