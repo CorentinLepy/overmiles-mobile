@@ -2,12 +2,18 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const apiClient = await readFile(new URL("../src/lib/api/api-client.ts", import.meta.url), "utf8");
+const apiClient = await readFile(
+  new URL("../src/lib/api/api-client.ts", import.meta.url),
+  "utf8",
+);
 const sessionManager = await readFile(
   new URL("../src/lib/auth/auth-session-manager.ts", import.meta.url),
   "utf8",
 );
-const tokenStore = await readFile(new URL("../src/lib/auth/token-store.ts", import.meta.url), "utf8");
+const tokenStore = await readFile(
+  new URL("../src/lib/auth/token-store.ts", import.meta.url),
+  "utf8",
+);
 const logger = await readFile(
   new URL("../src/lib/api/safe-network-logger.ts", import.meta.url),
   "utf8",
@@ -28,7 +34,9 @@ test("access token stays out of persistent TokenStore contract", () => {
 test("refresh is single-flight and successor refresh is persisted before access publication", () => {
   assert.match(sessionManager, /private refreshPromise: Promise<string> \| null = null/);
   assert.match(sessionManager, /if \(!this\.refreshPromise\)/);
-  const writeIndex = sessionManager.indexOf("await this.tokenStore.writeRefreshToken(next.refreshToken)");
+  const writeIndex = sessionManager.indexOf(
+    "await this.tokenStore.writeRefreshToken(next.refreshToken)",
+  );
   const accessIndex = sessionManager.indexOf("this.accessToken = next.accessToken", writeIndex);
   assert.ok(writeIndex >= 0 && accessIndex > writeIndex);
 });
