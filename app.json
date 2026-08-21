@@ -7,8 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "jsEngine": "hermes",
     "platforms": [
       "ios",
       "android"
@@ -25,8 +23,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F4EBDD"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "plugins": [
       "expo-router",
