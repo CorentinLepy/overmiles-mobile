@@ -34,22 +34,33 @@ Date : 21 août 2026.
 - Android `versionCode` initialisé à `1` ;
 - keystore Android généré dans le cloud et géré par EAS.
 
-## Build natif
+## Build natif Android
 
-Premier build Android development lancé :
+Premier build Android development terminé avec succès :
 
 - build ID : `79f78419-4835-495d-8c6f-0afae527ed84` ;
 - profil : `development` ;
 - distribution : `internal` ;
 - runtimeVersion : `0.1.0` ;
-- statut au dernier contrôle : **in progress**.
+- fingerprint : `cee079712e0ad98baaffb66bb5c2449b978ec5ce` ;
+- statut : **finished**.
 
-Le build n’est pas encore considéré validé tant que l’APK n’a pas été généré, installé sur un appareil physique et smoke-testé avec Metro.
+## Smoke test sur appareil physique
 
-## À terminer
+Validation réussie sur un appareil Android physique :
 
-1. attendre la fin du build Android ;
-2. installer l’APK sur un appareil physique ;
-3. lancer `pnpm dev` ;
-4. connecter le development client à Metro ;
-5. confirmer lancement sans crash et affichage de l’écran technique OVERMILES.
+- installation de l'APK : **réussie** ;
+- lancement du development client OVERMILES : **réussi** ;
+- démarrage de Metro via `pnpm dev` : **réussi** ;
+- connexion Metro : **réussie via tunnel Expo** ;
+- chargement du bundle JavaScript : **réussi** ;
+- affichage de l'écran technique OVERMILES `Bootstrap v0.1.0` : **réussi** ;
+- absence de crash pendant le smoke test : **confirmée**.
+
+La tentative initiale de connexion LAN directe à `192.168.1.112:8081` a échoué au niveau réseau ; le passage par le tunnel Expo a permis de valider le client et le bootstrap. Ce point n'indique pas une défaillance applicative COR-54.
+
+## Verdict
+
+**COR-54 est techniquement validé pour son périmètre de bootstrap Android.**
+
+Les validations iOS/TestFlight et la publication App Store / Google Play sont suivies dans le chantier release mobile dédié et ne bloquent pas le merge de ce bootstrap initial.
