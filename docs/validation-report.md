@@ -57,7 +57,7 @@ Validation réussie sur un appareil Android physique :
 - affichage de l'écran technique OVERMILES `Bootstrap v0.1.0` : **réussi** ;
 - absence de crash pendant le smoke test : **confirmée**.
 
-La tentative initiale de connexion LAN directe à `192.168.1.112:8081` a échoué au niveau réseau ; le passage par le tunnel Expo a permis de valider le client et le bootstrap. Ce point n'indique pas une défaillance applicative COR-54.
+La tentative initiale de connexion LAN directe à `192.168.1.112:8081` a échoué au niveau réseau ; le passage par le tunnel Expo a permis de valider le client et le bootstrap. Ce point n'indique pas une défaillance applicative COR-54. Le composant ngrok utilisé pour ce tunnel reste un outil local et n'est pas ajouté comme dépendance applicative.
 
 ## Revue finale de PR
 
