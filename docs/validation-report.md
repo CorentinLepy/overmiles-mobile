@@ -4,37 +4,52 @@ Date : 21 août 2026.
 
 ## Contrôles connectés exécutés
 
-- installation réelle des dépendances avec pnpm 11.20.0 : **réussie** ;
-- `pnpm-lock.yaml` généré et versionné ;
-- politique de build pnpm explicite : `unrs-resolver: false` ;
+- `pnpm install` : **réussi** ;
 - `pnpm run verify` : **réussi** ;
-  - structure : **13/13** ;
-  - TypeScript : **réussi** ;
-  - ESLint : **réussi** ;
-  - tests Node : **4/4 réussis** ;
-  - Prettier : **réussi** ;
-  - scan simple de motifs de secrets : **réussi** ;
+- vérification des chemins structurants : **13/13 réussis** ;
+- TypeScript strict : **réussi** ;
+- ESLint : **réussi** ;
+- tests Node : **4/4 réussis** ;
+- Prettier : **réussi** ;
+- analyse simple de motifs de secrets : **réussie** ;
 - `npx expo install --check` : **Dependencies are up to date** ;
-- `pnpm run doctor` : **21/21 checks passed** ;
+- Expo Doctor : **21/21 checks passed** ;
 - `git diff --check` : **réussi**.
 
-## Warnings de peer dependencies
+## Dépendances et politique de build
 
-`pnpm peers check` signale encore trois warnings transitifs :
+- lockfile pnpm : versionné ;
+- `unrs-resolver` : script de build explicitement refusé via `allowBuilds: false` ;
+- le lint et les validations Expo fonctionnent sans exécuter ce postinstall ;
+- `pnpm peers check` signale trois avertissements transitifs (`react-native-worklets`, `@react-native/metro-config`, `react-dom`) qui ne sont pas remontés comme incompatibilités par `expo install --check` ni Expo Doctor.
 
-- `react-native-worklets` ;
-- `@react-native/metro-config` ;
-- `react-dom`.
+## Expo / EAS
 
-Ils ne sont pas considérés comme bloquants pour COR-54 : Expo valide l’ensemble des dépendances et Expo Doctor ne remonte aucun problème. Ils restent à surveiller dans le chantier CI / durcissement des dépendances COR-59 plutôt que d’ajouter des dépendances directes non nécessaires au bootstrap.
+- compte : `corentinlpc` ;
+- projet : `@corentinlpc/overmiles-mobile` ;
+- project ID : `2361a89e-a0e0-446b-be67-0e7f60bfee4d` ;
+- `expo-updates@~57.0.16` installé et versionné ;
+- `updates.url` configurée vers le projet EAS ;
+- channel `development` créé ;
+- Android `versionCode` initialisé à `1` ;
+- keystore Android généré dans le cloud et géré par EAS.
 
-## Contrôles restant à exécuter
+## Build natif
 
-1. relier le dépôt au projet Expo/EAS ;
-2. vérifier les modifications générées par `eas init` ;
-3. créer un development build Android ;
-4. installer et tester ce build sur un appareil Android ;
-5. lancer Metro avec le development client ;
-6. préparer ensuite la validation iOS dans un lot adapté.
+Premier build Android development lancé :
 
-Aucun build Android/iOS réussi n’est revendiqué tant qu’il n’a pas effectivement été généré et installé.
+- build ID : `79f78419-4835-495d-8c6f-0afae527ed84` ;
+- profil : `development` ;
+- distribution : `internal` ;
+- runtimeVersion : `0.1.0` ;
+- statut au dernier contrôle : **in progress**.
+
+Le build n’est pas encore considéré validé tant que l’APK n’a pas été généré, installé sur un appareil physique et smoke-testé avec Metro.
+
+## À terminer
+
+1. attendre la fin du build Android ;
+2. installer l’APK sur un appareil physique ;
+3. lancer `pnpm dev` ;
+4. connecter le development client à Metro ;
+5. confirmer lancement sans crash et affichage de l’écran technique OVERMILES.
