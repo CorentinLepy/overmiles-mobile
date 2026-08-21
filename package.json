@@ -1,0 +1,48 @@
+{
+  "name": "overmiles-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "main": "expo-router/entry",
+  "packageManager": "pnpm@11.20.0",
+  "engines": {
+    "node": ">=22.13.0",
+    "pnpm": ">=11.20.0"
+  },
+  "scripts": {
+    "start": "expo start",
+    "dev": "expo start --dev-client",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "test": "node --test tests/*.test.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "structure:check": "node scripts/check-structure.mjs",
+    "security:check": "node scripts/check-secrets.mjs",
+    "verify": "pnpm structure:check && pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm security:check",
+    "doctor": "npx expo-doctor@latest"
+  },
+  "dependencies": {
+    "expo": "~57.0.10",
+    "expo-constants": "~57.0.9",
+    "expo-dev-client": "~57.0.10",
+    "expo-linking": "~57.0.5",
+    "expo-router": "~57.0.10",
+    "expo-splash-screen": "~57.0.5",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.2",
+    "react": "19.2.3",
+    "react-native": "0.86.2",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "eslint": "^9.18.0",
+    "eslint-config-expo": "~57.0.1",
+    "prettier": "^3.8.3",
+    "typescript": "~6.0.3"
+  }
+}
