@@ -46,6 +46,9 @@
         "projectId": "2361a89e-a0e0-446b-be67-0e7f60bfee4d"
       }
     },
-    "owner": "corentinlpc"
+    "owner": "corentinlpc",
+    "updates": {
+      "url": "https://u.expo.dev/2361a89e-a0e0-446b-be67-0e7f60bfee4d"
+    }
   }
 }
