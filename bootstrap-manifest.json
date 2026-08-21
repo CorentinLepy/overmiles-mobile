@@ -26,9 +26,11 @@
       "@react-native/metro-config",
       "react-dom"
     ],
-    "metro": "not run",
-    "androidDevelopmentBuild": "in progress",
+    "metro": "pass",
+    "androidDevelopmentBuild": "pass",
     "androidBuildId": "79f78419-4835-495d-8c6f-0afae527ed84",
+    "androidBuildFingerprint": "cee079712e0ad98baaffb66bb5c2449b978ec5ce",
+    "androidPhysicalDeviceSmokeTest": "pass",
     "iosDevelopmentBuild": "not run"
   },
   "security": {
@@ -48,10 +50,7 @@
     "androidVersionCode": 1
   },
   "next": [
-    "wait for Android development build completion",
-    "install APK on physical Android device",
-    "start Metro with pnpm dev",
-    "connect development client",
-    "run Android smoke test"
+    "final PR review",
+    "merge COR-54 if review is clean"
   ]
 }
