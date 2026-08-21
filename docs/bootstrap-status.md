@@ -31,7 +31,7 @@
 
 ## Build Android development
 
-Le premier build EAS Android development a été lancé le 21 août 2026 :
+Le premier build EAS Android development a été terminé avec succès le 21 août 2026 :
 
 - build ID : `79f78419-4835-495d-8c6f-0afae527ed84` ;
 - profil : `development` ;
@@ -39,18 +39,27 @@ Le premier build EAS Android development a été lancé le 21 août 2026 :
 - channel : `development` ;
 - runtimeVersion : `0.1.0` ;
 - versionCode : `1` ;
-- commit de référence affiché par EAS : `28efe6c` ;
-- statut au dernier contrôle utilisateur : `in progress`.
+- fingerprint : `cee079712e0ad98baaffb66bb5c2449b978ec5ce` ;
+- statut EAS : `finished`.
 
-Le build a été archivé depuis le working tree contenant la configuration `expo-updates`; cette configuration est désormais aussi versionnée sur la branche COR-54 dans le commit `3c3f150`.
+Le build a été archivé depuis le working tree contenant la configuration `expo-updates`; cette configuration est également versionnée sur la branche COR-54 dans le commit `3c3f150`.
 
-## Reste avant merge de COR-54
+## Smoke test Android physique
 
-1. attendre la fin du build Android development ;
-2. installer l’APK sur un appareil Android physique ;
-3. démarrer Metro avec `pnpm dev` ;
-4. connecter le development client ;
-5. effectuer le smoke test : lancement, connexion Metro, affichage de l’écran technique, absence de crash ;
-6. mettre la PR prête à review puis merger si le smoke test est vert.
+Le smoke test a été exécuté avec succès sur un appareil Android physique :
+
+- APK installé ;
+- development client OVERMILES lancé ;
+- Metro démarré via `pnpm dev` ;
+- connexion au serveur de développement réussie via tunnel Expo après échec du LAN direct ;
+- bundle JavaScript chargé ;
+- écran technique OVERMILES `Bootstrap v0.1.0` affiché ;
+- environnement `development` visible ;
+- Expo SDK 57 / React Native 0.86 / Expo Router / TypeScript strict visibles ;
+- aucun crash observé.
+
+## État de merge
+
+Les critères techniques prévus pour COR-54 sont satisfaits côté bootstrap Android. Il reste uniquement la revue finale de la PR avant merge.
 
 Les builds iOS/TestFlight et la publication stores sont traités dans le chantier release mobile dédié et ne bloquent pas ce bootstrap Android initial.
