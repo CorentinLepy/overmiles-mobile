@@ -66,10 +66,11 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       }
       if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
+      const body = request.body === undefined ? null : JSON.stringify(request.body);
       const response = await fetch(url, {
         method,
         headers,
-        body: request.body === undefined ? undefined : JSON.stringify(request.body),
+        body,
         signal: controller.signal,
       });
       const durationMs = Date.now() - startedAt;
@@ -91,8 +92,8 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         return execute<TResponse>(request, true, retryAttempt);
       }
 
-      const body = (await readJson(response)) as ApiErrorBody;
-      const error = mapHttpError(response.status, body, response.headers.get("retry-after"));
+      const errorBody = (await readJson(response)) as ApiErrorBody;
+      const error = mapHttpError(response.status, errorBody, response.headers.get("retry-after"));
       logger.log({ method, route: url, status: response.status, durationMs, requestId, outcome: "http_error" });
 
       if (shouldRetry(method, error, retryAttempt)) {
@@ -153,6 +154,9 @@ function validateBaseUrl(value: string): string {
 function isLocalDevelopmentUrl(url: URL): boolean {
   return (
     url.protocol === "http:" &&
-    (url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "10.0.2.2" || url.hostname.endsWith(".local"))
+    (url.hostname === "localhost" ||
+      url.hostname === "127.0.0.1" ||
+      url.hostname === "10.0.2.2" ||
+      url.hostname.endsWith(".local"))
   );
 }
