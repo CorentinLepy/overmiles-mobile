@@ -1,11 +1,5 @@
 import { fetch } from "expo/fetch";
-import {
-  ApiError,
-  mapHttpError,
-  networkError,
-  timeoutError,
-  type ApiErrorBody,
-} from "./api-error";
+import { ApiError, mapHttpError, networkError, timeoutError, type ApiErrorBody } from "./api-error";
 import {
   isIdempotentMethod,
   retryDelayMs,
@@ -110,11 +104,7 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       }
 
       const errorBody = (await readJson(response)) as ApiErrorBody;
-      const error = mapHttpError(
-        response.status,
-        errorBody,
-        response.headers.get("retry-after"),
-      );
+      const error = mapHttpError(response.status, errorBody, response.headers.get("retry-after"));
       logger.log({
         method,
         route: url,

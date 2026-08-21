@@ -2,10 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const apiClient = await readFile(
-  new URL("../src/lib/api/api-client.ts", import.meta.url),
-  "utf8",
-);
+const apiClient = await readFile(new URL("../src/lib/api/api-client.ts", import.meta.url), "utf8");
 const sessionManager = await readFile(
   new URL("../src/lib/auth/auth-session-manager.ts", import.meta.url),
   "utf8",
