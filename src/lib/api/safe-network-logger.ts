@@ -1,9 +1,9 @@
 export type NetworkLogEvent = Readonly<{
   method: string;
   route: string;
-  status?: number;
+  status?: number | undefined;
   durationMs: number;
-  requestId?: string;
+  requestId?: string | undefined;
   outcome: "success" | "http_error" | "network_error" | "timeout";
 }>;
 
@@ -33,7 +33,8 @@ export function normalizeRoute(value: string): string {
     const url = new URL(value, "https://overmiles.invalid");
     return url.pathname.replace(/\/{2,}/g, "/");
   } catch {
-    return value.split(/[?#]/, 1)[0].slice(0, 300);
+    const route = value.split(/[?#]/, 1)[0] ?? "";
+    return route.slice(0, 300);
   }
 }
 
