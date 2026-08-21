@@ -21,11 +21,7 @@
     "expoInstallCheck": "dependencies up to date",
     "expoDoctor": "21/21 pass",
     "gitDiffCheck": "pass",
-    "peerWarnings": [
-      "react-native-worklets",
-      "@react-native/metro-config",
-      "react-dom"
-    ],
+    "peerWarnings": ["react-native-worklets", "@react-native/metro-config", "react-dom"],
     "metro": "pass",
     "androidDevelopmentBuild": "pass",
     "androidBuildId": "79f78419-4835-495d-8c6f-0afae527ed84",
@@ -51,7 +47,5 @@
     "developmentChannelCreated": true,
     "androidVersionCode": 1
   },
-  "next": [
-    "merge COR-54"
-  ]
+  "next": ["merge COR-54"]
 }
