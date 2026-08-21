@@ -11,6 +11,10 @@ const tokenStore = await readFile(
   new URL("../src/lib/auth/token-store.ts", import.meta.url),
   "utf8",
 );
+const secureStoreTokenStore = await readFile(
+  new URL("../src/lib/auth/secure-store-token-store.ts", import.meta.url),
+  "utf8",
+);
 const logger = await readFile(
   new URL("../src/lib/api/safe-network-logger.ts", import.meta.url),
   "utf8",
@@ -26,6 +30,16 @@ test("access token stays out of persistent TokenStore contract", () => {
   assert.match(tokenStore, /writeRefreshToken/);
   assert.doesNotMatch(tokenStore, /writeAccessToken|readAccessToken/);
   assert.match(sessionManager, /private accessToken: string \| null = null/);
+});
+
+test("SecureStore adapter persists only the refresh token in device-bound secure storage", () => {
+  assert.match(secureStoreTokenStore, /from "expo-secure-store"/);
+  assert.match(secureStoreTokenStore, /WHEN_UNLOCKED_THIS_DEVICE_ONLY/);
+  assert.match(secureStoreTokenStore, /getItemAsync\(REFRESH_TOKEN_KEY/);
+  assert.match(secureStoreTokenStore, /setItemAsync\(REFRESH_TOKEN_KEY/);
+  assert.match(secureStoreTokenStore, /deleteItemAsync\(REFRESH_TOKEN_KEY/);
+  assert.doesNotMatch(secureStoreTokenStore, /accessToken/);
+  assert.doesNotMatch(secureStoreTokenStore, /requireAuthentication\s*:\s*true/);
 });
 
 test("refresh is single-flight and successor refresh is persisted before access publication", () => {
