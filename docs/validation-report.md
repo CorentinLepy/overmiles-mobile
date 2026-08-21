@@ -2,23 +2,39 @@
 
 Date : 21 août 2026.
 
-## Contrôles exécutés hors ligne
+## Contrôles connectés exécutés
 
-- tests structurels Node : **4/4 réussis** ;
-- vérification des chemins structurants : **13/13 réussis** ;
-- analyse simple de motifs de secrets : **réussie** ;
-- parsing des fichiers JSON : **8/8 réussis** ;
-- contrôle ciblé des usages interdits : **aucun usage applicatif détecté** ;
-- compilation TypeScript de syntaxe et des contrats locaux avec déclarations hors ligne : **réussie**.
+- installation réelle des dépendances avec pnpm 11.20.0 : **réussie** ;
+- `pnpm-lock.yaml` généré et versionné ;
+- politique de build pnpm explicite : `unrs-resolver: false` ;
+- `pnpm run verify` : **réussi** ;
+  - structure : **13/13** ;
+  - TypeScript : **réussi** ;
+  - ESLint : **réussi** ;
+  - tests Node : **4/4 réussis** ;
+  - Prettier : **réussi** ;
+  - scan simple de motifs de secrets : **réussi** ;
+- `npx expo install --check` : **Dependencies are up to date** ;
+- `pnpm run doctor` : **21/21 checks passed** ;
+- `git diff --check` : **réussi**.
 
-## Contrôles à refaire avec accès au registre
+## Warnings de peer dependencies
 
-1. `pnpm install` et génération du lockfile ;
-2. `pnpm typecheck` avec les types réels Expo/React Native ;
-3. `pnpm lint` avec `eslint-config-expo` ;
-4. `pnpm format:check` avec Prettier ;
-5. `pnpm doctor` ;
-6. démarrage Metro et development build Android/iOS ;
-7. build EAS `development`, puis `preview`.
+`pnpm peers check` signale encore trois warnings transitifs :
 
-Aucun résultat d’installation, de lint réel Expo, de démarrage Metro ou de build natif n’est revendiqué tant que ces étapes connectées n’ont pas été exécutées.
+- `react-native-worklets` ;
+- `@react-native/metro-config` ;
+- `react-dom`.
+
+Ils ne sont pas considérés comme bloquants pour COR-54 : Expo valide l’ensemble des dépendances et Expo Doctor ne remonte aucun problème. Ils restent à surveiller dans le chantier CI / durcissement des dépendances COR-59 plutôt que d’ajouter des dépendances directes non nécessaires au bootstrap.
+
+## Contrôles restant à exécuter
+
+1. relier le dépôt au projet Expo/EAS ;
+2. vérifier les modifications générées par `eas init` ;
+3. créer un development build Android ;
+4. installer et tester ce build sur un appareil Android ;
+5. lancer Metro avec le development client ;
+6. préparer ensuite la validation iOS dans un lot adapté.
+
+Aucun build Android/iOS réussi n’est revendiqué tant qu’il n’a pas effectivement été généré et installé.
