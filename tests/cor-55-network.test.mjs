@@ -40,10 +40,11 @@ test("SecureStore adapter persists only the refresh token in device-bound secure
   assert.match(secureStoreTokenStore, /from "expo-secure-store"/);
   assert.match(secureStoreTokenStore, /WHEN_UNLOCKED_THIS_DEVICE_ONLY/);
   assert.match(secureStoreTokenStore, /getItemAsync\(REFRESH_TOKEN_KEY/);
-  assert.match(secureStoreTokenStore, /setItemAsync\(REFRESH_TOKEN_KEY/);
+  assert.match(secureStoreTokenStore, /setItemAsync\(REFRESH_TOKEN_KEY, token/);
   assert.match(secureStoreTokenStore, /deleteItemAsync\(REFRESH_TOKEN_KEY/);
   assert.doesNotMatch(secureStoreTokenStore, /accessToken/);
   assert.doesNotMatch(secureStoreTokenStore, /requireAuthentication\s*:\s*true/);
+  assert.doesNotMatch(secureStoreTokenStore, /const normalized = token\.trim/);
 });
 
 test("refresh is single-flight and successor refresh is persisted before access publication", () => {
@@ -56,18 +57,27 @@ test("refresh is single-flight and successor refresh is persisted before access 
   assert.ok(writeIndex >= 0 && accessIndex > writeIndex);
 });
 
-test("mobile auth transport targets the real backend login and refresh endpoints", () => {
+test("mobile auth transport targets login refresh and authenticated logout endpoints", () => {
   assert.match(mobileAuthTransport, /"\/auth\/mobile\/login"/);
   assert.match(mobileAuthTransport, /"\/auth\/mobile\/refresh"/);
+  assert.match(mobileAuthTransport, /"\/auth\/mobile\/logout"/);
+  assert.match(mobileAuthTransport, /Authorization: `Bearer \$\{accessToken\}`/);
   assert.match(mobileAuthTransport, /from "expo\/fetch"/);
   assert.doesNotMatch(mobileAuthTransport, /cookie/i);
-  assert.doesNotMatch(mobileAuthTransport, /Authorization/);
 });
 
 test("auth POST transport has a bounded timeout and no automatic retry loop", () => {
   assert.match(mobileAuthTransport, /AUTH_TIMEOUT_MS = 10_000/);
   assert.match(mobileAuthTransport, /controller\.abort\("timeout"\)/);
   assert.doesNotMatch(mobileAuthTransport, /retryDelayMs|shouldRetry|for\s*\(/);
+});
+
+test("logout attempts server revocation and always clears local credentials", () => {
+  assert.match(sessionManager, /await this\.logoutTransport\(accessToken\)/);
+  const logoutIndex = sessionManager.indexOf("async logout(): Promise<void>");
+  const finallyIndex = sessionManager.indexOf("finally", logoutIndex);
+  const clearIndex = sessionManager.indexOf("await this.clearLocalSession()", finallyIndex);
+  assert.ok(logoutIndex >= 0 && finallyIndex > logoutIndex && clearIndex > finallyIndex);
 });
 
 test("automatic auth replay is restricted by idempotency or explicit opt-in", () => {
