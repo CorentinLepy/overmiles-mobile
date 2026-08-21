@@ -12,8 +12,8 @@ export type ApiErrorKind =
 export type ApiErrorDetails = Readonly<{
   kind: ApiErrorKind;
   status: number;
-  code?: string;
-  retryAfterMs?: number;
+  code?: string | undefined;
+  retryAfterMs?: number | undefined;
   retryable: boolean;
   userMessage: string;
 }>;
@@ -21,8 +21,8 @@ export type ApiErrorDetails = Readonly<{
 export class ApiError extends Error {
   readonly kind: ApiErrorKind;
   readonly status: number;
-  readonly code?: string;
-  readonly retryAfterMs?: number;
+  readonly code: string | undefined;
+  readonly retryAfterMs: number | undefined;
   readonly retryable: boolean;
   readonly userMessage: string;
 
