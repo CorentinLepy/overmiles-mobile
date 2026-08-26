@@ -37,6 +37,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Diagnose COR-58 Prettier diff
+        run: |
+          pnpm exec prettier src/lib/security/biometric-lock.ts tests/cor-58-biometric-lock.test.mjs --write
+          git diff -- src/lib/security/biometric-lock.ts tests/cor-58-biometric-lock.test.mjs
+          git checkout -- src/lib/security/biometric-lock.ts tests/cor-58-biometric-lock.test.mjs
+
       - name: Verify repository
         run: pnpm verify
 
