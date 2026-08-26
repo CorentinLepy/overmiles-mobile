@@ -84,8 +84,8 @@ export class OfflineSyncEngine implements SyncEngine {
       if (result.outcome === "applied") {
         await this.store.completeApplied(operation, {
           serverVersion: result.serverVersion,
-          serverUpdatedAt: result.serverUpdatedAt,
-          serverUpdatedBy: result.serverUpdatedBy,
+          serverUpdatedAt: result.serverUpdatedAt ?? null,
+          serverUpdatedBy: result.serverUpdatedBy ?? null,
           syncedAt: this.now().toISOString(),
         });
         summary.applied += 1;
