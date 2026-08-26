@@ -87,12 +87,16 @@ test("automatic auth replay is restricted by idempotency or explicit opt-in", ()
 
 test("mutation idempotency keys are explicit typed headers and validated", () => {
   assert.match(apiClient, /idempotencyKey\?: string/);
-  assert.match(apiClient, /headers\.set\("Idempotency-Key", validateIdempotencyKey/);
+  assert.match(apiClient, /headers\.set\("Idempotency-Key", idempotencyKey\)/);
   assert.match(apiClient, /\^\[A-Za-z0-9\._:-\]\{1,128\}\$/);
   assert.doesNotMatch(
     apiClient,
     /isIdempotentMethod\(method\) \|\| request\.idempotencyKey/,
   );
+
+  const validationIndex = apiClient.indexOf("validateIdempotencyKey(request.idempotencyKey)");
+  const networkTryIndex = apiClient.indexOf("    try {", validationIndex);
+  assert.ok(validationIndex >= 0 && networkTryIndex > validationIndex);
 });
 
 test("network logger contract excludes bodies, Authorization and tokens", () => {
