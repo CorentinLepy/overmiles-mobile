@@ -49,7 +49,14 @@ export function HomeScreen() {
       </View>
 
       <SectionCard>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: theme.spacing.md }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: theme.spacing.md,
+          }}
+        >
           <View
             style={{
               alignSelf: "flex-start",
@@ -61,7 +68,12 @@ export function HomeScreen() {
           >
             <Text
               selectable
-              style={{ color: theme.color.accent, fontSize: 12, fontWeight: "800", letterSpacing: 0.5 }}
+              style={{
+                color: theme.color.accent,
+                fontSize: 12,
+                fontWeight: "800",
+                letterSpacing: 0.5,
+              }}
             >
               PROCHAIN DÉPART
             </Text>
@@ -70,7 +82,7 @@ export function HomeScreen() {
 
         <Text
           selectable
-          style={{ color: theme.color.ink, fontSize: 24, lineHeight: 29, fontWeight: "750" }}
+          style={{ color: theme.color.ink, fontSize: 24, lineHeight: 29, fontWeight: "700" }}
         >
           Vos voyages arrivent bientôt ici
         </Text>
@@ -101,7 +113,7 @@ export function HomeScreen() {
       </SectionCard>
 
       <View style={{ gap: theme.spacing.md }}>
-        <Text selectable style={{ color: theme.color.ink, fontSize: 20, fontWeight: "750" }}>
+        <Text selectable style={{ color: theme.color.ink, fontSize: 20, fontWeight: "700" }}>
           Pensé pour le terrain
         </Text>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.sm }}>
@@ -115,7 +127,7 @@ export function HomeScreen() {
                 backgroundColor: theme.color.surfaceMuted,
               }}
             >
-              <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "650" }}>
+              <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "600" }}>
                 {label}
               </Text>
             </View>
