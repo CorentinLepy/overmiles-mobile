@@ -55,6 +55,7 @@ export class OfflineSyncEngine implements SyncEngine {
   }
 
   private async performRun(limit: number): Promise<SyncRunSummary> {
+    await this.store.recoverInterrupted();
     const operations = await this.store.listReady(limit, this.now());
     if (operations.length === 0) {
       this.state = "idle";
@@ -88,7 +89,7 @@ export class OfflineSyncEngine implements SyncEngine {
       }
 
       if (result.outcome === "fatal") {
-        await this.store.markFailed(operation.operationId, result.errorCode, null);
+        await this.store.markFailed(operation.operationId, result.errorCode);
         summary.failed += 1;
         continue;
       }
@@ -101,7 +102,14 @@ export class OfflineSyncEngine implements SyncEngine {
       summary.deferred += 1;
     }
 
-    this.state = summary.conflicts > 0 ? "conflict" : summary.failed > 0 ? "failed" : summary.deferred > 0 ? "pending" : "idle";
+    this.state =
+      summary.conflicts > 0
+        ? "conflict"
+        : summary.failed > 0
+          ? "failed"
+          : summary.deferred > 0
+            ? "pending"
+            : "idle";
     return summary;
   }
 }
