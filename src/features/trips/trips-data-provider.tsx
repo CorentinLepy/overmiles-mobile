@@ -40,11 +40,12 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     if (status !== "authenticated" || !repository) return;
 
+    const activeRepository = repository;
     let active = true;
 
     async function loadInitialTrips() {
       try {
-        const nextTrips = await repository.list();
+        const nextTrips = await activeRepository.list();
         if (!active) return;
         setTrips(sortTrips(nextTrips));
         setErrorMessage(null);
