@@ -12,6 +12,7 @@ export function createTripsRepository(apiClient: ApiClient): TripsRepository {
     list() {
       return apiClient.request<TripSummary[]>({
         path: "/trips",
+        method: "GET",
         kind: "json",
         auth: "required",
       });
@@ -20,6 +21,7 @@ export function createTripsRepository(apiClient: ApiClient): TripsRepository {
     getById(tripId: string) {
       return apiClient.request<TripSummary>({
         path: `/trips/${encodeURIComponent(tripId)}`,
+        method: "GET",
         kind: "json",
         auth: "required",
       });
