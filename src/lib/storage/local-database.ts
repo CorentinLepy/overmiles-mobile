@@ -1,4 +1,5 @@
 import * as SQLite from "expo-sqlite";
+
 import { DatabaseKeyStore } from "./database-key-store";
 import { runLocalMigrations } from "./migrations";
 
@@ -40,8 +41,17 @@ export class LocalDatabase {
     await this.keyStore.clearKey();
   }
 
+  private async recoverMissingKey(): Promise<string> {
+    // A SQLCipher database without its device-bound key is intentionally unrecoverable.
+    // Never generate a replacement key and reuse the old encrypted file: remove the
+    // inaccessible cache first, then rebuild it from the server source of truth.
+    await SQLite.deleteDatabaseAsync(DATABASE_NAME);
+    return this.keyStore.createKey();
+  }
+
   private async openEncryptedDatabase(): Promise<SQLite.SQLiteDatabase> {
-    const key = await this.keyStore.getOrCreateKey();
+    const storedKey = await this.keyStore.readKey();
+    const key = storedKey ?? (await this.recoverMissingKey());
     const db = await SQLite.openDatabaseAsync(DATABASE_NAME);
 
     try {
