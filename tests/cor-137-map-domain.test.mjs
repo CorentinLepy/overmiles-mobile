@@ -7,6 +7,10 @@ const projection = await readFile(
   new URL("../src/features/map/map-projection.ts", import.meta.url),
   "utf8",
 );
+const stopsRepository = await readFile(
+  new URL("../src/features/map/map-stops-repository.ts", import.meta.url),
+  "utf8",
+);
 
 test("COR-137 map contracts stay independent from a rendering provider", () => {
   assert.match(types, /export type MapCoordinate/);
@@ -17,6 +21,7 @@ test("COR-137 map contracts stay independent from a rendering provider", () => {
   assert.match(types, /status: "offline"/);
   assert.doesNotMatch(types, /maplibre|geoapify|openfreemap|google maps|webview/i);
   assert.doesNotMatch(projection, /maplibre|geoapify|openfreemap|google maps|webview/i);
+  assert.doesNotMatch(stopsRepository, /maplibre|geoapify|openfreemap|google maps|webview/i);
 });
 
 test("coordinate projection accepts Prisma decimal serialization and rejects invalid bounds", () => {
@@ -42,4 +47,14 @@ test("map projection preserves trip provenance and visited semantics", () => {
   assert.match(projection, /kind: point\.kind/);
   assert.match(projection, /visited: true as const/);
   assert.match(projection, /tripIds: Object\.freeze/);
+});
+
+test("map stops repository uses the existing authenticated stops endpoint", () => {
+  assert.match(stopsRepository, /ApiClient/);
+  assert.match(stopsRepository, /apiClient\.request<TripStopResponse\[]>/);
+  assert.match(stopsRepository, /`\/trips\/\$\{encodeURIComponent\(trip\.id\)\}\/stops`/);
+  assert.match(stopsRepository, /auth: "required"/);
+  assert.match(stopsRepository, /kind: "stop" as const/);
+  assert.match(stopsRepository, /projectTripMapPoints/);
+  assert.doesNotMatch(stopsRepository, /fetch\(|axios/i);
 });
