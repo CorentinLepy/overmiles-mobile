@@ -60,8 +60,12 @@ export class BiometricLockService {
     const result = await this.authenticate("Activer le verrou biométrique OverMiles");
     if (result.status !== "unlocked") return result;
 
-    await SecureStore.setItemAsync(BIOMETRIC_LOCK_PREFERENCE_KEY, "enabled", SECURE_STORE_OPTIONS);
-    return result;
+    try {
+      await SecureStore.setItemAsync(BIOMETRIC_LOCK_PREFERENCE_KEY, "enabled", SECURE_STORE_OPTIONS);
+      return result;
+    } catch {
+      return { status: "failed" };
+    }
   }
 
   async disable(): Promise<void> {
@@ -69,7 +73,14 @@ export class BiometricLockService {
   }
 
   async unlockIfEnabled(): Promise<BiometricUnlockResult> {
-    if (!(await this.isEnabled())) return { status: "not_enabled" };
+    let enabled: boolean;
+    try {
+      enabled = await this.isEnabled();
+    } catch {
+      return { status: "requires_reauth" };
+    }
+
+    if (!enabled) return { status: "not_enabled" };
 
     const availability = await this.getAvailability();
     if (availability.status !== "available") return { status: "requires_reauth" };
