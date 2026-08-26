@@ -13,15 +13,8 @@ import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 export function HomeScreen() {
   const theme = useOverMilesTheme();
-  const {
-    trips,
-    nextTrip,
-    isLoading,
-    isRefreshing,
-    isOffline,
-    errorMessage,
-    refresh,
-  } = useTripsData();
+  const { trips, nextTrip, isLoading, isRefreshing, isOffline, errorMessage, refresh } =
+    useTripsData();
   const daysUntil = nextTrip ? daysUntilTrip(nextTrip) : null;
   const moments = trips.reduce(
     (total, trip) =>
@@ -58,12 +51,9 @@ export function HomeScreen() {
         >
           Vos voyages, partout avec vous.
         </Text>
-        <Text
-          selectable
-          style={{ color: theme.color.muted, fontSize: 17, lineHeight: 25 }}
-        >
-          Votre prochain départ, vos essentiels et vos souvenirs réunis dans une
-          expérience pensée pour le terrain.
+        <Text selectable style={{ color: theme.color.muted, fontSize: 17, lineHeight: 25 }}>
+          Votre prochain départ, vos essentiels et vos souvenirs réunis dans une expérience pensée
+          pour le terrain.
         </Text>
       </View>
 
@@ -161,16 +151,10 @@ export function HomeScreen() {
             >
               {nextTrip.name}
             </Text>
-            <Text
-              selectable
-              style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}
-            >
+            <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
               {formatCountries(nextTrip)}
             </Text>
-            <Text
-              selectable
-              style={{ color: theme.color.ink, fontSize: 14, lineHeight: 20 }}
-            >
+            <Text selectable style={{ color: theme.color.ink, fontSize: 14, lineHeight: 20 }}>
               {formatTripDateRange(nextTrip)}
             </Text>
           </View>
@@ -220,10 +204,7 @@ export function HomeScreen() {
           >
             Aucun départ à l’horizon pour le moment.
           </Text>
-          <Text
-            selectable
-            style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}
-          >
+          <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
             {trips.length > 0
               ? "Vos anciens voyages restent disponibles dans l’onglet Voyages."
               : "Créez votre premier voyage sur OverMiles : il apparaîtra ici dès la prochaine synchronisation."}
@@ -256,19 +237,13 @@ export function HomeScreen() {
       )}
 
       {errorMessage && trips.length === 0 && !isLoading ? (
-        <Text
-          selectable
-          style={{ color: theme.color.warning, fontSize: 13, lineHeight: 19 }}
-        >
+        <Text selectable style={{ color: theme.color.warning, fontSize: 13, lineHeight: 19 }}>
           {errorMessage}
         </Text>
       ) : null}
 
       <View style={{ gap: theme.spacing.md }}>
-        <Text
-          selectable
-          style={{ color: theme.color.ink, fontSize: 20, fontWeight: "700" }}
-        >
+        <Text selectable style={{ color: theme.color.ink, fontSize: 20, fontWeight: "700" }}>
           Votre OverMiles
         </Text>
         <View style={{ flexDirection: "row", gap: theme.spacing.sm }}>
@@ -278,10 +253,7 @@ export function HomeScreen() {
       </View>
 
       <View style={{ gap: theme.spacing.md }}>
-        <Text
-          selectable
-          style={{ color: theme.color.ink, fontSize: 20, fontWeight: "700" }}
-        >
+        <Text selectable style={{ color: theme.color.ink, fontSize: 20, fontWeight: "700" }}>
           Pensé pour le terrain
         </Text>
         <View
@@ -347,10 +319,7 @@ function SummaryMetric({ label, value }: { label: string; value: number }) {
       >
         {value}
       </Text>
-      <Text
-        selectable
-        style={{ color: theme.color.muted, fontSize: 13, fontWeight: "600" }}
-      >
+      <Text selectable style={{ color: theme.color.muted, fontSize: 13, fontWeight: "600" }}>
         {label}
       </Text>
     </View>
