@@ -22,6 +22,15 @@ const detail = await readFile(
   new URL("../src/features/trips/screens/trip-detail-screen.tsx", import.meta.url),
   "utf8",
 );
+const tripCard = await readFile(
+  new URL("../src/features/trips/components/trip-card.tsx", import.meta.url),
+  "utf8",
+);
+const tripCover = await readFile(
+  new URL("../src/features/trips/components/trip-cover.tsx", import.meta.url),
+  "utf8",
+);
+const assetUrl = await readFile(new URL("../src/lib/api/asset-url.ts", import.meta.url), "utf8");
 const dynamicRoute = await readFile(
   new URL("../app/(tabs)/trips/[tripId].tsx", import.meta.url),
   "utf8",
@@ -59,6 +68,17 @@ test("trips screen covers loading offline error empty and pull-to-refresh states
   assert.match(trips, /onRefresh=\{\(\) => void refresh\(\)\}/);
   assert.match(trips, /TripCard/);
   assert.doesNotMatch(trips, /fetch\(|axios/i);
+});
+
+test("trip cards render resilient native covers without bypassing API URL rules", () => {
+  assert.match(tripCard, /<TripCover trip=\{trip\} \/>/);
+  assert.match(tripCover, /resolveApiAssetUrl/);
+  assert.match(tripCover, /onError=\{\(\) => setFailedUri\(uri\)\}/);
+  assert.match(tripCover, /accessibilityIgnoresInvertColors/);
+  assert.match(assetUrl, /candidate\.startsWith\(API_PREFIX\)/);
+  assert.match(assetUrl, /parsed\.protocol === "https:"/);
+  assert.match(assetUrl, /isLocalDevelopmentHost/);
+  assert.doesNotMatch(tripCover, /fetch\(|axios|WebView/i);
 });
 
 test("trip detail supports cached data and direct deep-link resolution", () => {
