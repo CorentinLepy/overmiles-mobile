@@ -41,11 +41,16 @@ test("root and tabs routes gate product navigation behind authentication", () =>
   assert.match(tabsLayout, /Redirect href="\/login"/);
 });
 
-test("login screen uses accessible native credential controls", () => {
+test("login screen uses accessible native credential controls and normalized email", () => {
   assert.match(loginScreen, /keyboardType="email-address"/);
   assert.match(loginScreen, /secureTextEntry/);
+  assert.match(loginScreen, /autoCorrect=\{false\}/);
   assert.match(loginScreen, /accessibilityLabel="Se connecter"/);
-  assert.match(loginScreen, /await login\(email, password\)/);
+  assert.match(loginScreen, /accessibilityState=\{\{/);
+  assert.match(loginScreen, /const normalizedEmail = email\.trim\(\)/);
+  assert.match(loginScreen, /await login\(normalizedEmail, password\)/);
+  assert.match(loginScreen, /Votre mot de passe n’est pas conservé/);
+  assert.doesNotMatch(loginScreen, /Google et Apple seront ajoutés/);
   assert.doesNotMatch(loginScreen, /fetch\(|axios/i);
 });
 
