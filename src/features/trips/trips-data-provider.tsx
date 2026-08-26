@@ -30,7 +30,10 @@ const TripsDataContext = createContext<TripsDataContextValue | null>(null);
 
 export function TripsDataProvider({ children }: PropsWithChildren) {
   const { apiClient, status } = useAuth();
-  const repository = useMemo(() => (apiClient ? createTripsRepository(apiClient) : null), [apiClient]);
+  const repository = useMemo(
+    () => (apiClient ? createTripsRepository(apiClient) : null),
+    [apiClient],
+  );
   const [trips, setTrips] = useState<TripSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -121,7 +124,17 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
       findTrip,
       ensureTrip,
     }),
-    [ensureTrip, errorMessage, findTrip, isLoading, isOffline, isRefreshing, nextTrip, refresh, trips],
+    [
+      ensureTrip,
+      errorMessage,
+      findTrip,
+      isLoading,
+      isOffline,
+      isRefreshing,
+      nextTrip,
+      refresh,
+      trips,
+    ],
   );
 
   return <TripsDataContext.Provider value={value}>{children}</TripsDataContext.Provider>;
