@@ -10,6 +10,7 @@ export function ProfileAccountScreen() {
   const { user, isBusy, logout } = useAuth();
 
   const identity = user?.displayName || user?.email || "Compte OverMiles";
+  const secondaryIdentity = user?.displayName && user.email ? user.email : null;
 
   return (
     <AppScreen>
@@ -31,6 +32,11 @@ export function ProfileAccountScreen() {
         >
           {identity}
         </Text>
+        {secondaryIdentity ? (
+          <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 21 }}>
+            {secondaryIdentity}
+          </Text>
+        ) : null}
         <Text selectable style={{ color: theme.color.muted, fontSize: 16, lineHeight: 23 }}>
           Votre compte, vos appareils et vos réglages de sécurité mobile.
         </Text>
@@ -41,12 +47,13 @@ export function ProfileAccountScreen() {
           Session mobile sécurisée
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Le Refresh Token reste dans le stockage sécurisé de l’appareil. L’Access Token reste
-          uniquement en mémoire.
+          Votre session longue durée est protégée par le stockage sécurisé de l’appareil. Les accès
+          courts restent uniquement en mémoire pendant l’utilisation.
         </Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Se déconnecter"
+          accessibilityState={{ disabled: isBusy, busy: isBusy }}
           disabled={isBusy}
           onPress={() => void logout()}
           style={({ pressed }) => ({
@@ -67,11 +74,11 @@ export function ProfileAccountScreen() {
 
       <SectionCard>
         <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "700" }}>
-          Prochaines protections
+          Protection de l’appareil
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Face ID / biométrie arrivera avec COR-58. Les sessions et appareils restent contrôlés côté
-          serveur OverMiles.
+          Un verrou biométrique local pourra protéger l’ouverture de l’application sans remplacer
+          la vérification de votre session par OverMiles.
         </Text>
       </SectionCard>
     </AppScreen>
