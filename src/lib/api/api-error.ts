@@ -155,6 +155,8 @@ function parseSyncConflict(body: ApiErrorBody): SyncConflictDetails | undefined 
   if (
     typeof body.entityType !== "string" ||
     typeof body.entityId !== "string" ||
+    typeof body.expectedVersion !== "number" ||
+    typeof body.currentVersion !== "number" ||
     !Number.isSafeInteger(body.expectedVersion) ||
     !Number.isSafeInteger(body.currentVersion) ||
     !isPlainRecord(body.serverSnapshot)
@@ -165,8 +167,8 @@ function parseSyncConflict(body: ApiErrorBody): SyncConflictDetails | undefined 
   return {
     entityType: body.entityType,
     entityId: body.entityId,
-    expectedVersion: body.expectedVersion as number,
-    currentVersion: body.currentVersion as number,
+    expectedVersion: body.expectedVersion,
+    currentVersion: body.currentVersion,
     serverSnapshot: body.serverSnapshot,
   };
 }
