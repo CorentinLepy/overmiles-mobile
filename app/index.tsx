@@ -1,5 +1,5 @@
-import { TechnicalBootstrapScreen } from "@/src/components/ui/technical-bootstrap-screen";
+import { Redirect } from "expo-router";
 
-export default function BootstrapRoute() {
-  return <TechnicalBootstrapScreen />;
+export default function IndexRoute() {
+  return <Redirect href="/home" />;
 }
