@@ -1,0 +1,167 @@
+import * as Crypto from "expo-crypto";
+import type { SQLiteDatabase } from "expo-sqlite";
+
+import { localDatabase } from "@/src/lib/storage/local-database";
+
+export type PendingOperationState = "pending" | "sending" | "conflict" | "failed";
+export type PendingOperationKind = "create" | "update" | "delete";
+
+export type PendingOperation = Readonly<{
+  operationId: string;
+  entityType: string;
+  entityId: string;
+  operationKind: PendingOperationKind;
+  payload: unknown;
+  payloadVersion: number;
+  baseVersion: number | null;
+  createdAt: string;
+  retryCount: number;
+  lastErrorCode: string | null;
+  state: PendingOperationState;
+}>;
+
+export type EnqueueOperationInput = Readonly<{
+  entityType: string;
+  entityId: string;
+  operationKind: PendingOperationKind;
+  payload: unknown;
+  payloadVersion?: number;
+  baseVersion?: number | null;
+}>;
+
+type PendingOperationRow = Readonly<{
+  operation_id: string;
+  entity_type: string;
+  entity_id: string;
+  operation_kind: string;
+  payload_json: string;
+  payload_version: number;
+  base_version: number | null;
+  created_at: string;
+  retry_count: number;
+  last_error_code: string | null;
+  state: string;
+}>;
+
+export class PendingOperationsStore {
+  constructor(private readonly openDatabase: () => Promise<SQLiteDatabase> = () => localDatabase.open()) {}
+
+  async enqueue(input: EnqueueOperationInput): Promise<PendingOperation> {
+    const database = await this.openDatabase();
+    const operation: PendingOperation = {
+      operationId: Crypto.randomUUID(),
+      entityType: input.entityType,
+      entityId: input.entityId,
+      operationKind: input.operationKind,
+      payload: input.payload,
+      payloadVersion: input.payloadVersion ?? 1,
+      baseVersion: input.baseVersion ?? null,
+      createdAt: new Date().toISOString(),
+      retryCount: 0,
+      lastErrorCode: null,
+      state: "pending",
+    };
+
+    await database.runAsync(
+      `INSERT INTO pending_operations (
+        operation_id, entity_type, entity_id, operation_kind, payload_json, payload_version,
+        base_version, created_at, retry_count, last_error_code, state
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      operation.operationId,
+      operation.entityType,
+      operation.entityId,
+      operation.operationKind,
+      JSON.stringify(operation.payload),
+      operation.payloadVersion,
+      operation.baseVersion,
+      operation.createdAt,
+      operation.retryCount,
+      operation.lastErrorCode,
+      operation.state,
+    );
+
+    return operation;
+  }
+
+  async listReady(limit = 25): Promise<PendingOperation[]> {
+    const database = await this.openDatabase();
+    const safeLimit = Math.max(1, Math.min(Math.trunc(limit), 100));
+    const rows = await database.getAllAsync<PendingOperationRow>(
+      `SELECT * FROM pending_operations
+       WHERE state IN ('pending', 'failed')
+       ORDER BY created_at ASC
+       LIMIT ?`,
+      safeLimit,
+    );
+    return rows.map(mapRow);
+  }
+
+  async markSending(operationId: string): Promise<void> {
+    await this.updateState(operationId, "sending", null, false);
+  }
+
+  async markPending(operationId: string, errorCode: string | null = null): Promise<void> {
+    await this.updateState(operationId, "pending", errorCode, true);
+  }
+
+  async markFailed(operationId: string, errorCode: string): Promise<void> {
+    await this.updateState(operationId, "failed", errorCode, true);
+  }
+
+  async markConflict(operationId: string, errorCode = "SYNC_VERSION_CONFLICT"): Promise<void> {
+    await this.updateState(operationId, "conflict", errorCode, false);
+  }
+
+  async remove(operationId: string): Promise<void> {
+    const database = await this.openDatabase();
+    await database.runAsync("DELETE FROM pending_operations WHERE operation_id = ?", operationId);
+  }
+
+  private async updateState(
+    operationId: string,
+    state: PendingOperationState,
+    errorCode: string | null,
+    incrementRetry: boolean,
+  ): Promise<void> {
+    const database = await this.openDatabase();
+    await database.runAsync(
+      `UPDATE pending_operations
+       SET state = ?,
+           last_error_code = ?,
+           retry_count = retry_count + ?
+       WHERE operation_id = ?`,
+      state,
+      errorCode,
+      incrementRetry ? 1 : 0,
+      operationId,
+    );
+  }
+}
+
+function mapRow(row: PendingOperationRow): PendingOperation {
+  return {
+    operationId: row.operation_id,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    operationKind: parseOperationKind(row.operation_kind),
+    payload: JSON.parse(row.payload_json) as unknown,
+    payloadVersion: row.payload_version,
+    baseVersion: row.base_version,
+    createdAt: row.created_at,
+    retryCount: row.retry_count,
+    lastErrorCode: row.last_error_code,
+    state: parseState(row.state),
+  };
+}
+
+function parseOperationKind(value: string): PendingOperationKind {
+  if (value === "create" || value === "update" || value === "delete") return value;
+  throw new Error(`Unsupported pending operation kind: ${value}`);
+}
+
+function parseState(value: string): PendingOperationState {
+  if (value === "pending" || value === "sending" || value === "conflict" || value === "failed") {
+    return value;
+  }
+  throw new Error(`Unsupported pending operation state: ${value}`);
+}
