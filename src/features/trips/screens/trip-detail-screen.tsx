@@ -11,7 +11,8 @@ import type { TripSummary } from "../trips.types";
 
 export function TripDetailScreen({ tripId }: { tripId: string }) {
   const theme = useOverMilesTheme();
-  const { findTrip, ensureTrip, isOffline, errorMessage, refresh, isRefreshing } = useTripsData();
+  const { findTrip, ensureTrip, isOffline, errorMessage, refresh, isRefreshing } =
+    useTripsData();
   const cachedTrip = findTrip(tripId);
   const [loadedTrip, setLoadedTrip] = useState<TripSummary | null>(null);
   const [isResolving, setIsResolving] = useState(cachedTrip === null);
@@ -39,7 +40,13 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
     return (
       <AppScreen>
         <SectionCard>
-          <View style={{ alignItems: "center", gap: theme.spacing.md, paddingVertical: theme.spacing.xl }}>
+          <View
+            style={{
+              alignItems: "center",
+              gap: theme.spacing.md,
+              paddingVertical: theme.spacing.xl,
+            }}
+          >
             <ActivityIndicator />
             <Text selectable style={{ color: theme.color.muted, fontSize: 14 }}>
               Ouverture du voyage…
@@ -167,7 +174,14 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
           souvenirs. Cette page utilise déjà le vrai voyage OverMiles et le contrat de session mobile.
         </Text>
         {trip.version ? (
-          <Text selectable style={{ color: theme.color.muted, fontSize: 12, fontVariant: ["tabular-nums"] }}>
+          <Text
+            selectable
+            style={{
+              color: theme.color.muted,
+              fontSize: 12,
+              fontVariant: ["tabular-nums"],
+            }}
+          >
             Version synchronisée : {trip.version}
           </Text>
         ) : null}
@@ -195,7 +209,12 @@ function DetailMetric({ label, value }: { label: string; value: number }) {
     >
       <Text
         selectable
-        style={{ color: theme.color.ink, fontSize: 27, fontWeight: "800", fontVariant: ["tabular-nums"] }}
+        style={{
+          color: theme.color.ink,
+          fontSize: 27,
+          fontWeight: "800",
+          fontVariant: ["tabular-nums"],
+        }}
       >
         {value}
       </Text>
