@@ -38,7 +38,7 @@ test("local lock never falls back silently to the device passcode", () => {
   assert.match(biometricLock, /status: "requires_reauth"/);
 });
 
-test("enabling the lock requires a successful biometric challenge first", () => {
+test("enabling the lock requires a successful biometric challenge before persistence", () => {
   const authenticationIndex = biometricLock.indexOf(
     'this.authenticate("Activer le verrou biométrique OverMiles")',
   );
@@ -46,6 +46,22 @@ test("enabling the lock requires a successful biometric challenge first", () => 
     'SecureStore.setItemAsync(BIOMETRIC_LOCK_PREFERENCE_KEY, "enabled"',
   );
   assert.ok(authenticationIndex >= 0 && persistenceIndex > authenticationIndex);
+  assert.match(biometricLock, /catch \{\s*return \{ status: "failed" \};\s*\}/);
+});
+
+test("unlock fails closed if SecureStore cannot read the biometric preference", () => {
+  const unlockIndex = biometricLock.indexOf("async unlockIfEnabled()");
+  const readIndex = biometricLock.indexOf("enabled = await this.isEnabled()", unlockIndex);
+  const catchIndex = biometricLock.indexOf("catch", readIndex);
+  const reauthIndex = biometricLock.indexOf('return { status: "requires_reauth" }', catchIndex);
+  const notEnabledIndex = biometricLock.indexOf('return { status: "not_enabled" }', unlockIndex);
+
+  assert.ok(unlockIndex >= 0);
+  assert.ok(readIndex > unlockIndex);
+  assert.ok(catchIndex > readIndex);
+  assert.ok(reauthIndex > catchIndex);
+  assert.ok(notEnabledIndex > reauthIndex);
+  assert.doesNotMatch(biometricLock, /isEnabled\(\)[\s\S]{0,160}catch[\s\S]{0,100}return false/);
 });
 
 test("biometric preference stays separate from credentials and database keys", () => {
