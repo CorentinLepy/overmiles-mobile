@@ -25,20 +25,26 @@ export function TripCover({ trip }: TripCoverProps) {
 
   if (showImage) {
     return (
-      <Image
-        source={{ uri }}
-        resizeMode="cover"
+      <View
         accessible={false}
-        accessibilityIgnoresInvertColors
-        onError={() => setFailedUri(uri)}
         style={{
           width: "100%",
           aspectRatio: 16 / 9,
+          overflow: "hidden",
           borderRadius: theme.radius.control,
           borderCurve: "continuous",
           backgroundColor: theme.color.surfaceMuted,
         }}
-      />
+      >
+        <Image
+          source={{ uri }}
+          resizeMode="cover"
+          accessible={false}
+          accessibilityIgnoresInvertColors
+          onError={() => setFailedUri(uri)}
+          style={{ width: "100%", height: "100%" }}
+        />
+      </View>
     );
   }
 
