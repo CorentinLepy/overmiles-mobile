@@ -23,6 +23,7 @@ type TripsDataContextValue = Readonly<{
   errorMessage: string | null;
   refresh(): Promise<void>;
   findTrip(tripId: string): TripSummary | null;
+  ensureTrip(tripId: string): Promise<TripSummary | null>;
 }>;
 
 const TripsDataContext = createContext<TripsDataContextValue | null>(null);
@@ -80,11 +81,32 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
     }
   }, [repository, status]);
 
-  const nextTrip = useMemo(() => findNextTrip(trips), [trips]);
   const findTrip = useCallback(
     (tripId: string) => trips.find((trip) => trip.id === tripId) ?? null,
     [trips],
   );
+
+  const ensureTrip = useCallback(
+    async (tripId: string): Promise<TripSummary | null> => {
+      const cached = trips.find((trip) => trip.id === tripId);
+      if (cached) return cached;
+      if (!repository || status !== "authenticated") return null;
+
+      try {
+        const loaded = await repository.getById(tripId);
+        setTrips((current) => sortTrips(upsertTrip(current, loaded)));
+        setErrorMessage(null);
+        setIsOffline(false);
+        return loaded;
+      } catch (error) {
+        setErrorState(error, setErrorMessage, setIsOffline);
+        return null;
+      }
+    },
+    [repository, status, trips],
+  );
+
+  const nextTrip = useMemo(() => findNextTrip(trips), [trips]);
 
   const value = useMemo<TripsDataContextValue>(
     () => ({
@@ -96,8 +118,9 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
       errorMessage,
       refresh,
       findTrip,
+      ensureTrip,
     }),
-    [errorMessage, findTrip, isLoading, isOffline, isRefreshing, nextTrip, refresh, trips],
+    [ensureTrip, errorMessage, findTrip, isLoading, isOffline, isRefreshing, nextTrip, refresh, trips],
   );
 
   return <TripsDataContext.Provider value={value}>{children}</TripsDataContext.Provider>;
@@ -124,6 +147,15 @@ function setErrorState(
 
   setMessage("Impossible de charger vos voyages pour le moment.");
   setOffline(false);
+}
+
+function upsertTrip(trips: TripSummary[], trip: TripSummary): TripSummary[] {
+  const index = trips.findIndex((candidate) => candidate.id === trip.id);
+  if (index < 0) return [...trips, trip];
+
+  const nextTrips = [...trips];
+  nextTrips[index] = trip;
+  return nextTrips;
 }
 
 function sortTrips(trips: TripSummary[]): TripSummary[] {
