@@ -1,5 +1,5 @@
-import type { PropsWithChildren } from "react";
-import { ScrollView, type ComponentProps, type StyleProp, type ViewStyle } from "react-native";
+import type { ComponentProps, PropsWithChildren } from "react";
+import { ScrollView, type StyleProp, type ViewStyle } from "react-native";
 
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
