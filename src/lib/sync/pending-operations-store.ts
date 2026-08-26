@@ -53,7 +53,9 @@ type PendingOperationRow = Readonly<{
 }>;
 
 export class PendingOperationsStore {
-  constructor(private readonly openDatabase: () => Promise<SQLiteDatabase> = () => localDatabase.open()) {}
+  constructor(
+    private readonly openDatabase: () => Promise<SQLiteDatabase> = () => localDatabase.open(),
+  ) {}
 
   async enqueue(input: EnqueueOperationInput): Promise<PendingOperation> {
     const database = await this.openDatabase();
