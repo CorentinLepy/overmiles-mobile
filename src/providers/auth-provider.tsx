@@ -58,7 +58,44 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
 
-  const restoreSession = useCallback(async () => {
+  const applyRestoreState = useCallback((nextState: AuthRestoreState) => {
+    setStatus(nextState);
+
+    if (nextState !== "authenticated") {
+      setUser(null);
+    }
+
+    setErrorMessage(
+      nextState === "offline_auth_pending"
+        ? "Votre session est conservée sur cet appareil, mais le réseau est nécessaire pour la vérifier."
+        : null,
+    );
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function restoreInitialSession() {
+      if (!sessionManager) {
+        if (!active) return;
+        setStatus("anonymous");
+        setErrorMessage(runtimeConfig.errors[0] ?? "Configuration API mobile invalide.");
+        return;
+      }
+
+      const nextState = await sessionManager.restore();
+      if (!active) return;
+      applyRestoreState(nextState);
+    }
+
+    void restoreInitialSession();
+
+    return () => {
+      active = false;
+    };
+  }, [applyRestoreState, runtimeConfig.errors, sessionManager]);
+
+  const retryRestore = useCallback(async () => {
     if (!sessionManager) {
       setStatus("anonymous");
       setErrorMessage(runtimeConfig.errors[0] ?? "Configuration API mobile invalide.");
@@ -67,24 +104,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     setStatus("restoring");
     setErrorMessage(null);
-
     const nextState = await sessionManager.restore();
-    setStatus(nextState);
-
-    if (nextState !== "authenticated") {
-      setUser(null);
-    }
-
-    if (nextState === "offline_auth_pending") {
-      setErrorMessage(
-        "Votre session est conservée sur cet appareil, mais le réseau est nécessaire pour la vérifier.",
-      );
-    }
-  }, [runtimeConfig.errors, sessionManager]);
-
-  useEffect(() => {
-    void restoreSession();
-  }, [restoreSession]);
+    applyRestoreState(nextState);
+  }, [applyRestoreState, runtimeConfig.errors, sessionManager]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<boolean> => {
@@ -152,9 +174,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isBusy,
       login,
       logout,
-      retryRestore: restoreSession,
+      retryRestore,
     }),
-    [errorMessage, isBusy, login, logout, restoreSession, status, user],
+    [errorMessage, isBusy, login, logout, retryRestore, status, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
