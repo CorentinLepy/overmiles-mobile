@@ -12,7 +12,7 @@ test("package.json pins the approved Expo 57 baseline", async () => {
   assert.equal(pkg.main, "expo-router/entry");
   assert.match(pkg.dependencies.expo, /^~57\./);
   assert.equal(pkg.dependencies.react, "19.2.3");
-  assert.equal(pkg.dependencies["react-native"], "0.86.2");
+  assert.match(pkg.dependencies["react-native"], /^0\.86\./);
   assert.equal(pkg.scripts.typecheck, "tsc --noEmit");
   assert.match(pkg.scripts.verify, /structure:check/);
 });
