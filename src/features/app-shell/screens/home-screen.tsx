@@ -3,13 +3,18 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
-import { daysUntilTrip, formatCountries, formatTripDateRange } from "@/src/features/trips/trip-formatters";
+import {
+  daysUntilTrip,
+  formatCountries,
+  formatTripDateRange,
+} from "@/src/features/trips/trip-formatters";
 import { useTripsData } from "@/src/features/trips/trips-data-provider";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 export function HomeScreen() {
   const theme = useOverMilesTheme();
-  const { trips, nextTrip, isLoading, isRefreshing, isOffline, errorMessage, refresh } = useTripsData();
+  const { trips, nextTrip, isLoading, isRefreshing, isOffline, errorMessage, refresh } =
+    useTripsData();
   const daysUntil = nextTrip ? daysUntilTrip(nextTrip) : null;
   const moments = trips.reduce(
     (total, trip) =>
@@ -69,7 +74,13 @@ export function HomeScreen() {
 
       {isLoading ? (
         <SectionCard>
-          <View style={{ alignItems: "center", gap: theme.spacing.md, paddingVertical: theme.spacing.lg }}>
+          <View
+            style={{
+              alignItems: "center",
+              gap: theme.spacing.md,
+              paddingVertical: theme.spacing.lg,
+            }}
+          >
             <ActivityIndicator />
             <Text selectable style={{ color: theme.color.muted, fontSize: 14 }}>
               Préparation de votre espace voyage…
@@ -102,7 +113,12 @@ export function HomeScreen() {
             {daysUntil !== null ? (
               <Text
                 selectable
-                style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800", fontVariant: ["tabular-nums"] }}
+                style={{
+                  color: theme.color.ink,
+                  fontSize: 13,
+                  fontWeight: "800",
+                  fontVariant: ["tabular-nums"],
+                }}
               >
                 {daysUntil === 0 ? "Aujourd’hui" : `J-${daysUntil}`}
               </Text>
@@ -110,7 +126,10 @@ export function HomeScreen() {
           </View>
 
           <View style={{ gap: theme.spacing.xs }}>
-            <Text selectable style={{ color: theme.color.ink, fontSize: 27, lineHeight: 32, fontWeight: "800" }}>
+            <Text
+              selectable
+              style={{ color: theme.color.ink, fontSize: 27, lineHeight: 32, fontWeight: "800" }}
+            >
               {nextTrip.name}
             </Text>
             <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
@@ -143,7 +162,10 @@ export function HomeScreen() {
         </SectionCard>
       ) : (
         <SectionCard>
-          <Text selectable style={{ color: theme.color.ink, fontSize: 23, lineHeight: 28, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{ color: theme.color.ink, fontSize: 23, lineHeight: 28, fontWeight: "800" }}
+          >
             Aucun départ à l’horizon pour le moment.
           </Text>
           <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
@@ -233,7 +255,12 @@ function SummaryMetric({ label, value }: { label: string; value: number }) {
     >
       <Text
         selectable
-        style={{ color: theme.color.ink, fontSize: 28, fontWeight: "800", fontVariant: ["tabular-nums"] }}
+        style={{
+          color: theme.color.ink,
+          fontSize: 28,
+          fontWeight: "800",
+          fontVariant: ["tabular-nums"],
+        }}
       >
         {value}
       </Text>
