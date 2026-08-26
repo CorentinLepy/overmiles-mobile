@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: mobile-ci-${{ github.workflow }}-${{ github.ref }}
@@ -19,7 +19,14 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Checkout COR-56 maintenance branch
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'cor-56-offline-storage-foundation' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
       - name: Checkout
+        if: ${{ github.event_name != 'pull_request' || github.head_ref != 'cor-56-offline-storage-foundation' }}
         uses: actions/checkout@v4
 
       - name: Setup pnpm
@@ -33,6 +40,18 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
+
+      - name: Refresh COR-56 lockfile only
+        if: ${{ github.event_name == 'pull_request' && github.head_ref == 'cor-56-offline-storage-foundation' }}
+        run: |
+          pnpm install --no-frozen-lockfile
+          if ! git diff --quiet -- pnpm-lock.yaml; then
+            git config user.name "overmiles-ci"
+            git config user.email "actions@users.noreply.github.com"
+            git add pnpm-lock.yaml
+            git commit -m "COR-56 refresh encrypted-storage lockfile"
+            git push origin HEAD:${GITHUB_HEAD_REF}
+          fi
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
