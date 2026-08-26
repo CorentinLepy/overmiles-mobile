@@ -31,7 +31,8 @@ test("auth provider composes the approved secure token store and mobile transpor
 
 test("offline restore keeps a non-destructive pending state", () => {
   assert.match(provider, /offline_auth_pending/);
-  assert.match(provider, /retryRestore: restoreSession/);
+  assert.match(provider, /const retryRestore = useCallback/);
+  assert.match(provider, /retryRestore,/);
   assert.doesNotMatch(provider, /offline_auth_pending[\s\S]{0,200}clearLocalSession/);
 });
 
