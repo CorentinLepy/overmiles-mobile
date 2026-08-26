@@ -24,10 +24,19 @@ test("pending operations use durable idempotency and optimistic base versions", 
   assert.match(store, /SYNC_VERSION_CONFLICT/);
 });
 
-test("ready queue never retries before its persisted backoff deadline", () => {
+test("ready queue retries only pending work after its persisted backoff deadline", () => {
+  assert.match(store, /WHERE state = 'pending'/);
   assert.match(store, /next_attempt_at IS NULL OR next_attempt_at <= \?/);
   assert.match(engine, /retryDelayMs/);
   assert.match(engine, /MAX_RETRY_DELAY_MS/);
+});
+
+test("interrupted sends are recovered but fatal failures remain terminal", () => {
+  assert.match(store, /WHERE state = 'sending'/);
+  assert.match(store, /SYNC_INTERRUPTED/);
+  assert.match(engine, /recoverInterrupted\(\)/);
+  assert.match(engine, /markFailed/);
+  assert.doesNotMatch(store, /state IN \('pending', 'failed'\)/);
 });
 
 test("sync engine is single-flight and never auto-resolves version conflicts", () => {
