@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
+import { createApiClient, type ApiClient } from "@/src/lib/api/api-client";
 import { ApiError } from "@/src/lib/api/api-error";
 import { AuthSessionManager, type AuthRestoreState } from "@/src/lib/auth/auth-session-manager";
 import {
@@ -24,6 +25,7 @@ type AuthContextValue = Readonly<{
   user: MobileAuthUser | null;
   errorMessage: string | null;
   isBusy: boolean;
+  apiClient: ApiClient | null;
   login(email: string, password: string): Promise<boolean>;
   logout(): Promise<void>;
   retryRestore(): Promise<void>;
@@ -43,6 +45,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
         ? new AuthSessionManager(createSecureStoreTokenStore(), transport.refresh, transport.logout)
         : null,
     [transport],
+  );
+  const apiClient = useMemo(
+    () =>
+      runtimeConfig.apiBaseUrl && sessionManager
+        ? createApiClient({ baseUrl: runtimeConfig.apiBaseUrl, auth: sessionManager })
+        : null,
+    [runtimeConfig.apiBaseUrl, sessionManager],
   );
 
   const [status, setStatus] = useState<AuthStatus>("restoring");
@@ -164,11 +173,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       user,
       errorMessage,
       isBusy,
+      apiClient,
       login,
       logout,
       retryRestore,
     }),
-    [errorMessage, isBusy, login, logout, retryRestore, status, user],
+    [apiClient, errorMessage, isBusy, login, logout, retryRestore, status, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
