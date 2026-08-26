@@ -4,8 +4,8 @@ Socle natif iOS/Android d’OVERMILES. Le backend de référence reste l’API O
 
 ## Baseline
 
-- Expo SDK 57 ;
-- React Native 0.86.2 / React 19.2.3 ;
+- Expo SDK 57, patches compatibles maintenus avec `expo install --check` ;
+- React Native 0.86.x / React 19.2.3 ;
 - Expo Router ;
 - TypeScript strict ;
 - Node.js 22.13 minimum ;
@@ -23,7 +23,7 @@ pnpm verify
 pnpm dev
 ```
 
-Le premier `pnpm install` doit générer puis faire committer `pnpm-lock.yaml`. Ensuite, la CI utilisera exclusivement `pnpm install --frozen-lockfile`.
+Le premier `pnpm install` doit générer puis faire committer `pnpm-lock.yaml`. Ensuite, la CI utilise `pnpm install --frozen-lockfile` pour les validations normales.
 
 ## Variables publiques
 
@@ -67,11 +67,11 @@ L’OTA production n’est jamais déclenchée automatiquement. Toute update doi
 
 ## Git et livraison
 
-- dépôt cible privé : `CorentinLepy/overmiles-mobile` ;
+- dépôt public : `CorentinLepy/overmiles-mobile` ;
+- aucun secret, credential serveur ou configuration privée ne doit être versionné ;
 - `main` reste stable ;
 - branches `cor-XX-description` ;
 - PR en Draft par défaut ;
-- aucun écran métier dans COR-54 ;
 - aucun submodule ou import direct depuis `Adventure-Hub` ;
 - les contrats partagés passent par une API/version de schéma explicite.
 
