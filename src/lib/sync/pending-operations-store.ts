@@ -16,6 +16,7 @@ export type PendingOperation = Readonly<{
   baseVersion: number | null;
   createdAt: string;
   retryCount: number;
+  nextAttemptAt: string | null;
   lastErrorCode: string | null;
   state: PendingOperationState;
 }>;
@@ -39,6 +40,7 @@ type PendingOperationRow = Readonly<{
   base_version: number | null;
   created_at: string;
   retry_count: number;
+  next_attempt_at: string | null;
   last_error_code: string | null;
   state: string;
 }>;
@@ -58,6 +60,7 @@ export class PendingOperationsStore {
       baseVersion: input.baseVersion ?? null,
       createdAt: new Date().toISOString(),
       retryCount: 0,
+      nextAttemptAt: null,
       lastErrorCode: null,
       state: "pending",
     };
@@ -65,8 +68,8 @@ export class PendingOperationsStore {
     await database.runAsync(
       `INSERT INTO pending_operations (
         operation_id, entity_type, entity_id, operation_kind, payload_json, payload_version,
-        base_version, created_at, retry_count, last_error_code, state
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        base_version, created_at, retry_count, next_attempt_at, last_error_code, state
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       operation.operationId,
       operation.entityType,
       operation.entityId,
@@ -76,6 +79,7 @@ export class PendingOperationsStore {
       operation.baseVersion,
       operation.createdAt,
       operation.retryCount,
+      operation.nextAttemptAt,
       operation.lastErrorCode,
       operation.state,
     );
@@ -83,33 +87,43 @@ export class PendingOperationsStore {
     return operation;
   }
 
-  async listReady(limit = 25): Promise<PendingOperation[]> {
+  async listReady(limit = 25, now = new Date()): Promise<PendingOperation[]> {
     const database = await this.openDatabase();
     const safeLimit = Math.max(1, Math.min(Math.trunc(limit), 100));
     const rows = await database.getAllAsync<PendingOperationRow>(
       `SELECT * FROM pending_operations
        WHERE state IN ('pending', 'failed')
+         AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
        ORDER BY created_at ASC
        LIMIT ?`,
+      now.toISOString(),
       safeLimit,
     );
     return rows.map(mapRow);
   }
 
   async markSending(operationId: string): Promise<void> {
-    await this.updateState(operationId, "sending", null, false);
+    await this.updateState(operationId, "sending", null, null, false);
   }
 
-  async markPending(operationId: string, errorCode: string | null = null): Promise<void> {
-    await this.updateState(operationId, "pending", errorCode, true);
+  async markPending(
+    operationId: string,
+    errorCode: string | null = null,
+    nextAttemptAt: string | null = null,
+  ): Promise<void> {
+    await this.updateState(operationId, "pending", errorCode, nextAttemptAt, true);
   }
 
-  async markFailed(operationId: string, errorCode: string): Promise<void> {
-    await this.updateState(operationId, "failed", errorCode, true);
+  async markFailed(
+    operationId: string,
+    errorCode: string,
+    nextAttemptAt: string | null,
+  ): Promise<void> {
+    await this.updateState(operationId, "failed", errorCode, nextAttemptAt, true);
   }
 
   async markConflict(operationId: string, errorCode = "SYNC_VERSION_CONFLICT"): Promise<void> {
-    await this.updateState(operationId, "conflict", errorCode, false);
+    await this.updateState(operationId, "conflict", errorCode, null, false);
   }
 
   async remove(operationId: string): Promise<void> {
@@ -121,6 +135,7 @@ export class PendingOperationsStore {
     operationId: string,
     state: PendingOperationState,
     errorCode: string | null,
+    nextAttemptAt: string | null,
     incrementRetry: boolean,
   ): Promise<void> {
     const database = await this.openDatabase();
@@ -128,10 +143,12 @@ export class PendingOperationsStore {
       `UPDATE pending_operations
        SET state = ?,
            last_error_code = ?,
+           next_attempt_at = ?,
            retry_count = retry_count + ?
        WHERE operation_id = ?`,
       state,
       errorCode,
+      nextAttemptAt,
       incrementRetry ? 1 : 0,
       operationId,
     );
@@ -149,6 +166,7 @@ function mapRow(row: PendingOperationRow): PendingOperation {
     baseVersion: row.base_version,
     createdAt: row.created_at,
     retryCount: row.retry_count,
+    nextAttemptAt: row.next_attempt_at,
     lastErrorCode: row.last_error_code,
     state: parseState(row.state),
   };
