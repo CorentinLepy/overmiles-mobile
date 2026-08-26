@@ -10,6 +10,8 @@ La branche COR-56 conserve la baseline Expo 57 déjà admise par la politique su
 
 Le `pnpm-lock.yaml` a été régénéré sur runner GitHub à partir de cette baseline sans exécuter d’auto-upgrade Expo. Les validations normales utilisent à nouveau `pnpm install --frozen-lockfile` avec une CI `contents: read`.
 
+Le dernier run avant la passe de formatage valide déjà l’installation figée et la politique supply-chain, TypeScript, ESLint et **19/19 tests**. Le seul écart restant sur ce run était le formatage Prettier de `database-key-store.ts`.
+
 ## Invariants automatisés
 
 Les tests COR-56 contrôlent notamment :
