@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
+import { createApiClient, type ApiClient } from "@/src/lib/api/api-client";
 import { ApiError } from "@/src/lib/api/api-error";
 import { AuthSessionManager, type AuthRestoreState } from "@/src/lib/auth/auth-session-manager";
 import {
@@ -24,6 +25,7 @@ type AuthContextValue = Readonly<{
   user: MobileAuthUser | null;
   errorMessage: string | null;
   isBusy: boolean;
+  apiClient: ApiClient | null;
   login(email: string, password: string): Promise<boolean>;
   logout(): Promise<void>;
   retryRestore(): Promise<void>;
@@ -43,6 +45,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
         ? new AuthSessionManager(createSecureStoreTokenStore(), transport.refresh, transport.logout)
         : null,
     [transport],
+  );
+  const apiClient = useMemo(
+    () =>
+      runtimeConfig.apiBaseUrl && sessionManager
+        ? createApiClient({ baseUrl: runtimeConfig.apiBaseUrl, auth: sessionManager })
+        : null,
+    [runtimeConfig.apiBaseUrl, sessionManager],
   );
 
   const [status, setStatus] = useState<AuthStatus>("restoring");
@@ -64,6 +73,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
     );
   }, []);
 
+  const loadCurrentUser = useCallback(async (): Promise<MobileAuthUser | null> => {
+    if (!apiClient) return null;
+    return apiClient.request<MobileAuthUser>({
+      path: "/users/me",
+      kind: "json",
+      auth: "required",
+    });
+  }, [apiClient]);
+
   useEffect(() => {
     let active = true;
 
@@ -78,6 +96,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const nextState = await sessionManager.restore();
       if (!active) return;
       applyRestoreState(nextState);
+
+      if (nextState !== "authenticated") return;
+
+      try {
+        const restoredUser = await loadCurrentUser();
+        if (active && restoredUser) setUser(restoredUser);
+      } catch (error) {
+        if (!active) return;
+        if (error instanceof ApiError && (error.kind === "network" || error.kind === "timeout")) {
+          return;
+        }
+        setUser(null);
+        setStatus("anonymous");
+      }
     }
 
     void restoreInitialSession();
@@ -85,7 +117,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [applyRestoreState, runtimeConfig.errors, sessionManager]);
+  }, [applyRestoreState, loadCurrentUser, runtimeConfig.errors, sessionManager]);
 
   const retryRestore = useCallback(async () => {
     if (!sessionManager) {
@@ -98,7 +130,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setErrorMessage(null);
     const nextState = await sessionManager.restore();
     applyRestoreState(nextState);
-  }, [applyRestoreState, runtimeConfig.errors, sessionManager]);
+
+    if (nextState !== "authenticated") return;
+
+    try {
+      const restoredUser = await loadCurrentUser();
+      if (restoredUser) setUser(restoredUser);
+    } catch (error) {
+      if (error instanceof ApiError && (error.kind === "network" || error.kind === "timeout")) {
+        return;
+      }
+      setUser(null);
+      setStatus("anonymous");
+    }
+  }, [applyRestoreState, loadCurrentUser, runtimeConfig.errors, sessionManager]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<boolean> => {
@@ -164,11 +209,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       user,
       errorMessage,
       isBusy,
+      apiClient,
       login,
       logout,
       retryRestore,
     }),
-    [errorMessage, isBusy, login, logout, retryRestore, status, user],
+    [apiClient, errorMessage, isBusy, login, logout, retryRestore, status, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
