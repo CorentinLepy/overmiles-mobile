@@ -6,6 +6,7 @@ import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 import { formatCountries, formatTripDateRange, tripTemporalLabel } from "../trip-formatters";
 import type { TripSummary } from "../trips.types";
+import { TripCover } from "./trip-cover";
 
 export function TripCard({ trip }: { trip: TripSummary }) {
   const theme = useOverMilesTheme();
@@ -20,6 +21,8 @@ export function TripCard({ trip }: { trip: TripSummary }) {
         style={({ pressed }) => ({ opacity: pressed ? 0.78 : 1 })}
       >
         <SectionCard>
+          <TripCover trip={trip} />
+
           <View
             style={{
               flexDirection: "row",
