@@ -24,7 +24,12 @@ export function SectionPlaceholderScreen({
       <View style={{ gap: theme.spacing.sm, paddingTop: theme.spacing.sm }}>
         <Text
           selectable
-          style={{ color: theme.color.accent, fontSize: 12, fontWeight: "800", letterSpacing: 1.5 }}
+          style={{
+            color: theme.color.accent,
+            fontSize: 12,
+            fontWeight: "800",
+            letterSpacing: 1.5,
+          }}
         >
           {eyebrow}
         </Text>
@@ -59,7 +64,10 @@ export function SectionPlaceholderScreen({
             {status}
           </Text>
         </View>
-        <Text selectable style={{ color: theme.color.ink, fontSize: 18, lineHeight: 24, fontWeight: "700" }}>
+        <Text
+          selectable
+          style={{ color: theme.color.ink, fontSize: 18, lineHeight: 24, fontWeight: "700" }}
+        >
           Le socle natif est prêt pour cette section.
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
