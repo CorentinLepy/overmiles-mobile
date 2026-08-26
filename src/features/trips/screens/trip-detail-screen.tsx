@@ -13,20 +13,13 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
   const theme = useOverMilesTheme();
   const { findTrip, ensureTrip, isOffline, errorMessage, refresh, isRefreshing } = useTripsData();
   const cachedTrip = findTrip(tripId);
-  const [loadedTrip, setLoadedTrip] = useState<TripSummary | null>(cachedTrip);
+  const [loadedTrip, setLoadedTrip] = useState<TripSummary | null>(null);
   const [isResolving, setIsResolving] = useState(cachedTrip === null);
 
   useEffect(() => {
-    let active = true;
-    const current = findTrip(tripId);
-    if (current) {
-      setLoadedTrip(current);
-      setIsResolving(false);
-      return () => {
-        active = false;
-      };
-    }
+    if (cachedTrip) return;
 
+    let active = true;
     async function resolveTrip() {
       const trip = await ensureTrip(tripId);
       if (!active) return;
@@ -38,9 +31,9 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
     return () => {
       active = false;
     };
-  }, [ensureTrip, findTrip, tripId]);
+  }, [cachedTrip, ensureTrip, tripId]);
 
-  const trip = findTrip(tripId) ?? loadedTrip;
+  const trip = cachedTrip ?? loadedTrip;
 
   if (isResolving && !trip) {
     return (
