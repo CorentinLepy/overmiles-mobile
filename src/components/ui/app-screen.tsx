@@ -1,18 +1,20 @@
 import type { PropsWithChildren } from "react";
-import { ScrollView, type StyleProp, type ViewStyle } from "react-native";
+import { ScrollView, type ComponentProps, type StyleProp, type ViewStyle } from "react-native";
 
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 type AppScreenProps = PropsWithChildren<{
   contentContainerStyle?: StyleProp<ViewStyle>;
+  refreshControl?: ComponentProps<typeof ScrollView>["refreshControl"];
 }>;
 
-export function AppScreen({ children, contentContainerStyle }: AppScreenProps) {
+export function AppScreen({ children, contentContainerStyle, refreshControl }: AppScreenProps) {
   const theme = useOverMilesTheme();
 
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
+      refreshControl={refreshControl}
       style={{ flex: 1, backgroundColor: theme.color.canvas }}
       contentContainerStyle={[
         {
