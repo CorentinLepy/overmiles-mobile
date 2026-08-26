@@ -23,6 +23,8 @@ SQLCipher n’est pas validé avec Expo Go : le gate de sortie de COR-56 inclut 
 
 Chaque mutation locale est enregistrée avec un `operationId` unique, son `baseVersion`, une version de payload et son état durable. Seules les opérations `pending` arrivées à leur échéance de retry sont réémises. Le backoff exponentiel est borné et son prochain horaire est persisté pour survivre aux redémarrages.
 
+La sélection de travail est déterministe : les opérations prêtes sont traitées dans l’ordre de `created_at`, avec un batch borné entre 1 et 100 éléments afin d’éviter qu’une reprise après une longue période hors-ligne monopolise une exécution.
+
 Une opération restée `sending` après un crash est ramenée à `pending` avec le code `SYNC_INTERRUPTED`. Une erreur fatale reste `failed` et n’est jamais relancée automatiquement. Un conflit de version reste `conflict` : aucune résolution implicite n’est appliquée.
 
 Après un succès serveur, la nouvelle version et les métadonnées de synchronisation sont écrites dans `sync_metadata` et l’opération est retirée de `pending_operations` dans une même transaction SQLite. Cela évite un état local incohérent si l’application est interrompue juste après l’accusé de réception serveur.
