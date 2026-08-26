@@ -30,6 +30,13 @@ export type EnqueueOperationInput = Readonly<{
   baseVersion?: number | null;
 }>;
 
+export type AppliedSyncMetadata = Readonly<{
+  serverVersion: number;
+  serverUpdatedAt?: string | null;
+  serverUpdatedBy?: string | null;
+  syncedAt?: string;
+}>;
+
 type PendingOperationRow = Readonly<{
   operation_id: string;
   entity_type: string;
@@ -134,9 +141,36 @@ export class PendingOperationsStore {
     await this.updateState(operationId, "conflict", errorCode, null, false);
   }
 
-  async remove(operationId: string): Promise<void> {
+  async completeApplied(
+    operation: PendingOperation,
+    metadata: AppliedSyncMetadata,
+  ): Promise<void> {
     const database = await this.openDatabase();
-    await database.runAsync("DELETE FROM pending_operations WHERE operation_id = ?", operationId);
+    const syncedAt = metadata.syncedAt ?? new Date().toISOString();
+
+    await database.withTransactionAsync(async () => {
+      await database.runAsync(
+        `INSERT INTO sync_metadata (
+          entity_type, entity_id, version, updated_at, updated_by, sync_state, last_synced_at
+        ) VALUES (?, ?, ?, ?, ?, 'synced', ?)
+        ON CONFLICT(entity_type, entity_id) DO UPDATE SET
+          version = excluded.version,
+          updated_at = excluded.updated_at,
+          updated_by = excluded.updated_by,
+          sync_state = 'synced',
+          last_synced_at = excluded.last_synced_at`,
+        operation.entityType,
+        operation.entityId,
+        metadata.serverVersion,
+        metadata.serverUpdatedAt ?? null,
+        metadata.serverUpdatedBy ?? null,
+        syncedAt,
+      );
+      await database.runAsync(
+        "DELETE FROM pending_operations WHERE operation_id = ?",
+        operation.operationId,
+      );
+    });
   }
 
   private async updateState(
