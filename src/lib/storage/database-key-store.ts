@@ -17,10 +17,7 @@ function bytesToHex(bytes: Uint8Array): string {
 
 export class DatabaseKeyStore {
   async getOrCreateKey(): Promise<string> {
-    const existing = await SecureStore.getItemAsync(
-      DATABASE_KEY_STORAGE_KEY,
-      SECURE_STORE_OPTIONS,
-    );
+    const existing = await SecureStore.getItemAsync(DATABASE_KEY_STORAGE_KEY, SECURE_STORE_OPTIONS);
 
     if (existing) {
       if (!HEX_KEY_PATTERN.test(existing)) {
@@ -30,26 +27,16 @@ export class DatabaseKeyStore {
     }
 
     const generated = bytesToHex(await getRandomBytesAsync(DATABASE_KEY_BYTES));
-    await SecureStore.setItemAsync(
-      DATABASE_KEY_STORAGE_KEY,
-      generated,
-      SECURE_STORE_OPTIONS,
-    );
+    await SecureStore.setItemAsync(DATABASE_KEY_STORAGE_KEY, generated, SECURE_STORE_OPTIONS);
     return generated;
   }
 
   async hasKey(): Promise<boolean> {
-    const value = await SecureStore.getItemAsync(
-      DATABASE_KEY_STORAGE_KEY,
-      SECURE_STORE_OPTIONS,
-    );
+    const value = await SecureStore.getItemAsync(DATABASE_KEY_STORAGE_KEY, SECURE_STORE_OPTIONS);
     return value !== null;
   }
 
   async clearKey(): Promise<void> {
-    await SecureStore.deleteItemAsync(
-      DATABASE_KEY_STORAGE_KEY,
-      SECURE_STORE_OPTIONS,
-    );
+    await SecureStore.deleteItemAsync(DATABASE_KEY_STORAGE_KEY, SECURE_STORE_OPTIONS);
   }
 }
