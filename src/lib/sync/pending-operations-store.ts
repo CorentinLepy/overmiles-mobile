@@ -222,7 +222,12 @@ function parseOperationKind(value: string): PendingOperationKind {
 }
 
 function parseState(value: string): PendingOperationState {
-  if (value === "pending" || value === "sending" || value === "conflict" || value === "failed") {
+  if (
+    value === "pending" ||
+    value === "sending" ||
+    value === "conflict" ||
+    value === "failed"
+  ) {
     return value;
   }
   throw new Error(`Unsupported pending operation state: ${value}`);
