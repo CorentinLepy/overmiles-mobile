@@ -73,6 +73,29 @@ export function AuthProvider({ children }: PropsWithChildren) {
     );
   }, []);
 
+  const loadCurrentUser = useCallback(async (): Promise<MobileAuthUser | null> => {
+    if (!apiClient) return null;
+    return apiClient.request<MobileAuthUser>({
+      path: "/users/me",
+      kind: "json",
+      auth: "required",
+    });
+  }, [apiClient]);
+
+  const invalidateUnauthorizedProfile = useCallback(
+    async (error: unknown): Promise<boolean> => {
+      if (!(error instanceof ApiError) || error.kind !== "unauthorized" || !sessionManager) {
+        return false;
+      }
+
+      await sessionManager.clearLocalSession();
+      setUser(null);
+      setStatus("anonymous");
+      return true;
+    },
+    [sessionManager],
+  );
+
   useEffect(() => {
     let active = true;
 
@@ -87,6 +110,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const nextState = await sessionManager.restore();
       if (!active) return;
       applyRestoreState(nextState);
+
+      if (nextState !== "authenticated") return;
+
+      try {
+        const restoredUser = await loadCurrentUser();
+        if (active && restoredUser) setUser(restoredUser);
+      } catch (error) {
+        if (!active) return;
+        await invalidateUnauthorizedProfile(error);
+      }
     }
 
     void restoreInitialSession();
@@ -94,7 +127,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [applyRestoreState, runtimeConfig.errors, sessionManager]);
+  }, [
+    applyRestoreState,
+    invalidateUnauthorizedProfile,
+    loadCurrentUser,
+    runtimeConfig.errors,
+    sessionManager,
+  ]);
 
   const retryRestore = useCallback(async () => {
     if (!sessionManager) {
@@ -107,7 +146,22 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setErrorMessage(null);
     const nextState = await sessionManager.restore();
     applyRestoreState(nextState);
-  }, [applyRestoreState, runtimeConfig.errors, sessionManager]);
+
+    if (nextState !== "authenticated") return;
+
+    try {
+      const restoredUser = await loadCurrentUser();
+      if (restoredUser) setUser(restoredUser);
+    } catch (error) {
+      await invalidateUnauthorizedProfile(error);
+    }
+  }, [
+    applyRestoreState,
+    invalidateUnauthorizedProfile,
+    loadCurrentUser,
+    runtimeConfig.errors,
+    sessionManager,
+  ]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<boolean> => {
