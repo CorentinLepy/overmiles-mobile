@@ -11,17 +11,23 @@ const stopsRepository = await readFile(
   new URL("../src/features/map/map-stops-repository.ts", import.meta.url),
   "utf8",
 );
+const destinationRepository = await readFile(
+  new URL("../src/features/map/map-destination-repository.ts", import.meta.url),
+  "utf8",
+);
 
 test("COR-137 map contracts stay independent from a rendering provider", () => {
   assert.match(types, /export type MapCoordinate/);
   assert.match(types, /export type TripMapPoint/);
   assert.match(types, /export type VisitedPlace/);
+  assert.match(types, /export type DestinationSuggestion/);
   assert.match(types, /export type SelectedDestination/);
   assert.match(types, /status: "visited" \| "unvisited"/);
   assert.match(types, /status: "offline"/);
-  assert.doesNotMatch(types, /maplibre|geoapify|openfreemap|google maps|webview/i);
-  assert.doesNotMatch(projection, /maplibre|geoapify|openfreemap|google maps|webview/i);
-  assert.doesNotMatch(stopsRepository, /maplibre|geoapify|openfreemap|google maps|webview/i);
+
+  for (const source of [types, projection, stopsRepository, destinationRepository]) {
+    assert.doesNotMatch(source, /maplibre|geoapify|openfreemap|google maps|webview/i);
+  }
 });
 
 test("coordinate projection accepts Prisma decimal serialization and rejects invalid bounds", () => {
@@ -57,4 +63,14 @@ test("map stops repository uses the existing authenticated stops endpoint", () =
   assert.match(stopsRepository, /kind: "stop" as const/);
   assert.match(stopsRepository, /projectTripMapPoints/);
   assert.doesNotMatch(stopsRepository, /fetch\(|axios/i);
+});
+
+test("destination exploration stays behind the OverMiles places API abstraction", () => {
+  assert.match(destinationRepository, /ApiClient/);
+  assert.match(destinationRepository, /apiClient\.request<PlaceSuggestionResponse\[]>/);
+  assert.match(destinationRepository, /`\/places\/suggestions\?q=\$\{encodeURIComponent/);
+  assert.match(destinationRepository, /auth: "required"/);
+  assert.match(destinationRepository, /createMapCoordinate/);
+  assert.doesNotMatch(destinationRepository, /status:\s*"unvisited"/);
+  assert.doesNotMatch(destinationRepository, /fetch\(|axios|geoapify/i);
 });
