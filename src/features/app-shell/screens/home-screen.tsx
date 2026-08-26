@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
+import { TripCover } from "@/src/features/trips/components/trip-cover";
 import {
   daysUntilTrip,
   formatCountries,
@@ -96,6 +97,8 @@ export function HomeScreen() {
         </SectionCard>
       ) : nextTrip ? (
         <SectionCard>
+          <TripCover trip={nextTrip} />
+
           <View
             style={{
               flexDirection: "row",
