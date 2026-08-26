@@ -19,7 +19,7 @@
     "test": "node --test tests/*.test.mjs",
     "auth:smoke": "node scripts/smoke-mobile-auth.mjs",
     "format": "prettier --write .",
-    "format:check": "node scripts/print-cor-136-prettier.mjs",
+    "format:check": "prettier --check .",
     "structure:check": "node scripts/check-structure.mjs",
     "security:check": "node scripts/check-secrets.mjs",
     "verify": "pnpm structure:check && pnpm typecheck && pnpm lint && pnpm test && pnpm format:check && pnpm security:check",
