@@ -28,11 +28,19 @@ export function TripsScreen() {
         </Text>
         <Text
           selectable
-          style={{ color: theme.color.ink, fontSize: 31, lineHeight: 36, fontWeight: "800" }}
+          style={{
+            color: theme.color.ink,
+            fontSize: 31,
+            lineHeight: 36,
+            fontWeight: "800",
+          }}
         >
           Tous vos départs, au même endroit.
         </Text>
-        <Text selectable style={{ color: theme.color.muted, fontSize: 16, lineHeight: 23 }}>
+        <Text
+          selectable
+          style={{ color: theme.color.muted, fontSize: 16, lineHeight: 23 }}
+        >
           {trips.length > 0
             ? `${trips.length} voyage${trips.length > 1 ? "s" : ""} synchronisé${trips.length > 1 ? "s" : ""} avec OverMiles.`
             : "Préparez votre prochain départ puis retrouvez-le ici, même quand le réseau devient capricieux."}
@@ -41,22 +49,38 @@ export function TripsScreen() {
 
       {isOffline ? (
         <SectionCard>
-          <Text selectable style={{ color: theme.color.warning, fontSize: 14, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{
+              color: theme.color.warning,
+              fontSize: 14,
+              fontWeight: "800",
+            }}
+          >
             MODE HORS-LIGNE
           </Text>
-          <Text selectable style={{ color: theme.color.muted, fontSize: 14, lineHeight: 21 }}>
-            Le serveur n’est pas joignable. Les données déjà chargées restent visibles ; le cache
-            chiffré persistant arrivera avec COR-56/COR-57.
+          <Text
+            selectable
+            style={{ color: theme.color.muted, fontSize: 14, lineHeight: 21 }}
+          >
+            Le serveur n’est pas joignable. Les données déjà chargées restent
+            visibles ; le cache chiffré persistant arrivera avec COR-56/COR-57.
           </Text>
         </SectionCard>
       ) : null}
 
       {errorMessage && !isOffline ? (
         <SectionCard>
-          <Text selectable style={{ color: theme.color.ink, fontSize: 17, fontWeight: "700" }}>
+          <Text
+            selectable
+            style={{ color: theme.color.ink, fontSize: 17, fontWeight: "700" }}
+          >
             Impossible d’actualiser les voyages
           </Text>
-          <Text selectable style={{ color: theme.color.muted, fontSize: 14, lineHeight: 21 }}>
+          <Text
+            selectable
+            style={{ color: theme.color.muted, fontSize: 14, lineHeight: 21 }}
+          >
             {errorMessage}
           </Text>
           <RetryButton onPress={() => void refresh()} />
@@ -80,12 +104,18 @@ export function TripsScreen() {
         </SectionCard>
       ) : trips.length === 0 ? (
         <SectionCard>
-          <Text selectable style={{ color: theme.color.ink, fontSize: 22, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{ color: theme.color.ink, fontSize: 22, fontWeight: "800" }}
+          >
             Votre prochaine aventure commence ici.
           </Text>
-          <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-            Aucun voyage n’est encore associé à ce compte. Dès qu’un voyage existe côté OverMiles,
-            il apparaîtra ici automatiquement.
+          <Text
+            selectable
+            style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}
+          >
+            Aucun voyage n’est encore associé à ce compte. Dès qu’un voyage
+            existe côté OverMiles, il apparaîtra ici automatiquement.
           </Text>
         </SectionCard>
       ) : (
@@ -117,7 +147,11 @@ function RetryButton({ onPress }: { onPress: () => void }) {
         opacity: pressed ? 0.8 : 1,
       })}
     >
-      <Text style={{ color: theme.color.surface, fontSize: 14, fontWeight: "800" }}>Réessayer</Text>
+      <Text
+        style={{ color: theme.color.surface, fontSize: 14, fontWeight: "800" }}
+      >
+        Réessayer
+      </Text>
     </Pressable>
   );
 }
