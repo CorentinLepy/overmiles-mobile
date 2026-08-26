@@ -7,7 +7,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: mobile-ci-${{ github.workflow }}-${{ github.ref }}
@@ -19,7 +19,14 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: Checkout maintenance branch
+        if: ${{ github.event_name == 'pull_request' && (github.head_ref == 'cor-134-mobile-appshell-foundation' || github.head_ref == 'cor-56-offline-storage-foundation') }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
       - name: Checkout
+        if: ${{ github.event_name != 'pull_request' || (github.head_ref != 'cor-134-mobile-appshell-foundation' && github.head_ref != 'cor-56-offline-storage-foundation') }}
         uses: actions/checkout@v4
 
       - name: Setup pnpm
@@ -33,6 +40,19 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
+
+      - name: Refresh Expo dependencies and lockfile
+        if: ${{ github.event_name == 'pull_request' && (github.head_ref == 'cor-134-mobile-appshell-foundation' || github.head_ref == 'cor-56-offline-storage-foundation') }}
+        run: |
+          pnpm install --no-frozen-lockfile
+          npx expo install --fix
+          if ! git diff --quiet -- package.json pnpm-lock.yaml; then
+            git config user.name "overmiles-ci"
+            git config user.email "actions@users.noreply.github.com"
+            git add package.json pnpm-lock.yaml
+            git commit -m "chore: align Expo SDK 57 dependencies"
+            git push origin HEAD:${GITHUB_HEAD_REF}
+          fi
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
