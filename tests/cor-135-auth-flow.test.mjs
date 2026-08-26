@@ -21,9 +21,19 @@ test("auth provider composes the approved secure token store and mobile transpor
   assert.match(provider, /createSecureStoreTokenStore/);
   assert.match(provider, /createMobileAuthTransport/);
   assert.match(provider, /new AuthSessionManager/);
+  assert.match(provider, /createApiClient/);
   assert.match(provider, /sessionManager\.restore\(\)/);
   assert.match(provider, /sessionManager\.acceptSession\(response\)/);
   assert.doesNotMatch(provider, /AsyncStorage|localStorage/);
+});
+
+test("successful session restore hydrates the current user from the protected profile endpoint", () => {
+  assert.match(provider, /loadCurrentUser/);
+  assert.match(provider, /path: "\/users\/me"/);
+  assert.match(provider, /auth: "required"/);
+  assert.match(provider, /if \(active && restoredUser\) setUser\(restoredUser\)/);
+  assert.match(provider, /if \(restoredUser\) setUser\(restoredUser\)/);
+  assert.doesNotMatch(provider, /decode.*jwt|jwt.*decode/i);
 });
 
 test("offline restore keeps a non-destructive pending state", () => {
@@ -54,8 +64,12 @@ test("login screen uses accessible native credential controls and normalized ema
   assert.doesNotMatch(loginScreen, /fetch\(|axios/i);
 });
 
-test("profile exposes explicit server-revoking logout through the auth provider", () => {
+test("profile exposes hydrated identity and explicit server-revoking logout", () => {
+  assert.match(profileScreen, /user\?\.displayName \|\| user\?\.email/);
+  assert.match(profileScreen, /secondaryIdentity/);
   assert.match(profileScreen, /accessibilityLabel="Se déconnecter"/);
+  assert.match(profileScreen, /accessibilityState=\{\{ disabled: isBusy, busy: isBusy \}\}/);
   assert.match(profileScreen, /void logout\(\)/);
   assert.match(profileScreen, /useAuth\(\)/);
+  assert.doesNotMatch(profileScreen, /COR-58/);
 });
