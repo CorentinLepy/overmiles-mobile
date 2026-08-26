@@ -57,6 +57,17 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
       );
     `,
   },
+  {
+    version: 2,
+    name: "sync-retry-scheduling",
+    sql: `
+      ALTER TABLE pending_operations
+        ADD COLUMN next_attempt_at TEXT;
+
+      CREATE INDEX IF NOT EXISTS idx_pending_operations_ready
+        ON pending_operations (state, next_attempt_at, created_at);
+    `,
+  },
 ];
 
 export async function runLocalMigrations(db: SQLiteDatabase): Promise<void> {
