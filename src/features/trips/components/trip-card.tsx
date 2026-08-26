@@ -4,25 +4,16 @@ import { Pressable, Text, View } from "react-native";
 import { SectionCard } from "@/src/components/ui/section-card";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
-import {
-  formatCountries,
-  formatTripDateRange,
-  tripTemporalLabel,
-} from "../trip-formatters";
+import { formatCountries, formatTripDateRange, tripTemporalLabel } from "../trip-formatters";
 import type { TripSummary } from "../trips.types";
 
 export function TripCard({ trip }: { trip: TripSummary }) {
   const theme = useOverMilesTheme();
   const moments =
-    (trip._count?.photos ?? 0) +
-    (trip._count?.journalEntries ?? 0) +
-    (trip._count?.events ?? 0);
+    (trip._count?.photos ?? 0) + (trip._count?.journalEntries ?? 0) + (trip._count?.events ?? 0);
 
   return (
-    <Link
-      href={{ pathname: "/trips/[tripId]", params: { tripId: trip.id } }}
-      asChild
-    >
+    <Link href={{ pathname: "/trips/[tripId]", params: { tripId: trip.id } }} asChild>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ouvrir le voyage ${trip.name}`}
@@ -58,10 +49,7 @@ export function TripCard({ trip }: { trip: TripSummary }) {
               </Text>
             </View>
             {trip.version ? (
-              <Text
-                selectable
-                style={{ color: theme.color.muted, fontSize: 12 }}
-              >
+              <Text selectable style={{ color: theme.color.muted, fontSize: 12 }}>
                 v{trip.version}
               </Text>
             ) : null}
@@ -79,16 +67,10 @@ export function TripCard({ trip }: { trip: TripSummary }) {
             >
               {trip.name}
             </Text>
-            <Text
-              selectable
-              style={{ color: theme.color.muted, fontSize: 15, lineHeight: 21 }}
-            >
+            <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 21 }}>
               {formatCountries(trip)}
             </Text>
-            <Text
-              selectable
-              style={{ color: theme.color.ink, fontSize: 14, lineHeight: 20 }}
-            >
+            <Text selectable style={{ color: theme.color.ink, fontSize: 14, lineHeight: 20 }}>
               {formatTripDateRange(trip)}
             </Text>
           </View>
@@ -136,10 +118,7 @@ function Metric({ label, value }: { label: string; value: number }) {
       >
         {value}
       </Text>
-      <Text
-        selectable
-        style={{ color: theme.color.muted, fontSize: 12, fontWeight: "600" }}
-      >
+      <Text selectable style={{ color: theme.color.muted, fontSize: 12, fontWeight: "600" }}>
         {label}
       </Text>
     </View>
