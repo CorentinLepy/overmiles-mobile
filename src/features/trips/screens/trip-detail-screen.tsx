@@ -5,14 +5,24 @@ import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
-import { formatCountries, formatTripDateRange, tripTemporalLabel } from "../trip-formatters";
+import {
+  formatCountries,
+  formatTripDateRange,
+  tripTemporalLabel,
+} from "../trip-formatters";
 import { useTripsData } from "../trips-data-provider";
 import type { TripSummary } from "../trips.types";
 
 export function TripDetailScreen({ tripId }: { tripId: string }) {
   const theme = useOverMilesTheme();
-  const { findTrip, ensureTrip, isOffline, errorMessage, refresh, isRefreshing } =
-    useTripsData();
+  const {
+    findTrip,
+    ensureTrip,
+    isOffline,
+    errorMessage,
+    refresh,
+    isRefreshing,
+  } = useTripsData();
   const cachedTrip = findTrip(tripId);
   const [loadedTrip, setLoadedTrip] = useState<TripSummary | null>(null);
   const [isResolving, setIsResolving] = useState(cachedTrip === null);
@@ -61,10 +71,16 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
     return (
       <AppScreen refreshing={isRefreshing} onRefresh={() => void refresh()}>
         <SectionCard>
-          <Text selectable style={{ color: theme.color.ink, fontSize: 22, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{ color: theme.color.ink, fontSize: 22, fontWeight: "800" }}
+          >
             Voyage indisponible
           </Text>
-          <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
+          <Text
+            selectable
+            style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}
+          >
             {errorMessage ??
               "Ce voyage n’est plus accessible ou n’a pas encore pu être synchronisé sur cet appareil."}
           </Text>
@@ -87,7 +103,13 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
               opacity: pressed ? 0.8 : 1,
             })}
           >
-            <Text style={{ color: theme.color.surface, fontSize: 14, fontWeight: "800" }}>
+            <Text
+              style={{
+                color: theme.color.surface,
+                fontSize: 14,
+                fontWeight: "800",
+              }}
+            >
               Réessayer
             </Text>
           </Pressable>
@@ -97,12 +119,19 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
   }
 
   const count = trip._count;
-  const moments = (count?.photos ?? 0) + (count?.journalEntries ?? 0) + (count?.events ?? 0);
+  const moments =
+    (count?.photos ?? 0) + (count?.journalEntries ?? 0) + (count?.events ?? 0);
 
   return (
     <AppScreen refreshing={isRefreshing} onRefresh={() => void refresh()}>
       <View style={{ gap: theme.spacing.sm, paddingTop: theme.spacing.sm }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: theme.spacing.sm }}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            gap: theme.spacing.sm,
+          }}
+        >
           <View
             style={{
               paddingHorizontal: 11,
@@ -111,12 +140,26 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
               backgroundColor: theme.color.accentSoft,
             }}
           >
-            <Text selectable style={{ color: theme.color.accent, fontSize: 12, fontWeight: "800" }}>
+            <Text
+              selectable
+              style={{
+                color: theme.color.accent,
+                fontSize: 12,
+                fontWeight: "800",
+              }}
+            >
               {tripTemporalLabel(trip)}
             </Text>
           </View>
           {isOffline ? (
-            <Text selectable style={{ color: theme.color.warning, fontSize: 12, fontWeight: "700" }}>
+            <Text
+              selectable
+              style={{
+                color: theme.color.warning,
+                fontSize: 12,
+                fontWeight: "700",
+              }}
+            >
               Hors-ligne
             </Text>
           ) : null}
@@ -134,30 +177,51 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
         >
           {trip.name}
         </Text>
-        <Text selectable style={{ color: theme.color.muted, fontSize: 16, lineHeight: 23 }}>
+        <Text
+          selectable
+          style={{ color: theme.color.muted, fontSize: 16, lineHeight: 23 }}
+        >
           {formatCountries(trip)}
         </Text>
-        <Text selectable style={{ color: theme.color.ink, fontSize: 15, lineHeight: 22 }}>
+        <Text
+          selectable
+          style={{ color: theme.color.ink, fontSize: 15, lineHeight: 22 }}
+        >
           {formatTripDateRange(trip)}
         </Text>
       </View>
 
       {trip.description ? (
         <SectionCard>
-          <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{ color: theme.color.ink, fontSize: 18, fontWeight: "800" }}
+          >
             À propos du voyage
           </Text>
-          <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 23 }}>
+          <Text
+            selectable
+            style={{ color: theme.color.muted, fontSize: 15, lineHeight: 23 }}
+          >
             {trip.description}
           </Text>
         </SectionCard>
       ) : null}
 
       <View style={{ gap: theme.spacing.md }}>
-        <Text selectable style={{ color: theme.color.ink, fontSize: 20, fontWeight: "800" }}>
+        <Text
+          selectable
+          style={{ color: theme.color.ink, fontSize: 20, fontWeight: "800" }}
+        >
           Votre voyage en un coup d’œil
         </Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.sm }}>
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            gap: theme.spacing.sm,
+          }}
+        >
           <DetailMetric label="Étapes" value={count?.stops ?? 0} />
           <DetailMetric label="Moments" value={moments} />
           <DetailMetric label="Dépenses" value={count?.expenses ?? 0} />
@@ -166,12 +230,19 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
       </View>
 
       <SectionCard>
-        <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "800" }}>
+        <Text
+          selectable
+          style={{ color: theme.color.ink, fontSize: 18, fontWeight: "800" }}
+        >
           Prêt pour la suite
         </Text>
-        <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Les prochaines tranches ouvriront ici les étapes, la carte, les documents, le budget et les
-          souvenirs. Cette page utilise déjà le vrai voyage OverMiles et le contrat de session mobile.
+        <Text
+          selectable
+          style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}
+        >
+          Les prochaines tranches ouvriront ici les étapes, la carte, les
+          documents, le budget et les souvenirs. Cette page utilise déjà le vrai
+          voyage OverMiles et le contrat de session mobile.
         </Text>
         {trip.version ? (
           <Text
@@ -218,7 +289,10 @@ function DetailMetric({ label, value }: { label: string; value: number }) {
       >
         {value}
       </Text>
-      <Text selectable style={{ color: theme.color.muted, fontSize: 13, fontWeight: "600" }}>
+      <Text
+        selectable
+        style={{ color: theme.color.muted, fontSize: 13, fontWeight: "600" }}
+      >
         {label}
       </Text>
     </View>
