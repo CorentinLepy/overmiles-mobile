@@ -15,10 +15,7 @@ const profileScreen = await readFile(
   "utf8",
 );
 const rootRoute = await readFile(new URL("../app/index.tsx", import.meta.url), "utf8");
-const tabsLayout = await readFile(
-  new URL("../app/(tabs)/_layout.tsx", import.meta.url),
-  "utf8",
-);
+const tabsLayout = await readFile(new URL("../app/(tabs)/_layout.tsx", import.meta.url), "utf8");
 
 test("auth provider composes the approved secure token store and mobile transport", () => {
   assert.match(provider, /createSecureStoreTokenStore/);

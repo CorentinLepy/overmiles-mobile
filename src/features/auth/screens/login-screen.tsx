@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { useRouter } from "expo-router";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
@@ -178,7 +171,8 @@ export function LoginScreen() {
           </Pressable>
 
           <Text selectable style={{ color: theme.color.muted, fontSize: 13, lineHeight: 19 }}>
-            Google et Apple seront ajoutés via le chantier SSO dédié. Aucun fournisseur externe n’est simulé ici.
+            Google et Apple seront ajoutés via le chantier SSO dédié. Aucun fournisseur externe
+            n’est simulé ici.
           </Text>
         </SectionCard>
       </AppScreen>

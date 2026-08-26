@@ -41,7 +41,8 @@ export function ProfileAccountScreen() {
           Session mobile sécurisée
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Le Refresh Token reste dans le stockage sécurisé de l’appareil. L’Access Token reste uniquement en mémoire.
+          Le Refresh Token reste dans le stockage sécurisé de l’appareil. L’Access Token reste
+          uniquement en mémoire.
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -69,7 +70,8 @@ export function ProfileAccountScreen() {
           Prochaines protections
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Face ID / biométrie arrivera avec COR-58. Les sessions et appareils restent contrôlés côté serveur OverMiles.
+          Face ID / biométrie arrivera avec COR-58. Les sessions et appareils restent contrôlés côté
+          serveur OverMiles.
         </Text>
       </SectionCard>
     </AppScreen>

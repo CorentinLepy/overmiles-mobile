@@ -10,10 +10,7 @@ import {
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
 import { ApiError } from "@/src/lib/api/api-error";
-import {
-  AuthSessionManager,
-  type AuthRestoreState,
-} from "@/src/lib/auth/auth-session-manager";
+import { AuthSessionManager, type AuthRestoreState } from "@/src/lib/auth/auth-session-manager";
 import {
   createMobileAuthTransport,
   type MobileAuthUser,
@@ -37,18 +34,13 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: PropsWithChildren) {
   const runtimeConfig = useMemo(() => readPublicRuntimeConfig(), []);
   const transport = useMemo(
-    () =>
-      runtimeConfig.apiBaseUrl ? createMobileAuthTransport(runtimeConfig.apiBaseUrl) : null,
+    () => (runtimeConfig.apiBaseUrl ? createMobileAuthTransport(runtimeConfig.apiBaseUrl) : null),
     [runtimeConfig.apiBaseUrl],
   );
   const sessionManager = useMemo(
     () =>
       transport
-        ? new AuthSessionManager(
-            createSecureStoreTokenStore(),
-            transport.refresh,
-            transport.logout,
-          )
+        ? new AuthSessionManager(createSecureStoreTokenStore(), transport.refresh, transport.logout)
         : null,
     [transport],
   );
