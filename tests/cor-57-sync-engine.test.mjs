@@ -8,6 +8,7 @@ const store = await readFile(
   "utf8",
 );
 const engine = await readFile(new URL("../src/lib/sync/sync-engine.ts", import.meta.url), "utf8");
+const apiError = await readFile(new URL("../src/lib/api/api-error.ts", import.meta.url), "utf8");
 
 test("COR-57 adds retry scheduling as a monotonic migration", () => {
   assert.match(migrations, /version: 2/);
@@ -37,6 +38,23 @@ test("interrupted sends are recovered but fatal failures remain terminal", () =>
   assert.match(engine, /recoverInterrupted\(\)/);
   assert.match(engine, /markFailed/);
   assert.doesNotMatch(store, /state IN \('pending', 'failed'\)/);
+});
+
+test("applied sync updates metadata and removes queue work in one transaction", () => {
+  assert.match(store, /completeApplied/);
+  assert.match(store, /withTransactionAsync/);
+  assert.match(store, /INSERT INTO sync_metadata/);
+  assert.match(store, /sync_state = 'synced'/);
+  assert.match(store, /DELETE FROM pending_operations/);
+  assert.match(engine, /completeApplied/);
+});
+
+test("409 sync conflicts retain typed server versions and snapshots", () => {
+  assert.match(apiError, /SYNC_VERSION_CONFLICT/);
+  assert.match(apiError, /expectedVersion/);
+  assert.match(apiError, /currentVersion/);
+  assert.match(apiError, /serverSnapshot/);
+  assert.match(apiError, /parseSyncConflict/);
 });
 
 test("sync engine is single-flight and never auto-resolves version conflicts", () => {
