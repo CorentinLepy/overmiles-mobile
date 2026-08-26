@@ -82,6 +82,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
     });
   }, [apiClient]);
 
+  const invalidateUnauthorizedProfile = useCallback(
+    async (error: unknown): Promise<boolean> => {
+      if (!(error instanceof ApiError) || error.kind !== "unauthorized" || !sessionManager) {
+        return false;
+      }
+
+      await sessionManager.clearLocalSession();
+      setUser(null);
+      setStatus("anonymous");
+      return true;
+    },
+    [sessionManager],
+  );
+
   useEffect(() => {
     let active = true;
 
@@ -104,11 +118,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (active && restoredUser) setUser(restoredUser);
       } catch (error) {
         if (!active) return;
-        if (error instanceof ApiError && (error.kind === "network" || error.kind === "timeout")) {
-          return;
-        }
-        setUser(null);
-        setStatus("anonymous");
+        await invalidateUnauthorizedProfile(error);
       }
     }
 
@@ -117,7 +127,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [applyRestoreState, loadCurrentUser, runtimeConfig.errors, sessionManager]);
+  }, [
+    applyRestoreState,
+    invalidateUnauthorizedProfile,
+    loadCurrentUser,
+    runtimeConfig.errors,
+    sessionManager,
+  ]);
 
   const retryRestore = useCallback(async () => {
     if (!sessionManager) {
@@ -137,13 +153,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const restoredUser = await loadCurrentUser();
       if (restoredUser) setUser(restoredUser);
     } catch (error) {
-      if (error instanceof ApiError && (error.kind === "network" || error.kind === "timeout")) {
-        return;
-      }
-      setUser(null);
-      setStatus("anonymous");
+      await invalidateUnauthorizedProfile(error);
     }
-  }, [applyRestoreState, loadCurrentUser, runtimeConfig.errors, sessionManager]);
+  }, [
+    applyRestoreState,
+    invalidateUnauthorizedProfile,
+    loadCurrentUser,
+    runtimeConfig.errors,
+    sessionManager,
+  ]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<boolean> => {
