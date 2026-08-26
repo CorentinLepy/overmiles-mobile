@@ -56,6 +56,10 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     const method = request.method ?? "GET";
     const authMode = request.auth ?? "required";
     const url = buildUrl(baseUrl, request.path);
+    const idempotencyKey =
+      request.idempotencyKey === undefined
+        ? undefined
+        : validateIdempotencyKey(request.idempotencyKey);
     const controller = new AbortController();
     const timeoutMs = timeoutFor(request.kind ?? "json");
     const timeoutId = setTimeout(() => controller.abort("timeout"), timeoutMs);
@@ -70,8 +74,8 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       if (request.body !== undefined && !headers.has("Content-Type")) {
         headers.set("Content-Type", "application/json");
       }
-      if (request.idempotencyKey !== undefined) {
-        headers.set("Idempotency-Key", validateIdempotencyKey(request.idempotencyKey));
+      if (idempotencyKey !== undefined) {
+        headers.set("Idempotency-Key", idempotencyKey);
       }
       if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
