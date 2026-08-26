@@ -47,6 +47,8 @@ test("applied sync updates metadata and removes queue work in one transaction", 
   assert.match(store, /sync_state = 'synced'/);
   assert.match(store, /DELETE FROM pending_operations/);
   assert.match(engine, /completeApplied/);
+  assert.match(engine, /serverUpdatedAt: result\.serverUpdatedAt \?\? null/);
+  assert.match(engine, /serverUpdatedBy: result\.serverUpdatedBy \?\? null/);
 });
 
 test("409 sync conflicts retain typed server versions and snapshots", () => {
@@ -55,6 +57,8 @@ test("409 sync conflicts retain typed server versions and snapshots", () => {
   assert.match(apiError, /currentVersion/);
   assert.match(apiError, /serverSnapshot/);
   assert.match(apiError, /parseSyncConflict/);
+  assert.match(apiError, /typeof body\.expectedVersion !== "number"/);
+  assert.match(apiError, /typeof body\.currentVersion !== "number"/);
 });
 
 test("sync engine is single-flight and never auto-resolves version conflicts", () => {
