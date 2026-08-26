@@ -46,9 +46,12 @@ export function projectTripMapPoints(points: readonly MapSourcePoint[]): readonl
 
 export function groupVisitedPlaces(
   points: readonly TripMapPoint[],
-  precision = 3,
+  precision: number,
 ): readonly VisitedPlace[] {
-  const safePrecision = Math.max(1, Math.min(Math.trunc(precision), 6));
+  if (!Number.isInteger(precision) || precision < 1 || precision > 6) {
+    throw new Error("La précision de regroupement doit être un entier entre 1 et 6.");
+  }
+
   const grouped = new Map<
     string,
     {
@@ -61,7 +64,7 @@ export function groupVisitedPlaces(
   >();
 
   for (const point of points) {
-    const key = coordinateBucketKey(point.coordinate, safePrecision);
+    const key = coordinateBucketKey(point.coordinate, precision);
     const existing = grouped.get(key);
 
     if (!existing) {
