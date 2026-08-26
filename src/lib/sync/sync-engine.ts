@@ -9,7 +9,12 @@ export interface SyncEngine {
 }
 
 export type SyncTransportResult =
-  | Readonly<{ outcome: "applied"; serverVersion: number }>
+  | Readonly<{
+      outcome: "applied";
+      serverVersion: number;
+      serverUpdatedAt?: string | null;
+      serverUpdatedBy?: string | null;
+    }>
   | Readonly<{ outcome: "conflict"; errorCode?: string }>
   | Readonly<{ outcome: "retryable"; errorCode: string }>
   | Readonly<{ outcome: "fatal"; errorCode: string }>;
@@ -77,7 +82,12 @@ export class OfflineSyncEngine implements SyncEngine {
       }
 
       if (result.outcome === "applied") {
-        await this.store.remove(operation.operationId);
+        await this.store.completeApplied(operation, {
+          serverVersion: result.serverVersion,
+          serverUpdatedAt: result.serverUpdatedAt,
+          serverUpdatedBy: result.serverUpdatedBy,
+          syncedAt: this.now().toISOString(),
+        });
         summary.applied += 1;
         continue;
       }
