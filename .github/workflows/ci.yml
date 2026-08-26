@@ -37,6 +37,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Diagnose COR-57 formatting
+        run: |
+          pnpm exec prettier src/lib/sync/pending-operations-store.ts --write
+          git diff -- src/lib/sync/pending-operations-store.ts
+          git checkout -- src/lib/sync/pending-operations-store.ts
+
       - name: Verify repository
         run: pnpm verify
 
