@@ -8,7 +8,8 @@ Cette checklist valide le comportement réel du verrou local biométrique OverMi
 - elle ne crée, ne renouvelle et ne réactive jamais une session serveur ;
 - une session révoquée/expirée doit rester prioritaire ;
 - aucune clé SQLCipher, Access Token, Refresh Token ou mot de passe n’est protégée en les déplaçant dans le mécanisme biométrique ;
-- aucun fallback silencieux vers le code appareil : les cas nécessitant un fallback applicatif doivent conduire à une réauthentification OverMiles explicite.
+- aucun fallback silencieux vers le code appareil : les cas nécessitant un fallback applicatif doivent conduire à une réauthentification OverMiles explicite ;
+- une lecture SecureStore impossible de la préférence biométrique doit **échouer fermée** : l’application demande une réauthentification au lieu de supposer que le verrou est désactivé.
 
 ## iOS — Face ID / Touch ID
 
@@ -44,6 +45,16 @@ Cette checklist valide le comportement réel du verrou local biométrique OverMi
 
 **Attendu** : la préférence est persistante et séparée des credentials. La désactivation supprime uniquement la préférence biométrique.
 
+## Erreur SecureStore / fail closed
+
+À exécuter avec un hook de test contrôlé ou une simulation d’erreur de stockage :
+
+1. Conserver une session serveur valide.
+2. Provoquer une erreur de lecture SecureStore sur la préférence biométrique.
+3. Appeler le flux de déverrouillage local.
+
+**Attendu** : le résultat est `requires_reauth`. L’application ne doit jamais transformer l’erreur en `not_enabled` ni laisser passer l’utilisateur sans vérification explicite.
+
 ## Session serveur prioritaire
 
 À valider une fois COR-135/COR-58 intégrés sur la même branche :
@@ -60,6 +71,7 @@ Cette checklist valide le comportement réel du verrou local biométrique OverMi
 - Face ID/Touch ID validé sur Development Build iOS ;
 - biométrie forte validée sur Android ;
 - annulation/absence d’enrôlement/lockout validés ;
+- erreur SecureStore validée en fail closed ;
 - persistance activation/désactivation validée ;
 - intégration lifecycle définie sans délai caché dans le service ;
 - réauthentification serveur explicitement prioritaire ;
