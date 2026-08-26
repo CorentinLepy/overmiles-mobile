@@ -87,12 +87,24 @@ export class PendingOperationsStore {
     return operation;
   }
 
+  async recoverInterrupted(): Promise<void> {
+    const database = await this.openDatabase();
+    await database.runAsync(
+      `UPDATE pending_operations
+       SET state = 'pending',
+           last_error_code = 'SYNC_INTERRUPTED',
+           next_attempt_at = NULL,
+           retry_count = retry_count + 1
+       WHERE state = 'sending'`,
+    );
+  }
+
   async listReady(limit = 25, now = new Date()): Promise<PendingOperation[]> {
     const database = await this.openDatabase();
     const safeLimit = Math.max(1, Math.min(Math.trunc(limit), 100));
     const rows = await database.getAllAsync<PendingOperationRow>(
       `SELECT * FROM pending_operations
-       WHERE state IN ('pending', 'failed')
+       WHERE state = 'pending'
          AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
        ORDER BY created_at ASC
        LIMIT ?`,
@@ -114,12 +126,8 @@ export class PendingOperationsStore {
     await this.updateState(operationId, "pending", errorCode, nextAttemptAt, true);
   }
 
-  async markFailed(
-    operationId: string,
-    errorCode: string,
-    nextAttemptAt: string | null,
-  ): Promise<void> {
-    await this.updateState(operationId, "failed", errorCode, nextAttemptAt, true);
+  async markFailed(operationId: string, errorCode: string): Promise<void> {
+    await this.updateState(operationId, "failed", errorCode, null, true);
   }
 
   async markConflict(operationId: string, errorCode = "SYNC_VERSION_CONFLICT"): Promise<void> {
