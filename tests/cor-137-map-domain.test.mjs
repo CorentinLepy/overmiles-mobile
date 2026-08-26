@@ -20,7 +20,15 @@ const destinationRepository = await readFile(
   "utf8",
 );
 
-test("COR-137 map contracts stay independent from a rendering provider", () => {
+const mapDomainSources = [
+  types,
+  projection,
+  stopsRepository,
+  timelineRepository,
+  destinationRepository,
+];
+
+test("COR-137 map contracts stay independent from rendering and native UI providers", () => {
   assert.match(types, /export type MapCoordinate/);
   assert.match(types, /export type TripMapPoint/);
   assert.match(types, /export type VisitedPlace/);
@@ -29,14 +37,9 @@ test("COR-137 map contracts stay independent from a rendering provider", () => {
   assert.match(types, /status: "visited" \| "unvisited"/);
   assert.match(types, /status: "offline"/);
 
-  for (const source of [
-    types,
-    projection,
-    stopsRepository,
-    timelineRepository,
-    destinationRepository,
-  ]) {
+  for (const source of mapDomainSources) {
     assert.doesNotMatch(source, /maplibre|geoapify|openfreemap|google maps|webview/i);
+    assert.doesNotMatch(source, /from "react-native"|from 'react-native'/);
   }
 });
 
