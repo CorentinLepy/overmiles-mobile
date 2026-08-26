@@ -143,10 +143,7 @@ export class PendingOperationsStore {
     await this.updateState(operationId, "conflict", errorCode, null, false);
   }
 
-  async completeApplied(
-    operation: PendingOperation,
-    metadata: AppliedSyncMetadata,
-  ): Promise<void> {
+  async completeApplied(operation: PendingOperation, metadata: AppliedSyncMetadata): Promise<void> {
     const database = await this.openDatabase();
     const syncedAt = metadata.syncedAt ?? new Date().toISOString();
 
@@ -222,12 +219,7 @@ function parseOperationKind(value: string): PendingOperationKind {
 }
 
 function parseState(value: string): PendingOperationState {
-  if (
-    value === "pending" ||
-    value === "sending" ||
-    value === "conflict" ||
-    value === "failed"
-  ) {
+  if (value === "pending" || value === "sending" || value === "conflict" || value === "failed") {
     return value;
   }
   throw new Error(`Unsupported pending operation state: ${value}`);
