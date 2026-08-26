@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const migrations = await readFile(new URL("../src/lib/storage/migrations.ts", import.meta.url), "utf8");
+const migrations = await readFile(
+  new URL("../src/lib/storage/migrations.ts", import.meta.url),
+  "utf8",
+);
 const store = await readFile(
   new URL("../src/lib/sync/pending-operations-store.ts", import.meta.url),
   "utf8",
