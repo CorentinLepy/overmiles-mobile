@@ -9,7 +9,8 @@ import { useTripsData } from "../trips-data-provider";
 
 export function TripsScreen() {
   const theme = useOverMilesTheme();
-  const { trips, isLoading, isRefreshing, isOffline, errorMessage, refresh } = useTripsData();
+  const { trips, isLoading, isRefreshing, isOffline, errorMessage, refresh } =
+    useTripsData();
 
   return (
     <AppScreen refreshing={isRefreshing} onRefresh={() => void refresh()}>
@@ -64,7 +65,13 @@ export function TripsScreen() {
 
       {isLoading ? (
         <SectionCard>
-          <View style={{ alignItems: "center", gap: theme.spacing.md, paddingVertical: theme.spacing.lg }}>
+          <View
+            style={{
+              alignItems: "center",
+              gap: theme.spacing.md,
+              paddingVertical: theme.spacing.lg,
+            }}
+          >
             <ActivityIndicator />
             <Text selectable style={{ color: theme.color.muted, fontSize: 14 }}>
               Synchronisation de vos voyages…
