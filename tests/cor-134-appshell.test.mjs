@@ -13,6 +13,10 @@ const appScreen = await readFile(
   new URL("../src/components/ui/app-screen.tsx", import.meta.url),
   "utf8",
 );
+const feedbackState = await readFile(
+  new URL("../src/components/ui/feedback-state.tsx", import.meta.url),
+  "utf8",
+);
 
 test("root route enters the product app instead of technical bootstrap", () => {
   assert.match(rootRoute, /Redirect/);
@@ -38,4 +42,14 @@ test("design tokens provide light and dark OverMiles themes", () => {
 test("product screens use automatic insets and do not expose web primitives", () => {
   assert.match(appScreen, /contentInsetAdjustmentBehavior="automatic"/);
   assert.doesNotMatch(home, /<div|<img|className=/);
+});
+
+test("design system exposes a reusable accessible feedback state", () => {
+  assert.match(feedbackState, /export function FeedbackState/);
+  assert.match(feedbackState, /ActivityIndicator/);
+  assert.match(feedbackState, /tone = "neutral"/);
+  assert.match(feedbackState, /accessibilityRole="button"/);
+  assert.match(feedbackState, /actionAccessibilityLabel/);
+  assert.match(feedbackState, /SectionCard/);
+  assert.doesNotMatch(feedbackState, /<div|<img|className=/);
 });
