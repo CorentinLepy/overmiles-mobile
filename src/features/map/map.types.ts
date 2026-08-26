@@ -25,6 +25,14 @@ export type VisitedPlace = Readonly<{
   tripIds: readonly string[];
 }>;
 
+export type DestinationSuggestion = Readonly<{
+  id: string;
+  label: string;
+  subtitle?: string | null;
+  countryCode?: string | null;
+  coordinate: MapCoordinate;
+}>;
+
 export type SelectedDestination = Readonly<{
   id: string;
   label: string;
