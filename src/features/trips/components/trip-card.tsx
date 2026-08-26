@@ -15,10 +15,7 @@ export function TripCard({ trip }: { trip: TripSummary }) {
     (trip._count?.events ?? 0);
 
   return (
-    <Link
-      href={{ pathname: "/trips/[tripId]", params: { tripId: trip.id } }}
-      asChild
-    >
+    <Link href={{ pathname: "/trips/[tripId]", params: { tripId: trip.id } }} asChild>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Ouvrir le voyage ${trip.name}`}
@@ -99,7 +96,12 @@ function Metric({ label, value }: { label: string; value: number }) {
     >
       <Text
         selectable
-        style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800", fontVariant: ["tabular-nums"] }}
+        style={{
+          color: theme.color.ink,
+          fontSize: 13,
+          fontWeight: "800",
+          fontVariant: ["tabular-nums"],
+        }}
       >
         {value}
       </Text>
