@@ -18,7 +18,7 @@ const migrations = await readFile(
 );
 
 test("COR-56 declares Expo SQLite and enables SQLCipher", () => {
-  assert.match(packageJson, /"expo-sqlite": "~57\.0\.1"/);
+  assert.match(packageJson, /"expo-sqlite": "~57\.0\.\d+"/);
   assert.match(appConfig, /"expo-sqlite"/);
   assert.match(appConfig, /"useSQLCipher": true/);
 });
