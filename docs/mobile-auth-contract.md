@@ -28,6 +28,19 @@ La connexion utilise exclusivement le transport centralisé COR-55. Le formulair
 
 Google et Apple restent gérés par le chantier SSO dédié ; COR-135 ne simule aucun fournisseur externe.
 
+## Validation automatisée COR-135
+
+Avant la passe de formatage finale, la CI valide déjà :
+
+- installation figée avec politique supply-chain ;
+- TypeScript strict ;
+- ESLint sans warning ;
+- 22/22 tests auth, navigation, réseau et sécurité ;
+- absence de stockage persistant de l’Access Token ;
+- absence de `fetch` direct dans l’écran de connexion.
+
+Le formatage Prettier est traité comme le dernier gate statique avant Expo config et Expo Doctor.
+
 ## Appareils connectés
 
 COR-52 prépare la liste des sessions et la révocation fine. Le client doit considérer le serveur comme autoritaire : une session absente, expirée ou révoquée force le retour à l’authentification.
