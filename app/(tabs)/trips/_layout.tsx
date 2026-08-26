@@ -15,6 +15,7 @@ export default function TripsLayout() {
       }}
     >
       <Stack.Screen name="index" options={{ title: "Voyages" }} />
+      <Stack.Screen name="[tripId]" options={{ title: "Voyage" }} />
     </Stack>
   );
 }
