@@ -77,8 +77,8 @@ export function ProfileAccountScreen() {
           Protection de l’appareil
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Un verrou biométrique local pourra protéger l’ouverture de l’application sans remplacer
-          la vérification de votre session par OverMiles.
+          Un verrou biométrique local pourra protéger l’ouverture de l’application sans remplacer la
+          vérification de votre session par OverMiles.
         </Text>
       </SectionCard>
     </AppScreen>
