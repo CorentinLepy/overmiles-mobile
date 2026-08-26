@@ -55,6 +55,7 @@ test("home renders real upcoming trip data instead of a product placeholder", ()
   assert.match(home, /useTripsData\(\)/);
   assert.match(home, /nextTrip\.name/);
   assert.match(home, /daysUntilTrip/);
+  assert.match(home, /<TripCover trip=\{nextTrip\} \/>/);
   assert.match(home, /pathname: "\/trips\/\[tripId\]"/);
   assert.doesNotMatch(home, /Vos voyages arrivent bientôt ici/);
   assert.doesNotMatch(home, /fetch\(|axios/i);
