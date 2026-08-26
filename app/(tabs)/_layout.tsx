@@ -1,9 +1,21 @@
+import { Redirect } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 
+import { AuthLoadingScreen } from "@/src/features/auth/screens/auth-loading-screen";
+import { useAuth } from "@/src/providers/auth-provider";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 export default function TabLayout() {
   const theme = useOverMilesTheme();
+  const { status } = useAuth();
+
+  if (status === "restoring") {
+    return <AuthLoadingScreen />;
+  }
+
+  if (status !== "authenticated") {
+    return <Redirect href="/login" />;
+  }
 
   return (
     <NativeTabs tintColor={theme.color.accent} minimizeBehavior="onScrollDown">
