@@ -11,6 +11,14 @@ Le niveau hors-ligne cible couvre les fonctions terrain essentielles, sans crée
 - états `pending`, `syncing`, `failed`, `conflict` ;
 - aucune stratégie globale d’écrasement silencieux en last-write-wins.
 
+## Stockage local COR-56
+
+La fondation locale utilise `expo-sqlite ~57.0.1` avec SQLCipher dans un Development Build et `expo-crypto ~57.0.2` pour générer la clé locale. Ces versions restent sur la baseline Expo 57 ayant passé la politique d’âge minimum des dépendances ; les patches publiés trop récemment ne sont pas adoptés automatiquement.
+
+La clé de base est générée aléatoirement et conservée dans SecureStore, séparément du Refresh Token. Les tables techniques `schema_migrations`, `sync_metadata`, `pending_operations` et `app_state` sont créées par migrations transactionnelles.
+
+SQLCipher n’est pas validé avec Expo Go : le gate de sortie de COR-56 inclut un build natif Android et iOS, ainsi que les scénarios perte de clé, migration et reprise après redémarrage.
+
 ## Métadonnées synchronisables
 
 Les entités éligibles convergent vers :
