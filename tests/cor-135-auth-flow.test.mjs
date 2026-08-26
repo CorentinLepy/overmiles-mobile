@@ -52,5 +52,5 @@ test("login screen uses accessible native credential controls", () => {
 test("profile exposes explicit server-revoking logout through the auth provider", () => {
   assert.match(profileScreen, /accessibilityLabel="Se déconnecter"/);
   assert.match(profileScreen, /void logout\(\)/);
-  assert.match(profileScreen, /Access Token reste uniquement en mémoire/);
+  assert.match(profileScreen, /useAuth\(\)/);
 });
