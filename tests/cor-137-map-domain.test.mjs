@@ -11,6 +11,10 @@ const stopsRepository = await readFile(
   new URL("../src/features/map/map-stops-repository.ts", import.meta.url),
   "utf8",
 );
+const timelineRepository = await readFile(
+  new URL("../src/features/map/map-timeline-repository.ts", import.meta.url),
+  "utf8",
+);
 const destinationRepository = await readFile(
   new URL("../src/features/map/map-destination-repository.ts", import.meta.url),
   "utf8",
@@ -25,7 +29,13 @@ test("COR-137 map contracts stay independent from a rendering provider", () => {
   assert.match(types, /status: "visited" \| "unvisited"/);
   assert.match(types, /status: "offline"/);
 
-  for (const source of [types, projection, stopsRepository, destinationRepository]) {
+  for (const source of [
+    types,
+    projection,
+    stopsRepository,
+    timelineRepository,
+    destinationRepository,
+  ]) {
     assert.doesNotMatch(source, /maplibre|geoapify|openfreemap|google maps|webview/i);
   }
 });
@@ -63,6 +73,16 @@ test("map stops repository uses the existing authenticated stops endpoint", () =
   assert.match(stopsRepository, /kind: "stop" as const/);
   assert.match(stopsRepository, /projectTripMapPoints/);
   assert.doesNotMatch(stopsRepository, /fetch\(|axios/i);
+});
+
+test("map timeline repository uses existing geolocated trip events", () => {
+  assert.match(timelineRepository, /ApiClient/);
+  assert.match(timelineRepository, /apiClient\.request<TimelineEventResponse\[]>/);
+  assert.match(timelineRepository, /`\/trips\/\$\{encodeURIComponent\(trip\.id\)\}\/events`/);
+  assert.match(timelineRepository, /event\.latitude === null \|\| event\.longitude === null/);
+  assert.match(timelineRepository, /kind: "timeline" as const/);
+  assert.match(timelineRepository, /projectTripMapPoints/);
+  assert.doesNotMatch(timelineRepository, /fetch\(|axios/i);
 });
 
 test("destination exploration stays behind the OverMiles places API abstraction", () => {
