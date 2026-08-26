@@ -8,12 +8,18 @@ export default function TabLayout() {
   return (
     <NativeTabs tintColor={theme.color.accent} minimizeBehavior="onScrollDown">
       <NativeTabs.Trigger name="home">
-        <NativeTabs.Trigger.Icon sf={{ default: "house", selected: "house.fill" }} md="home" />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "house", selected: "house.fill" }}
+          md="home"
+        />
         <NativeTabs.Trigger.Label>Accueil</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="trips">
-        <NativeTabs.Trigger.Icon sf={{ default: "suitcase", selected: "suitcase.fill" }} md="luggage" />
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "suitcase", selected: "suitcase.fill" }}
+          md="luggage"
+        />
         <NativeTabs.Trigger.Label>Voyages</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
