@@ -1,12 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useTripsData } from "@/src/features/trips/trips-data-provider";
+import type { TripSummary } from "@/src/features/trips/trips.types";
 import { ApiError } from "@/src/lib/api/api-error";
 import { useAuth } from "@/src/providers/auth-provider";
-import { useTripsData } from "@/src/features/trips/trips-data-provider";
 
 import { createMapStopsRepository } from "./map-stops-repository";
 import { createMapTimelineRepository } from "./map-timeline-repository";
 import type { MapDataState, TripMapPoint } from "./map.types";
+
+type MapRepositories = Readonly<{
+  stops: ReturnType<typeof createMapStopsRepository>;
+  timeline: ReturnType<typeof createMapTimelineRepository>;
+}>;
+
+type MapLoadResult = Readonly<{
+  successfulPoints: readonly TripMapPoint[];
+  failures: readonly unknown[];
+}>;
 
 type UseMapDataResult = Readonly<{
   state: MapDataState;
@@ -17,7 +28,7 @@ type UseMapDataResult = Readonly<{
 export function useMapData(): UseMapDataResult {
   const { apiClient, status } = useAuth();
   const { trips, isLoading: tripsLoading } = useTripsData();
-  const repositories = useMemo(
+  const repositories = useMemo<MapRepositories | null>(
     () =>
       apiClient
         ? {
@@ -30,75 +41,90 @@ export function useMapData(): UseMapDataResult {
   const [state, setState] = useState<MapDataState>({ status: "idle" });
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const load = useCallback(
-    async (refreshing: boolean) => {
-      if (status !== "authenticated" || !repositories || tripsLoading) return;
-
-      if (trips.length === 0) {
-        setState({ status: "ready", points: [] });
-        setIsRefreshing(false);
-        return;
-      }
-
-      if (refreshing) {
-        setIsRefreshing(true);
-      } else {
-        setState((current) =>
-          current.status === "ready" || current.status === "offline" || current.status === "error"
-            ? current
-            : { status: "loading" },
-        );
-      }
-
-      const results = await Promise.allSettled(
-        trips.map(async (trip) => {
-          const [stops, events] = await Promise.all([
-            repositories.stops.listTripStops(trip),
-            repositories.timeline.listTripEvents(trip),
-          ]);
-          return [...stops, ...events] as readonly TripMapPoint[];
-        }),
-      );
-
-      const successfulPoints = deduplicatePoints(
-        results.flatMap((result) => (result.status === "fulfilled" ? result.value : [])),
-      );
-      const failures = results.flatMap((result) =>
-        result.status === "rejected" ? [result.reason as unknown] : [],
-      );
-
-      if (failures.length === 0) {
-        setState({ status: "ready", points: successfulPoints });
-        setIsRefreshing(false);
-        return;
-      }
-
-      const offline = failures.every(isOfflineFailure);
-      setState((current) => {
-        const retained = successfulPoints.length > 0 ? successfulPoints : pointsFromState(current);
-        return offline
-          ? { status: "offline", points: retained }
-          : {
-              status: "error",
-              message: userMessageForFailures(failures),
-              points: retained,
-            };
-      });
-      setIsRefreshing(false);
-    },
-    [repositories, status, trips, tripsLoading],
-  );
-
   useEffect(() => {
-    if (status !== "authenticated" || tripsLoading) return;
-    void load(false);
-  }, [load, status, tripsLoading]);
+    if (status !== "authenticated" || !repositories || tripsLoading) return;
+
+    const activeRepositories = repositories;
+    const activeTrips = trips;
+    let active = true;
+
+    async function loadInitialMapData() {
+      if (activeTrips.length === 0) {
+        await Promise.resolve();
+        if (active) setState({ status: "ready", points: [] });
+        return;
+      }
+
+      const result = await collectMapData(activeRepositories, activeTrips);
+      if (!active) return;
+      setState((current) => stateFromLoadResult(result, current));
+    }
+
+    void loadInitialMapData();
+
+    return () => {
+      active = false;
+    };
+  }, [repositories, status, trips, tripsLoading]);
 
   const refresh = useCallback(async () => {
-    await load(true);
-  }, [load]);
+    if (status !== "authenticated" || !repositories || tripsLoading) return;
+
+    setIsRefreshing(true);
+    try {
+      if (trips.length === 0) {
+        setState({ status: "ready", points: [] });
+        return;
+      }
+
+      const result = await collectMapData(repositories, trips);
+      setState((current) => stateFromLoadResult(result, current));
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [repositories, status, trips, tripsLoading]);
 
   return { state, isRefreshing, refresh };
+}
+
+async function collectMapData(
+  repositories: MapRepositories,
+  trips: readonly TripSummary[],
+): Promise<MapLoadResult> {
+  const results = await Promise.allSettled(
+    trips.map(async (trip) => {
+      const [stops, events] = await Promise.all([
+        repositories.stops.listTripStops(trip),
+        repositories.timeline.listTripEvents(trip),
+      ]);
+      return [...stops, ...events] as readonly TripMapPoint[];
+    }),
+  );
+
+  return {
+    successfulPoints: deduplicatePoints(
+      results.flatMap((result) => (result.status === "fulfilled" ? result.value : [])),
+    ),
+    failures: results.flatMap((result) =>
+      result.status === "rejected" ? [result.reason as unknown] : [],
+    ),
+  };
+}
+
+function stateFromLoadResult(result: MapLoadResult, current: MapDataState): MapDataState {
+  if (result.failures.length === 0) {
+    return { status: "ready", points: result.successfulPoints };
+  }
+
+  const retained =
+    result.successfulPoints.length > 0 ? result.successfulPoints : pointsFromState(current);
+  return result.failures.every(isOfflineFailure)
+    ? { status: "offline", points: retained }
+    : {
+        status: "error",
+        message: userMessageForFailures(result.failures),
+        points: retained,
+      };
 }
 
 function deduplicatePoints(points: readonly TripMapPoint[]): readonly TripMapPoint[] {
