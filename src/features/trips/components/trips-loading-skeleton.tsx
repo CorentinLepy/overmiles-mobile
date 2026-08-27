@@ -10,7 +10,9 @@ export function HomeTripLoadingSkeleton() {
   return (
     <SectionCard>
       <SkeletonBlock height={172} radius={theme.radius.card} />
-      <View style={{ flexDirection: "row", justifyContent: "space-between", gap: theme.spacing.md }}>
+      <View
+        style={{ flexDirection: "row", justifyContent: "space-between", gap: theme.spacing.md }}
+      >
         <SkeletonBlock height={30} width={132} radius={theme.radius.pill} />
         <SkeletonBlock height={20} width={48} radius={theme.radius.pill} />
       </View>
@@ -28,7 +30,11 @@ export function TripsListLoadingSkeleton({ count = 3 }: { count?: number }) {
   const theme = useOverMilesTheme();
 
   return (
-    <View accessibilityLabel="Chargement de vos voyages" accessibilityRole="progressbar" style={{ gap: theme.spacing.md }}>
+    <View
+      accessibilityLabel="Chargement de vos voyages"
+      accessibilityRole="progressbar"
+      style={{ gap: theme.spacing.md }}
+    >
       {Array.from({ length: count }, (_, index) => (
         <SectionCard key={`trip-skeleton-${index}`}>
           <SkeletonBlock height={150} radius={theme.radius.card} />
