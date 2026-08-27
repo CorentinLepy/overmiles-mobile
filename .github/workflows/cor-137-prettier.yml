@@ -1,0 +1,49 @@
+name: COR-137 format map screen
+
+on:
+  push:
+    branches:
+      - cor-137-maplibre-native-phase-b
+    paths:
+      - .github/workflows/cor-137-prettier.yml
+      - src/features/map/screens/map-screen.tsx
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: cor-137-maplibre-native-phase-b
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.20.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format map screen
+        run: pnpm exec prettier src/features/map/screens/map-screen.tsx --write
+
+      - name: Commit formatted file
+        run: |
+          git diff --exit-code -- src/features/map/screens/map-screen.tsx && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/features/map/screens/map-screen.tsx
+          git commit -m "style(cor-137): format native map screen"
+          git push origin HEAD:cor-137-maplibre-native-phase-b
