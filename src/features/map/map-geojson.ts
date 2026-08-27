@@ -1,52 +1,45 @@
 import type { TripMapPoint } from "./map.types";
 
-export type VisitedPointsFeatureCollection = Readonly<{
+export type VisitedPointsFeatureCollection = {
   type: "FeatureCollection";
-  features: readonly Readonly<{
+  features: Array<{
     type: "Feature";
     id: string;
-    properties: Readonly<{
+    properties: {
       id: string;
       tripId: string;
       tripName: string;
       label: string;
       kind: TripMapPoint["kind"];
       occurredAt: string | null;
-    }>;
-    geometry: Readonly<{
+    };
+    geometry: {
       type: "Point";
-      coordinates: readonly [number, number];
-    }>;
-  }>[];
-}>;
+      coordinates: [number, number];
+    };
+  }>;
+};
 
 export function createVisitedPointsFeatureCollection(
   points: readonly TripMapPoint[],
 ): VisitedPointsFeatureCollection {
-  return Object.freeze({
-    type: "FeatureCollection" as const,
-    features: Object.freeze(
-      points.map((point) =>
-        Object.freeze({
-          type: "Feature" as const,
-          id: point.id,
-          properties: Object.freeze({
-            id: point.id,
-            tripId: point.tripId,
-            tripName: point.tripName,
-            label: point.label,
-            kind: point.kind,
-            occurredAt: point.occurredAt ?? null,
-          }),
-          geometry: Object.freeze({
-            type: "Point" as const,
-            coordinates: Object.freeze([
-              point.coordinate.longitude,
-              point.coordinate.latitude,
-            ]) as readonly [number, number],
-          }),
-        }),
-      ),
-    ),
-  });
+  return {
+    type: "FeatureCollection",
+    features: points.map((point) => ({
+      type: "Feature",
+      id: point.id,
+      properties: {
+        id: point.id,
+        tripId: point.tripId,
+        tripName: point.tripName,
+        label: point.label,
+        kind: point.kind,
+        occurredAt: point.occurredAt ?? null,
+      },
+      geometry: {
+        type: "Point",
+        coordinates: [point.coordinate.longitude, point.coordinate.latitude],
+      },
+    })),
+  };
 }
