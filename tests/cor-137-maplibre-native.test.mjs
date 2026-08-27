@@ -80,7 +80,10 @@ test("Phase B does not request live device location or GPS permissions", () => {
 });
 
 test("partial network failures retain successful map data instead of blanking the map", () => {
-  assert.match(mapData, /successfulPoints\.length > 0 \? successfulPoints : pointsFromState/);
+  assert.match(
+    mapData,
+    /result\.successfulPoints\.length > 0 \? result\.successfulPoints : pointsFromState/,
+  );
   assert.match(mapData, /status: "offline"/);
   assert.match(mapData, /status: "error"/);
   assert.match(mapData, /error\.kind === "network" \|\| error\.kind === "timeout"/);
