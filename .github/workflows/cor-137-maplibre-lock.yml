@@ -1,0 +1,45 @@
+name: COR-137 MapLibre lockfile
+
+on:
+  push:
+    branches:
+      - cor-137-maplibre-native-phase-b
+    paths:
+      - package.json
+
+permissions:
+  contents: write
+
+jobs:
+  update-lockfile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: cor-137-maplibre-native-phase-b
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.20.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Regenerate lockfile
+        run: pnpm install --lockfile-only
+
+      - name: Commit generated lockfile
+        run: |
+          git diff --exit-code -- pnpm-lock.yaml && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pnpm-lock.yaml
+          git commit -m "chore(cor-137): regenerate MapLibre lockfile"
+          git push origin HEAD:cor-137-maplibre-native-phase-b
