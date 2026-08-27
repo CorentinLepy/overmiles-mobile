@@ -2,7 +2,7 @@ import type { TripMapPoint } from "./map.types";
 
 export type VisitedPointsFeatureCollection = {
   type: "FeatureCollection";
-  features: Array<{
+  features: {
     type: "Feature";
     id: string;
     properties: {
@@ -17,7 +17,7 @@ export type VisitedPointsFeatureCollection = {
       type: "Point";
       coordinates: [number, number];
     };
-  }>;
+  }[];
 };
 
 export function createVisitedPointsFeatureCollection(
