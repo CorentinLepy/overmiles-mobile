@@ -26,6 +26,7 @@
     "doctor": "npx expo-doctor@latest"
   },
   "dependencies": {
+    "@maplibre/maplibre-react-native": "11.3.6",
     "expo": "~57.0.10",
     "expo-constants": "~57.0.9",
     "expo-dev-client": "~57.0.10",
