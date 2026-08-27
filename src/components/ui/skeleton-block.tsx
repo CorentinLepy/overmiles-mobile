@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AccessibilityInfo,
   Animated,
@@ -18,7 +18,7 @@ type SkeletonBlockProps = Readonly<{
 
 export function SkeletonBlock({ height, width = "100%", radius, style }: SkeletonBlockProps) {
   const theme = useOverMilesTheme();
-  const opacity = useRef(new Animated.Value(0.58)).current;
+  const [opacity] = useState(() => new Animated.Value(0.58));
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
