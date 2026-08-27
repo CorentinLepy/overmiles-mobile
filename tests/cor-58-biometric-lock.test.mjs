@@ -2,9 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const packageJson = JSON.parse(
-  await readFile(new URL("../package.json", import.meta.url), "utf8"),
-);
+const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 const appJson = JSON.parse(await readFile(new URL("../app.json", import.meta.url), "utf8"));
 const biometricLock = await readFile(
   new URL("../src/lib/security/biometric-lock.ts", import.meta.url),
@@ -43,7 +41,7 @@ test("enabling the lock requires a successful biometric challenge before persist
     'this.authenticate("Activer le verrou biométrique OverMiles")',
   );
   const persistenceIndex = biometricLock.indexOf(
-    'SecureStore.setItemAsync(BIOMETRIC_LOCK_PREFERENCE_KEY, "enabled"',
+    'SecureStore.setItemAsync(\n        BIOMETRIC_LOCK_PREFERENCE_KEY,',
   );
   assert.ok(authenticationIndex >= 0 && persistenceIndex > authenticationIndex);
   assert.match(biometricLock, /catch \{\s*return \{ status: "failed" \};\s*\}/);
