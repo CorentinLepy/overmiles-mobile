@@ -68,7 +68,10 @@ test("visited map points preserve longitude-latitude GeoJSON order and provenanc
 test("camera framing handles empty single-point and multi-point histories without hidden clustering", () => {
   assert.match(viewport, /center: \[0, 20\]/);
   assert.match(viewport, /points\.length === 1/);
-  assert.match(viewport, /bounds: \[west, south, east, north\]/);
+  assert.match(
+    viewport,
+    /const bounds: \[number, number, number, number\] = \[west, south, east, north\]/,
+  );
   assert.doesNotMatch(screen, /clusterRadius|clusterMaxZoom|clusterMinPoints/);
   assert.doesNotMatch(mapData, /clusterRadius|clusterMaxZoom|clusterMinPoints/);
 });
