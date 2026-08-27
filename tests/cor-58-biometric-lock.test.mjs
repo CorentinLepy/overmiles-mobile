@@ -8,6 +8,10 @@ const biometricLock = await readFile(
   new URL("../src/lib/security/biometric-lock.ts", import.meta.url),
   "utf8",
 );
+const biometricController = await readFile(
+  new URL("../src/lib/security/biometric-lock-controller.ts", import.meta.url),
+  "utf8",
+);
 
 test("COR-58 installs the Expo 57 local authentication module and Face ID plugin", () => {
   assert.equal(packageJson.dependencies["expo-local-authentication"], "~57.0.2");
@@ -69,6 +73,24 @@ test("biometric preference stays separate from credentials and database keys", (
   assert.doesNotMatch(biometricLock, /refresh.?token|access.?token|password|database-key/i);
 });
 
+test("lifecycle controller keeps server reauthentication authoritative", () => {
+  assert.match(biometricController, /reauth_required/);
+  assert.match(biometricController, /requireServerReauthentication/);
+  assert.match(biometricController, /restoreForAuthenticatedSession/);
+  assert.match(biometricController, /clearAfterLogout/);
+  assert.doesNotMatch(biometricController, /accessToken|refreshToken|Authorization/);
+});
+
+test("cancelled or failed local unlock stays locked", () => {
+  assert.match(biometricController, /case "cancelled":/);
+  assert.match(biometricController, /case "failed":/);
+  assert.match(biometricController, /return "locked"/);
+});
+
 test("lock service has no hidden timing or background policy", () => {
   assert.doesNotMatch(biometricLock, /AppState|setTimeout|backgroundAt|gracePeriod|minutes/i);
+  assert.doesNotMatch(
+    biometricController,
+    /AppState|setTimeout|backgroundAt|gracePeriod|minutes/i,
+  );
 });
