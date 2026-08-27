@@ -18,6 +18,7 @@
     "lint": "eslint . --max-warnings=0",
     "test": "node --test tests/*.test.mjs",
     "auth:smoke": "node scripts/smoke-mobile-auth.mjs",
+    "map:config": "expo config --type public",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "structure:check": "node scripts/check-structure.mjs",
