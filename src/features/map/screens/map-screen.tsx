@@ -179,7 +179,14 @@ function StatusPill({ label, tone }: { label: string; tone: "warning" }) {
         borderColor: theme.color.border,
       }}
     >
-      <Text selectable style={{ color: tone === "warning" ? theme.color.warning : theme.color.ink, fontSize: 12, fontWeight: "800" }}>
+      <Text
+        selectable
+        style={{
+          color: tone === "warning" ? theme.color.warning : theme.color.ink,
+          fontSize: 12,
+          fontWeight: "800",
+        }}
+      >
         {label}
       </Text>
     </View>
@@ -242,7 +249,10 @@ function SelectedPointCard({ point, onClose }: { point: TripMapPoint; onClose: (
           <Text selectable style={{ color: theme.color.accent, fontSize: 12, fontWeight: "800" }}>
             {kindLabel(point.kind).toUpperCase()}
           </Text>
-          <Text selectable style={{ color: theme.color.ink, fontSize: 21, lineHeight: 25, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{ color: theme.color.ink, fontSize: 21, lineHeight: 25, fontWeight: "800" }}
+          >
             {point.label}
           </Text>
           <Text selectable style={{ color: theme.color.muted, fontSize: 14 }}>
