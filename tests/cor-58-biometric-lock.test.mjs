@@ -89,8 +89,5 @@ test("cancelled or failed local unlock stays locked", () => {
 
 test("lock service has no hidden timing or background policy", () => {
   assert.doesNotMatch(biometricLock, /AppState|setTimeout|backgroundAt|gracePeriod|minutes/i);
-  assert.doesNotMatch(
-    biometricController,
-    /AppState|setTimeout|backgroundAt|gracePeriod|minutes/i,
-  );
+  assert.doesNotMatch(biometricController, /AppState|setTimeout|backgroundAt|gracePeriod|minutes/i);
 });
