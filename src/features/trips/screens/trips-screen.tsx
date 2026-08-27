@@ -1,10 +1,11 @@
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 import { TripCard } from "../components/trip-card";
+import { TripsListLoadingSkeleton } from "../components/trips-loading-skeleton";
 import { useTripsData } from "../trips-data-provider";
 
 export function TripsScreen() {
@@ -75,20 +76,7 @@ export function TripsScreen() {
       ) : null}
 
       {isLoading ? (
-        <SectionCard>
-          <View
-            style={{
-              alignItems: "center",
-              gap: theme.spacing.md,
-              paddingVertical: theme.spacing.lg,
-            }}
-          >
-            <ActivityIndicator />
-            <Text selectable style={{ color: theme.color.muted, fontSize: 14 }}>
-              Synchronisation de vos voyages…
-            </Text>
-          </View>
-        </SectionCard>
+        <TripsListLoadingSkeleton />
       ) : trips.length === 0 ? (
         <SectionCard>
           <Text selectable style={{ color: theme.color.ink, fontSize: 22, fontWeight: "800" }}>
