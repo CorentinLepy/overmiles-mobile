@@ -1,9 +1,10 @@
 import { Link } from "expo-router";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
 import { TripCover } from "@/src/features/trips/components/trip-cover";
+import { HomeTripLoadingSkeleton } from "@/src/features/trips/components/trips-loading-skeleton";
 import {
   daysUntilTrip,
   formatCountries,
@@ -81,20 +82,7 @@ export function HomeScreen() {
       ) : null}
 
       {isLoading ? (
-        <SectionCard>
-          <View
-            style={{
-              alignItems: "center",
-              gap: theme.spacing.md,
-              paddingVertical: theme.spacing.lg,
-            }}
-          >
-            <ActivityIndicator />
-            <Text selectable style={{ color: theme.color.muted, fontSize: 14 }}>
-              Préparation de votre espace voyage…
-            </Text>
-          </View>
-        </SectionCard>
+        <HomeTripLoadingSkeleton />
       ) : nextTrip ? (
         <SectionCard>
           <TripCover trip={nextTrip} />
