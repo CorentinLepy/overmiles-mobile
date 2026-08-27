@@ -41,7 +41,7 @@ test("enabling the lock requires a successful biometric challenge before persist
     'this.authenticate("Activer le verrou biométrique OverMiles")',
   );
   const persistenceIndex = biometricLock.indexOf(
-    'SecureStore.setItemAsync(\n        BIOMETRIC_LOCK_PREFERENCE_KEY,',
+    "SecureStore.setItemAsync(\n        BIOMETRIC_LOCK_PREFERENCE_KEY,",
   );
   assert.ok(authenticationIndex >= 0 && persistenceIndex > authenticationIndex);
   assert.match(biometricLock, /catch \{\s*return \{ status: "failed" \};\s*\}/);
