@@ -13,20 +13,19 @@ export type MapInitialViewState =
       zoom?: never;
     }>;
 
-const WORLD_VIEW: MapInitialViewState = Object.freeze({
+const WORLD_VIEW: MapInitialViewState = {
   center: [0, 20],
   zoom: 1.35,
-});
+};
 
 export function getMapInitialViewState(points: readonly TripMapPoint[]): MapInitialViewState {
   if (points.length === 0) return WORLD_VIEW;
 
   if (points.length === 1) {
     const point = points[0];
-    return Object.freeze({
-      center: [point.coordinate.longitude, point.coordinate.latitude],
-      zoom: 10,
-    });
+    if (!point) return WORLD_VIEW;
+    const center: [number, number] = [point.coordinate.longitude, point.coordinate.latitude];
+    return { center, zoom: 10 };
   }
 
   let west = 180;
@@ -42,14 +41,13 @@ export function getMapInitialViewState(points: readonly TripMapPoint[]): MapInit
   }
 
   if (west === east && south === north) {
-    return Object.freeze({
-      center: [west, south],
-      zoom: 10,
-    });
+    const center: [number, number] = [west, south];
+    return { center, zoom: 10 };
   }
 
-  return Object.freeze({
-    bounds: [west, south, east, north],
-    padding: Object.freeze({ top: 92, right: 44, bottom: 190, left: 44 }),
-  });
+  const bounds: [number, number, number, number] = [west, south, east, north];
+  return {
+    bounds,
+    padding: { top: 92, right: 44, bottom: 190, left: 44 },
+  };
 }
