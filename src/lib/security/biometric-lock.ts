@@ -61,7 +61,11 @@ export class BiometricLockService {
     if (result.status !== "unlocked") return result;
 
     try {
-      await SecureStore.setItemAsync(BIOMETRIC_LOCK_PREFERENCE_KEY, "enabled", SECURE_STORE_OPTIONS);
+      await SecureStore.setItemAsync(
+        BIOMETRIC_LOCK_PREFERENCE_KEY,
+        "enabled",
+        SECURE_STORE_OPTIONS,
+      );
       return result;
     } catch {
       return { status: "failed" };
