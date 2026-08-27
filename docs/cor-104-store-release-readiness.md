@@ -74,17 +74,17 @@ Les deux plateformes doivent valider au minimum :
 
 Ce tableau est un inventaire de vérification, pas une déclaration juridique pré-remplie. Les réponses finales App Store/Play doivent correspondre exactement au build candidat et au comportement serveur au moment de la soumission.
 
-| Domaine | Données/fonctionnalités à auditer | Preuve attendue |
-| --- | --- | --- |
-| Compte | email, profil, identifiants internes | contrat API + écrans compte |
-| Auth | refresh token device-bound, sessions appareils, MFA | COR-51/52/55 + SecureStore |
-| Voyages | noms, dates, pays, étapes, événements | API Trips/Stops/Timeline |
-| Médias | photos/covers et éventuelles métadonnées | modules Photos/Media |
-| Journal | texte/souvenirs saisis par l’utilisateur | module Journal/Memories |
-| Budget | dépenses, justificatifs, OCR si activé | module Expenses |
-| Documents | documents de voyage ajoutés par l’utilisateur | module Documents |
+| Domaine      | Données/fonctionnalités à auditer                              | Preuve attendue                            |
+| ------------ | -------------------------------------------------------------- | ------------------------------------------ |
+| Compte       | email, profil, identifiants internes                           | contrat API + écrans compte                |
+| Auth         | refresh token device-bound, sessions appareils, MFA            | COR-51/52/55 + SecureStore                 |
+| Voyages      | noms, dates, pays, étapes, événements                          | API Trips/Stops/Timeline                   |
+| Médias       | photos/covers et éventuelles métadonnées                       | modules Photos/Media                       |
+| Journal      | texte/souvenirs saisis par l’utilisateur                       | module Journal/Memories                    |
+| Budget       | dépenses, justificatifs, OCR si activé                         | module Expenses                            |
+| Documents    | documents de voyage ajoutés par l’utilisateur                  | module Documents                           |
 | Localisation | coordonnées déjà enregistrées ; toute future collecte GPS live | COR-137/138 + permissions natives du build |
-| Diagnostics | logs techniques réellement envoyés hors appareil | audit réseau/logging du build candidat |
+| Diagnostics  | logs techniques réellement envoyés hors appareil               | audit réseau/logging du build candidat     |
 
 Aucune case de privacy store ne doit être cochée à partir de ce document seul.
 

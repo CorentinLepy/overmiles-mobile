@@ -22,10 +22,7 @@ test("EAS owns monotonic production build numbers and targets the canonical API"
   assert.equal(eas.build.production.autoIncrement, true);
   assert.equal(eas.build.production.channel, "production");
   assert.equal(eas.build.production.env.EXPO_PUBLIC_APP_ENV, "production");
-  assert.equal(
-    eas.build.production.env.EXPO_PUBLIC_API_BASE_URL,
-    "https://overmiles.app/api/v1",
-  );
+  assert.equal(eas.build.production.env.EXPO_PUBLIC_API_BASE_URL, "https://overmiles.app/api/v1");
 });
 
 test("development and preview distributions cannot masquerade as public store releases", () => {
