@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Image, Text, View } from "react-native";
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
@@ -16,10 +16,6 @@ export function TripCover({ trip }: TripCoverProps) {
   const { apiBaseUrl } = readPublicRuntimeConfig();
   const uri = resolveApiAssetUrl(trip.coverImageUrl, apiBaseUrl);
   const [failedUri, setFailedUri] = useState<string | null>(null);
-
-  useEffect(() => {
-    setFailedUri(null);
-  }, [uri]);
 
   const showImage = uri !== null && uri !== failedUri;
 
