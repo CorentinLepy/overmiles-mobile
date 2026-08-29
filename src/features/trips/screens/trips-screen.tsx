@@ -56,8 +56,8 @@ export function TripsScreen() {
             MODE HORS-LIGNE
           </Text>
           <Text selectable style={{ color: theme.color.muted, fontSize: 14, lineHeight: 21 }}>
-            Le serveur n’est pas joignable. Les données déjà chargées restent visibles ; le cache
-            chiffré persistant arrivera avec COR-56/COR-57.
+            Le serveur n’est pas joignable. Les données déjà chargées restent visibles. Réessayez
+            lorsque la connexion est disponible.
           </Text>
         </SectionCard>
       ) : null}
