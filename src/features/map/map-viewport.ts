@@ -1,0 +1,53 @@
+import type { TripMapPoint } from "./map.types";
+
+export type MapInitialViewState =
+  | Readonly<{
+      center: [number, number];
+      zoom: number;
+      padding?: never;
+    }>
+  | Readonly<{
+      bounds: [number, number, number, number];
+      padding: Readonly<{ top: number; right: number; bottom: number; left: number }>;
+      center?: never;
+      zoom?: never;
+    }>;
+
+const WORLD_VIEW: MapInitialViewState = {
+  center: [0, 20],
+  zoom: 1.35,
+};
+
+export function getMapInitialViewState(points: readonly TripMapPoint[]): MapInitialViewState {
+  if (points.length === 0) return WORLD_VIEW;
+
+  if (points.length === 1) {
+    const point = points[0];
+    if (!point) return WORLD_VIEW;
+    const center: [number, number] = [point.coordinate.longitude, point.coordinate.latitude];
+    return { center, zoom: 10 };
+  }
+
+  let west = 180;
+  let south = 90;
+  let east = -180;
+  let north = -90;
+
+  for (const point of points) {
+    west = Math.min(west, point.coordinate.longitude);
+    south = Math.min(south, point.coordinate.latitude);
+    east = Math.max(east, point.coordinate.longitude);
+    north = Math.max(north, point.coordinate.latitude);
+  }
+
+  if (west === east && south === north) {
+    const center: [number, number] = [west, south];
+    return { center, zoom: 10 };
+  }
+
+  const bounds: [number, number, number, number] = [west, south, east, north];
+  return {
+    bounds,
+    padding: { top: 92, right: 44, bottom: 190, left: 44 },
+  };
+}

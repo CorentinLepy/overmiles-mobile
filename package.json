@@ -18,6 +18,7 @@
     "lint": "eslint . --max-warnings=0",
     "test": "node --test tests/*.test.mjs",
     "auth:smoke": "node scripts/smoke-mobile-auth.mjs",
+    "map:config": "expo config --type public",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "structure:check": "node scripts/check-structure.mjs",
@@ -26,6 +27,7 @@
     "doctor": "npx expo-doctor@latest"
   },
   "dependencies": {
+    "@maplibre/maplibre-react-native": "11.3.6",
     "expo": "~57.0.10",
     "expo-constants": "~57.0.9",
     "expo-dev-client": "~57.0.10",
