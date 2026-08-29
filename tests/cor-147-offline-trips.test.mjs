@@ -48,7 +48,10 @@ test("Trips provider renders encrypted local data before attempting network hydr
 });
 
 test("offline cache never bypasses authenticated account scoping", () => {
-  assert.match(provider, /apiClient && user \? createTripsRepository\(apiClient, user\.id\) : null/);
+  assert.match(
+    provider,
+    /apiClient && user \? createTripsRepository\(apiClient, user\.id\) : null/,
+  );
   assert.match(provider, /status !== "authenticated" \|\| !repository/);
   assert.match(repository, /localStore\.list\(accountUserId\)/);
   assert.match(repository, /localStore\.getById\(accountUserId, tripId\)/);
