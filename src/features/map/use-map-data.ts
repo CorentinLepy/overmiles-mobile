@@ -120,15 +120,7 @@ export function MapDataProvider({ children }: PropsWithChildren) {
 
     const result = await collectMapData(repositories, activeTrips);
     dispatch({ type: "load-finished", tripsKey: activeTripsKey, result });
-  }, [
-    isMapActive,
-    repositories,
-    runtime.inFlightTripsKey,
-    status,
-    trips,
-    tripsKey,
-    tripsLoading,
-  ]);
+  }, [isMapActive, repositories, runtime.inFlightTripsKey, status, trips, tripsKey, tripsLoading]);
 
   const value = useMemo<MapDataContextValue>(
     () => ({ state: runtime.data, isRefreshing: runtime.isRefreshing, refresh }),
