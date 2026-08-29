@@ -9,13 +9,16 @@ import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 export default function TabLayout() {
   const theme = useOverMilesTheme();
-  const { status } = useAuth();
+  const { status, user } = useAuth();
 
   if (status === "restoring") {
     return <AuthLoadingScreen />;
   }
 
-  if (status !== "authenticated") {
+  const hasLocalContentSession =
+    status === "authenticated" || (status === "offline_auth_pending" && user !== null);
+
+  if (!hasLocalContentSession) {
     return <Redirect href="/login" />;
   }
 
