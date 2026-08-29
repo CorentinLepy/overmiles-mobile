@@ -125,7 +125,11 @@ test("profile exposes hydrated identity and explicit server-revoking logout", ()
   assert.match(profileScreen, /user\?\.displayName \|\| user\?\.email/);
   assert.match(profileScreen, /secondaryIdentity/);
   assert.match(profileScreen, /accessibilityLabel="Se déconnecter"/);
-  assert.match(profileScreen, /accessibilityState=\{\{ disabled: isBusy, busy: isBusy \}\}/);
+  assert.match(profileScreen, /const securityBusy = isBusy \|\| biometricBusy/);
+  assert.match(
+    profileScreen,
+    /accessibilityState=\{\{ disabled: securityBusy, busy: isBusy \}\}/,
+  );
   assert.match(profileScreen, /void logout\(\)/);
   assert.match(profileScreen, /useAuth\(\)/);
   assert.doesNotMatch(profileScreen, /COR-58/);
