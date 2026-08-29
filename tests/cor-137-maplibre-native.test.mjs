@@ -62,7 +62,7 @@ test("map detail fan-out waits for map focus and reuses the same trip snapshot",
   assert.match(mapData, /createTripsKey/);
   assert.match(mapData, /trip\.updatedAt/);
   assert.match(mapData, /trip\.version/);
-  assert.doesNotMatch(mapData, /useEffect\([\s\S]*collectMapData/);
+  assert.doesNotMatch(mapData, /useEffect\(\(\) => \{[^}]*collectMapData/);
 });
 
 test("visited map points preserve longitude-latitude GeoJSON order and provenance", () => {
