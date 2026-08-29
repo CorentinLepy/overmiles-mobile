@@ -1,5 +1,4 @@
 import { Camera, GeoJSONSource, Layer, Map } from "@maplibre/maplibre-react-native";
-import { usePathname } from "expo-router";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
@@ -13,10 +12,8 @@ import { useMapData } from "../use-map-data";
 
 export function MapScreen() {
   const theme = useOverMilesTheme();
-  const pathname = usePathname();
   const runtimeConfig = useMemo(() => readPublicRuntimeConfig(), []);
-  const isMapActive = pathname === "/map";
-  const { state, isRefreshing, refresh } = useMapData(isMapActive);
+  const { state, isRefreshing, refresh } = useMapData();
   const points = pointsFromState(state);
   const featureCollection = useMemo(() => createVisitedPointsFeatureCollection(points), [points]);
   const initialViewState = useMemo(() => getMapInitialViewState(points), [points]);
