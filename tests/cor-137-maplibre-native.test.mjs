@@ -55,13 +55,14 @@ test("native map renders only OverMiles data and never calls geocoding providers
 
 test("map detail fan-out waits for map focus and reuses the same trip snapshot", () => {
   assert.match(mapData, /useFocusEffect/);
-  assert.doesNotMatch(mapData, /useEffect\(/);
+  assert.match(mapData, /useEffect\(\(\) => \{\s*tripsRef\.current = trips;\s*\}, \[trips\]\);/);
   assert.match(mapData, /loadedTripsKeyRef/);
   assert.match(mapData, /inFlightTripsKeyRef/);
   assert.match(mapData, /loadedTripsKeyRef\.current === activeTripsKey/);
   assert.match(mapData, /createTripsKey/);
   assert.match(mapData, /trip\.updatedAt/);
   assert.match(mapData, /trip\.version/);
+  assert.doesNotMatch(mapData, /useEffect\([\s\S]*collectMapData/);
 });
 
 test("visited map points preserve longitude-latitude GeoJSON order and provenance", () => {
