@@ -6,9 +6,11 @@ import { BiometricLockScreen } from "@/src/features/auth/screens/biometric-lock-
 import { AuthProvider, useAuth } from "@/src/providers/auth-provider";
 
 function RootNavigator() {
-  const { status, biometricState } = useAuth();
+  const { status, user, biometricState } = useAuth();
+  const hasLocalContentSession =
+    status === "authenticated" || (status === "offline_auth_pending" && user !== null);
   const isLocallyLocked =
-    status === "authenticated" &&
+    hasLocalContentSession &&
     (biometricState === "locked" || biometricState === "reauth_required");
 
   if (isLocallyLocked) {
