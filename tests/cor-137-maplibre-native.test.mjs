@@ -56,10 +56,7 @@ test("native map renders only OverMiles data and never calls geocoding providers
 
 test("map detail fan-out is gated by active pathname and cached above native tab remounts", () => {
   assert.match(tabsLayout, /MapDataProvider/);
-  assert.match(
-    tabsLayout,
-    /<TripsDataProvider>[\s\S]*<MapDataProvider>[\s\S]*<NativeTabs/,
-  );
+  assert.match(tabsLayout, /<TripsDataProvider>[\s\S]*<MapDataProvider>[\s\S]*<NativeTabs/);
   assert.match(mapData, /usePathname/);
   assert.match(mapData, /pathname === "\/map"/);
   assert.match(mapData, /pathname\.startsWith\("\/map\/"\)/);
