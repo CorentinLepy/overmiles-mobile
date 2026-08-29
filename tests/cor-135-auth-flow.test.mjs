@@ -99,7 +99,8 @@ test("native MFA screen supports TOTP and one-time recovery codes without direct
   assert.match(mfaScreen, /completeMfa\(factor, normalizedCode\)/);
   assert.match(mfaScreen, /keyboardType=\{isTotp \? "number-pad" : "default"\}/);
   assert.match(mfaScreen, /autoComplete=\{isTotp \? "one-time-code" : "off"\}/);
-  assert.match(mfaScreen, /Aucun jeton de session n’est créé ni enregistré/);
+  assert.match(mfaScreen, /Votre session ne s’ouvrira qu’après cette vérification/);
+  assert.doesNotMatch(mfaScreen, /jeton de session|Access Token|Refresh Token/i);
   assert.doesNotMatch(mfaScreen, /fetch\(|axios/i);
 });
 
