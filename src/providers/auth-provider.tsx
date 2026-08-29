@@ -125,8 +125,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setStatus(nextState);
       setPendingMfa(null);
 
-      if (nextState === "anonymous") {
+      if (nextState !== "authenticated") {
         setUser(null);
+      }
+
+      if (nextState === "anonymous") {
         resetBiometricRuntimeState();
       }
 

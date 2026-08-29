@@ -55,8 +55,14 @@ test("Trips stay local-only while session verification is offline", () => {
 
 test("logout unauthorized recovery and biometric reauth destroy local private data", () => {
   assert.match(authProvider, /localDatabase\.purge\(\)/);
-  assert.match(authProvider, /await sessionManager\.clearLocalSession\(\);\n      await purgeLocalPrivateData\(\)/);
-  assert.match(authProvider, /await sessionManager\.logout\(\);[\s\S]*await purgeLocalPrivateData\(\)/);
+  assert.match(
+    authProvider,
+    /await sessionManager\.clearLocalSession\(\);\n      await purgeLocalPrivateData\(\)/,
+  );
+  assert.match(
+    authProvider,
+    /await sessionManager\.logout\(\);[\s\S]*await purgeLocalPrivateData\(\)/,
+  );
   assert.match(
     authProvider,
     /await sessionManager\?\.clearLocalSession\(\);\n      await purgeLocalPrivateData\(\)/,
