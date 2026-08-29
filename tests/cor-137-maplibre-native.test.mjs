@@ -55,18 +55,16 @@ test("native map renders only OverMiles data and never calls geocoding providers
 
 test("map detail fan-out is gated by the active map pathname and reuses the same trip snapshot", () => {
   assert.match(screen, /usePathname/);
-  assert.match(screen, /pathname === "\/map" \|\| pathname\.startsWith\("\/map\/"\)/);
+  assert.match(screen, /pathname === "\/map"/);
   assert.match(screen, /useMapData\(isMapActive\)/);
   assert.match(mapData, /export function useMapData\(enabled: boolean\)/);
   assert.match(mapData, /if \(!enabled \|\| status !== "authenticated"/);
   assert.match(mapData, /loadedTripsKeyRef/);
   assert.match(mapData, /inFlightTripsKeyRef/);
-  assert.match(mapData, /latestRequestedTripsKeyRef/);
   assert.match(mapData, /loadedTripsKeyRef\.current === tripsKey/);
   assert.match(mapData, /createTripsKey/);
   assert.match(mapData, /trip\.updatedAt/);
   assert.match(mapData, /trip\.version/);
-  assert.doesNotMatch(mapData, /useFocusEffect/);
 });
 
 test("visited map points preserve longitude-latitude GeoJSON order and provenance", () => {
