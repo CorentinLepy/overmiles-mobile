@@ -38,6 +38,12 @@
       ],
       "expo-secure-store",
       [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Utiliser Face ID pour déverrouiller OverMiles sur cet appareil."
+        }
+      ],
+      [
         "expo-sqlite",
         {
           "useSQLCipher": true
