@@ -82,7 +82,7 @@ export function ProfileAccountScreen() {
         >
           <Text
             style={{
-              color: biometricEnabled ? theme.color.ink : theme.color.accentInk,
+              color: biometricEnabled ? theme.color.ink : theme.color.canvas,
               fontSize: 15,
               fontWeight: "800",
             }}
