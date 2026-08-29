@@ -112,6 +112,14 @@ test("MFA completion persists tokens only after the server returns an authentica
   assert.doesNotMatch(provider, /SecureStore.*challenge|challenge.*SecureStore/i);
 });
 
+test("server-expired or consumed MFA challenges force a fresh password login", () => {
+  assert.match(provider, /error\.code === "MFA_CHALLENGE_EXPIRED"/);
+  assert.match(provider, /Date\.parse\(pendingMfa\.expiresAt\) <= Date\.now\(\)/);
+  assert.match(provider, /setPendingMfa\(null\)/);
+  assert.match(provider, /setStatus\("anonymous"\)/);
+  assert.match(provider, /La vérification MFA a expiré\. Reconnectez-vous\./);
+});
+
 test("profile exposes hydrated identity and explicit server-revoking logout", () => {
   assert.match(profileScreen, /user\?\.displayName \|\| user\?\.email/);
   assert.match(profileScreen, /secondaryIdentity/);
