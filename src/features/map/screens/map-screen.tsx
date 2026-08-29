@@ -1,6 +1,7 @@
 import { Camera, GeoJSONSource, Layer, Map } from "@maplibre/maplibre-react-native";
 import { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
@@ -10,8 +11,11 @@ import { getMapInitialViewState } from "../map-viewport";
 import type { MapDataState, TripMapPoint } from "../map.types";
 import { useMapData } from "../use-map-data";
 
+const NATIVE_TAB_BAR_CLEARANCE = 72;
+
 export function MapScreen() {
   const theme = useOverMilesTheme();
+  const insets = useSafeAreaInsets();
   const runtimeConfig = useMemo(() => readPublicRuntimeConfig(), []);
   const { state, isRefreshing, refresh } = useMapData();
   const points = pointsFromState(state);
@@ -146,7 +150,11 @@ export function MapScreen() {
       ) : null}
 
       {selectedPoint ? (
-        <SelectedPointCard point={selectedPoint} onClose={() => setSelectedPointId(null)} />
+        <SelectedPointCard
+          point={selectedPoint}
+          onClose={() => setSelectedPointId(null)}
+          bottomInset={insets.bottom}
+        />
       ) : null}
     </View>
   );
@@ -224,7 +232,15 @@ function CenterCard({ title, description }: { title: string; description: string
   );
 }
 
-function SelectedPointCard({ point, onClose }: { point: TripMapPoint; onClose: () => void }) {
+function SelectedPointCard({
+  point,
+  onClose,
+  bottomInset,
+}: {
+  point: TripMapPoint;
+  onClose: () => void;
+  bottomInset: number;
+}) {
   const theme = useOverMilesTheme();
 
   return (
@@ -233,7 +249,7 @@ function SelectedPointCard({ point, onClose }: { point: TripMapPoint; onClose: (
         position: "absolute",
         left: theme.spacing.md,
         right: theme.spacing.md,
-        bottom: theme.spacing.md,
+        bottom: bottomInset + NATIVE_TAB_BAR_CLEARANCE,
         gap: theme.spacing.sm,
         padding: theme.spacing.lg,
         borderRadius: theme.radius.card,
