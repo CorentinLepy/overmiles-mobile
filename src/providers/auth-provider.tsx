@@ -263,7 +263,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
       } catch (error) {
         if (error instanceof ApiError && error.kind === "unauthorized") {
           const expired =
-            error.code === "MFA_CHALLENGE_EXPIRED" || Date.parse(pendingMfa.expiresAt) <= Date.now();
+            error.code === "MFA_CHALLENGE_EXPIRED" ||
+            Date.parse(pendingMfa.expiresAt) <= Date.now();
           if (expired) {
             setPendingMfa(null);
             setStatus("anonymous");
