@@ -27,11 +27,13 @@ jobs:
         run: |
           pnpm exec prettier --write \
             src/features/auth/screens/login-screen.tsx \
+            src/features/auth/screens/mfa-screen.tsx \
             src/features/auth/screens/profile-account-screen.tsx \
             src/providers/auth-provider.tsx \
             tests/cor-135-auth-flow.test.mjs
           if ! git diff --quiet -- \
             src/features/auth/screens/login-screen.tsx \
+            src/features/auth/screens/mfa-screen.tsx \
             src/features/auth/screens/profile-account-screen.tsx \
             src/providers/auth-provider.tsx \
             tests/cor-135-auth-flow.test.mjs; then
@@ -39,6 +41,7 @@ jobs:
             git config user.email "actions@users.noreply.github.com"
             git add \
               src/features/auth/screens/login-screen.tsx \
+              src/features/auth/screens/mfa-screen.tsx \
               src/features/auth/screens/profile-account-screen.tsx \
               src/providers/auth-provider.tsx \
               tests/cor-135-auth-flow.test.mjs

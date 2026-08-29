@@ -14,5 +14,9 @@ export default function IndexRoute() {
     return <Redirect href="/home" />;
   }
 
+  if (status === "mfa_required") {
+    return <Redirect href="/mfa" />;
+  }
+
   return <Redirect href="/login" />;
 }

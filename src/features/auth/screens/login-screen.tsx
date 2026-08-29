@@ -17,11 +17,15 @@ export function LoginScreen() {
   useEffect(() => {
     if (status === "authenticated") {
       router.replace("/home");
+    } else if (status === "mfa_required") {
+      router.replace("/mfa");
     }
   }, [router, status]);
 
   async function submit() {
-    await login(email, password);
+    const normalizedEmail = email.trim();
+    if (isBusy || !normalizedEmail || !password) return;
+    await login(normalizedEmail, password);
   }
 
   return (
@@ -64,6 +68,7 @@ export function LoginScreen() {
             <Text style={{ color: theme.color.ink, fontSize: 14, fontWeight: "700" }}>E-mail</Text>
             <TextInput
               accessibilityLabel="Adresse e-mail"
+              accessibilityHint="Saisissez l’adresse e-mail de votre compte OverMiles"
               autoCapitalize="none"
               autoComplete="email"
               autoCorrect={false}
@@ -92,8 +97,10 @@ export function LoginScreen() {
             </Text>
             <TextInput
               accessibilityLabel="Mot de passe"
+              accessibilityHint="Saisissez le mot de passe de votre compte OverMiles"
               autoCapitalize="none"
               autoComplete="password"
+              autoCorrect={false}
               onChangeText={setPassword}
               placeholder="Votre mot de passe"
               placeholderTextColor={theme.color.muted}
@@ -133,6 +140,7 @@ export function LoginScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Réessayer de vérifier la session"
+              accessibilityState={{ disabled: isBusy, busy: isBusy }}
               disabled={isBusy}
               onPress={() => void retryRestore()}
               style={({ pressed }) => ({
@@ -142,7 +150,7 @@ export function LoginScreen() {
                 borderWidth: 1,
                 borderColor: theme.color.border,
                 borderRadius: theme.radius.pill,
-                opacity: pressed ? 0.72 : 1,
+                opacity: isBusy ? 0.45 : pressed ? 0.72 : 1,
               })}
             >
               <Text style={{ color: theme.color.ink, fontSize: 14, fontWeight: "700" }}>
@@ -154,6 +162,10 @@ export function LoginScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Se connecter"
+            accessibilityState={{
+              disabled: isBusy || !email.trim() || !password,
+              busy: isBusy,
+            }}
             disabled={isBusy || !email.trim() || !password}
             onPress={() => void submit()}
             style={({ pressed }) => ({
@@ -171,8 +183,7 @@ export function LoginScreen() {
           </Pressable>
 
           <Text selectable style={{ color: theme.color.muted, fontSize: 13, lineHeight: 19 }}>
-            Google et Apple seront ajoutés via le chantier SSO dédié. Aucun fournisseur externe
-            n’est simulé ici.
+            Votre mot de passe n’est pas conservé par l’application sur cet appareil.
           </Text>
         </SectionCard>
       </AppScreen>

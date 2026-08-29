@@ -22,24 +22,45 @@ Les états sont explicites :
 
 - `authenticated` → accès à l’AppShell ;
 - `anonymous` → écran de connexion ;
+- `mfa_required` → mot de passe validé mais aucun token de session n’a encore été émis ;
 - `offline_auth_pending` → le credential local n’est pas détruit et l’utilisateur peut relancer la vérification lorsque le réseau revient.
 
 La connexion utilise exclusivement le transport centralisé COR-55. Le formulaire ne réalise aucun `fetch` direct et l’Access Token reste mémoire-only. La déconnexion appelle la révocation serveur puis efface les credentials locaux même si le serveur devient indisponible pendant l’opération.
 
 Google et Apple restent gérés par le chantier SSO dédié ; COR-135 ne simule aucun fournisseur externe.
 
-## Validation automatisée COR-135
+## MFA mobile — COR-176
 
-Avant la passe de formatage finale, la CI valide déjà :
+Le MFA utilisateur V1 reste **TOTP + codes de récupération** et réutilise le moteur MFA serveur existant. Le mobile ne possède aucune implémentation cryptographique TOTP locale.
+
+Le contrat de connexion est désormais en deux branches :
+
+1. compte sans MFA : `POST /auth/mobile/login` retourne directement la session mobile ;
+2. compte avec MFA : `POST /auth/mobile/login` retourne uniquement `mfaRequired=true`, un `challengeId` opaque et son expiration.
+
+Dans le second cas :
+
+- aucun Access Token n’est créé côté client ;
+- aucun Refresh Token n’est reçu ou stocké ;
+- le challenge reste uniquement en mémoire ;
+- l’utilisateur valide un TOTP ou un code de récupération via `POST /auth/mobile/login/mfa` ;
+- le backend consomme le challenge à usage unique et n’émet la session mobile qu’après validation du facteur ;
+- le Refresh Token final est ensuite stocké dans SecureStore avant que le nouvel Access Token soit exposé par `AuthSessionManager`.
+
+Un challenge expiré ou déjà consommé impose de recommencer la connexion par mot de passe. Un mauvais code ne doit jamais produire de token. Les valeurs MFA et les challenges ne doivent pas être journalisés.
+
+## Validation automatisée COR-135 / COR-176
+
+La CI doit notamment garantir :
 
 - installation figée avec politique supply-chain ;
 - TypeScript strict ;
 - ESLint sans warning ;
-- 22/22 tests auth, navigation, réseau et sécurité ;
 - absence de stockage persistant de l’Access Token ;
-- absence de `fetch` direct dans l’écran de connexion.
-
-Le formatage Prettier est traité comme le dernier gate statique avant Expo config et Expo Doctor.
+- absence de `fetch` direct dans les écrans d’authentification ;
+- le chemin `mfaRequired` ne passe jamais par `acceptSession` ;
+- le challenge MFA reste mémoire-only ;
+- la session n’est acceptée qu’après la réponse authentifiée de `/auth/mobile/login/mfa`.
 
 ## Appareils connectés
 

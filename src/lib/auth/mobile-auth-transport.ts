@@ -19,6 +19,14 @@ export type MobileLoginInput = Readonly<{
   password: string;
 }>;
 
+export type MobileMfaFactor = "totp" | "recovery";
+
+export type MobileMfaInput = Readonly<{
+  challengeId: string;
+  factor: MobileMfaFactor;
+  code: string;
+}>;
+
 export type MobileAuthUser = Readonly<{
   id: string;
   email: string;
@@ -30,13 +38,22 @@ export type MobileAuthUser = Readonly<{
   role: string;
 }>;
 
-export type MobileLoginResponse = MobileSessionTokens &
+export type MobileAuthenticatedResponse = MobileSessionTokens &
   Readonly<{
+    mfaRequired: false;
     user: MobileAuthUser;
     accessTokenExpiresIn: number;
     refreshTokenExpiresAt: string;
     sessionId: string;
   }>;
+
+export type MobileMfaChallengeResponse = Readonly<{
+  mfaRequired: true;
+  challengeId: string;
+  challengeExpiresAt: string;
+}>;
+
+export type MobileLoginResponse = MobileAuthenticatedResponse | MobileMfaChallengeResponse;
 
 export type MobileRefreshResponse = MobileSessionTokens &
   Readonly<{
@@ -47,6 +64,7 @@ export type MobileRefreshResponse = MobileSessionTokens &
 
 export interface MobileAuthTransport {
   login(input: MobileLoginInput): Promise<MobileLoginResponse>;
+  completeMfa(input: MobileMfaInput): Promise<MobileAuthenticatedResponse>;
   refresh: RefreshTransport;
   logout: LogoutTransport;
 }
@@ -57,6 +75,13 @@ export function createMobileAuthTransport(baseUrl: string): MobileAuthTransport 
   return {
     login(input) {
       return postJson<MobileLoginResponse>(normalizedBaseUrl, "/auth/mobile/login", input);
+    },
+    completeMfa(input) {
+      return postJson<MobileAuthenticatedResponse>(
+        normalizedBaseUrl,
+        "/auth/mobile/login/mfa",
+        input,
+      );
     },
     refresh(refreshToken) {
       return postJson<MobileRefreshResponse>(normalizedBaseUrl, "/auth/mobile/refresh", {
