@@ -44,9 +44,11 @@ test("trips repository uses the centralized authenticated API client", () => {
   assert.doesNotMatch(repository, /fetch\(|axios/i);
 });
 
-test("authenticated tabs share one trips data provider", () => {
+test("authenticated tabs share one offline-first trips data provider", () => {
   assert.match(tabsLayout, /TripsDataProvider/);
-  assert.match(provider, /repository\.list\(\)/);
+  assert.match(provider, /activeRepository\.listCached\(\)/);
+  assert.match(provider, /activeRepository\.refresh\(\)/);
+  assert.match(provider, /repository\.getCachedById\(tripId\)/);
   assert.match(provider, /repository\.getById\(tripId\)/);
   assert.match(provider, /ensureTrip/);
 });

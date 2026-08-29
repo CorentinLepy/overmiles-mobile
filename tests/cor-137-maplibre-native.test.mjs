@@ -75,6 +75,13 @@ test("map detail fan-out is gated by active pathname and cached above native tab
   assert.doesNotMatch(mapData, /useRef|\.current/);
 });
 
+test("selected map point detail remains above the native tab bar", () => {
+  assert.match(screen, /useSafeAreaInsets/);
+  assert.match(screen, /NATIVE_TAB_BAR_CLEARANCE = 72/);
+  assert.match(screen, /bottomInset=\{insets\.bottom\}/);
+  assert.match(screen, /bottom: bottomInset \+ NATIVE_TAB_BAR_CLEARANCE/);
+});
+
 test("visited map points preserve longitude-latitude GeoJSON order and provenance", () => {
   assert.match(geojson, /type: "FeatureCollection"/);
   assert.match(geojson, /type: "Point"/);

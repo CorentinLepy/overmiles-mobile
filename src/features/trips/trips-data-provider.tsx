@@ -29,10 +29,10 @@ type TripsDataContextValue = Readonly<{
 const TripsDataContext = createContext<TripsDataContextValue | null>(null);
 
 export function TripsDataProvider({ children }: PropsWithChildren) {
-  const { apiClient, status } = useAuth();
+  const { apiClient, status, user } = useAuth();
   const repository = useMemo(
-    () => (apiClient ? createTripsRepository(apiClient) : null),
-    [apiClient],
+    () => (apiClient && user ? createTripsRepository(apiClient, user.id) : null),
+    [apiClient, user],
   );
   const [trips, setTrips] = useState<TripSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,10 +47,22 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
     let active = true;
 
     async function loadInitialTrips() {
+      setIsLoading(true);
+
       try {
-        const nextTrips = await activeRepository.list();
+        const cachedTrips = await activeRepository.listCached();
         if (!active) return;
-        setTrips(sortTrips(nextTrips));
+        setTrips(sortTrips(cachedTrips));
+        if (cachedTrips.length > 0) setIsLoading(false);
+      } catch {
+        if (!active) return;
+        setTrips([]);
+      }
+
+      try {
+        const hydratedTrips = await activeRepository.refresh();
+        if (!active) return;
+        setTrips(sortTrips(hydratedTrips));
         setErrorMessage(null);
         setIsOffline(false);
       } catch (error) {
@@ -73,8 +85,8 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
 
     setIsRefreshing(true);
     try {
-      const nextTrips = await repository.list();
-      setTrips(sortTrips(nextTrips));
+      const hydratedTrips = await repository.refresh();
+      setTrips(sortTrips(hydratedTrips));
       setErrorMessage(null);
       setIsOffline(false);
     } catch (error) {
@@ -92,11 +104,17 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
 
   const ensureTrip = useCallback(
     async (tripId: string): Promise<TripSummary | null> => {
-      const cached = trips.find((trip) => trip.id === tripId);
-      if (cached) return cached;
+      const inMemory = trips.find((trip) => trip.id === tripId);
+      if (inMemory) return inMemory;
       if (!repository || status !== "authenticated") return null;
 
       try {
+        const cached = await repository.getCachedById(tripId);
+        if (cached) {
+          setTrips((current) => sortTrips(upsertTrip(current, cached)));
+          return cached;
+        }
+
         const loaded = await repository.getById(tripId);
         setTrips((current) => sortTrips(upsertTrip(current, loaded)));
         setErrorMessage(null);

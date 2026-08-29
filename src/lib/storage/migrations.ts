@@ -68,6 +68,24 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
         ON pending_operations (state, next_attempt_at, created_at);
     `,
   },
+  {
+    version: 3,
+    name: "offline-trip-cache",
+    sql: `
+      CREATE TABLE IF NOT EXISTS cached_trips (
+        account_user_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        server_version INTEGER,
+        server_updated_at TEXT NOT NULL,
+        cached_at TEXT NOT NULL,
+        PRIMARY KEY (account_user_id, trip_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_cached_trips_account_updated
+        ON cached_trips (account_user_id, server_updated_at DESC);
+    `,
+  },
 ];
 
 export async function runLocalMigrations(db: SQLiteDatabase): Promise<void> {
