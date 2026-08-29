@@ -5,6 +5,12 @@ on:
     paths-ignore:
       - "**/*.md"
       - "docs/**"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
   workflow_dispatch:
 
 permissions:
@@ -42,12 +48,14 @@ jobs:
         run: pnpm verify
 
       - name: Validate Expo configuration
+        if: ${{ github.event_name != 'push' }}
         run: npx expo config --type public > /dev/null
 
       - name: Run Expo Doctor
+        if: ${{ github.event_name != 'push' }}
         run: pnpm doctor
 
       - name: Report Expo dependency compatibility
-        if: ${{ !cancelled() }}
+        if: ${{ github.event_name != 'push' && !cancelled() }}
         continue-on-error: true
         run: npx expo install --check
