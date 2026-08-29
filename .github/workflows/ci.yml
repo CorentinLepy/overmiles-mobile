@@ -22,7 +22,9 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
+    env:
+      EXPO_NO_TELEMETRY: "1"
 
     steps:
       - name: Checkout
@@ -49,14 +51,18 @@ jobs:
         run: pnpm verify
 
       - name: Validate Expo configuration
-        if: ${{ github.event_name != 'push' }}
         run: npx expo config --type public > /dev/null
 
       - name: Run Expo Doctor
-        if: ${{ github.event_name != 'push' }}
         run: pnpm doctor
 
       - name: Report Expo dependency compatibility
-        if: ${{ github.event_name != 'push' && !cancelled() }}
+        if: ${{ !cancelled() }}
         continue-on-error: true
         run: npx expo install --check
+
+      - name: Bundle iOS
+        run: npx expo export --platform ios --output-dir .expo-ci/ios --clear
+
+      - name: Bundle Android
+        run: npx expo export --platform android --output-dir .expo-ci/android --clear
