@@ -53,16 +53,20 @@ test("native map renders only OverMiles data and never calls geocoding providers
   assert.doesNotMatch(mapData, /geoapify|google maps|webview|fetch\(|axios/i);
 });
 
-test("map detail fan-out waits for map focus and reuses the same trip snapshot", () => {
-  assert.match(mapData, /useFocusEffect/);
-  assert.match(mapData, /useEffect\(\(\) => \{\s*tripsRef\.current = trips;\s*\}, \[trips\]\);/);
+test("map detail fan-out is gated by the active map pathname and reuses the same trip snapshot", () => {
+  assert.match(screen, /usePathname/);
+  assert.match(screen, /pathname === "\/map" \|\| pathname\.startsWith\("\/map\/"\)/);
+  assert.match(screen, /useMapData\(isMapActive\)/);
+  assert.match(mapData, /export function useMapData\(enabled: boolean\)/);
+  assert.match(mapData, /if \(!enabled \|\| status !== "authenticated"/);
   assert.match(mapData, /loadedTripsKeyRef/);
   assert.match(mapData, /inFlightTripsKeyRef/);
-  assert.match(mapData, /loadedTripsKeyRef\.current === activeTripsKey/);
+  assert.match(mapData, /latestRequestedTripsKeyRef/);
+  assert.match(mapData, /loadedTripsKeyRef\.current === tripsKey/);
   assert.match(mapData, /createTripsKey/);
   assert.match(mapData, /trip\.updatedAt/);
   assert.match(mapData, /trip\.version/);
-  assert.doesNotMatch(mapData, /useEffect\(\(\) => \{[^}]*collectMapData/);
+  assert.doesNotMatch(mapData, /useFocusEffect/);
 });
 
 test("visited map points preserve longitude-latitude GeoJSON order and provenance", () => {
