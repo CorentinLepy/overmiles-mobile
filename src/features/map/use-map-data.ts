@@ -47,10 +47,7 @@ export function useMapData(enabled: boolean): UseMapDataResult {
 
   useEffect(() => {
     if (!enabled || status !== "authenticated" || !repositories || tripsLoading) return;
-    if (
-      loadedTripsKeyRef.current === tripsKey ||
-      inFlightTripsKeyRef.current === tripsKey
-    ) {
+    if (loadedTripsKeyRef.current === tripsKey || inFlightTripsKeyRef.current === tripsKey) {
       return;
     }
 
