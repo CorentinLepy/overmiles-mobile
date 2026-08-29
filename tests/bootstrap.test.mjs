@@ -17,12 +17,17 @@ test("package.json pins the approved Expo 57 baseline", async () => {
   assert.match(pkg.scripts.verify, /structure:check/);
 });
 
-test("EAS keeps channels separated and production targets the canonical API", async () => {
+test("EAS keeps channels separated and every build profile targets the canonical API", async () => {
   const eas = await readJson("eas.json");
+  const canonicalApi = "https://overmiles.app/api/v1";
+
   assert.equal(eas.build.development.channel, "development");
   assert.equal(eas.build.preview.channel, "preview");
   assert.equal(eas.build.production.channel, "production");
-  assert.equal(eas.build.production.env.EXPO_PUBLIC_API_BASE_URL, "https://overmiles.app/api/v1");
+
+  for (const profile of ["development", "preview", "production"]) {
+    assert.equal(eas.build[profile].env.EXPO_PUBLIC_API_BASE_URL, canonicalApi);
+  }
 });
 
 test("real environment files are ignored while .env.example stays tracked", async () => {
