@@ -2,21 +2,22 @@ name: Mobile CI
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: mobile-ci-${{ github.workflow }}-${{ github.ref }}
+  group: mobile-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
 
     steps:
       - name: Checkout
@@ -40,15 +41,13 @@ jobs:
       - name: Verify repository
         run: pnpm verify
 
-      # Expo can recommend patch releases before they pass our pnpm minimum-release-age policy.
-      # Keep this visible as an advisory signal; frozen install, supply-chain policy and Expo Doctor
-      # remain blocking gates.
-      - name: Report Expo dependency compatibility
-        continue-on-error: true
-        run: npx expo install --check
-
       - name: Validate Expo configuration
         run: npx expo config --type public > /dev/null
 
       - name: Run Expo Doctor
         run: pnpm doctor
+
+      - name: Report Expo dependency compatibility
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npx expo install --check
