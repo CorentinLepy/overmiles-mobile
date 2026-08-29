@@ -68,6 +68,7 @@ test("trips screen covers loading offline error empty and pull-to-refresh states
   assert.match(trips, /trips\.length === 0/);
   assert.match(trips, /onRefresh=\{\(\) => void refresh\(\)\}/);
   assert.match(trips, /TripCard/);
+  assert.doesNotMatch(trips, /COR-\d+/);
   assert.doesNotMatch(trips, /fetch\(|axios/i);
 });
 
@@ -79,6 +80,7 @@ test("trip cards render resilient native covers without bypassing API URL rules"
   assert.match(assetUrl, /candidate\.startsWith\(API_PREFIX\)/);
   assert.match(assetUrl, /parsed\.protocol === "https:"/);
   assert.match(assetUrl, /isLocalDevelopmentHost/);
+  assert.doesNotMatch(tripCard, /v\{trip\.version\}/);
   assert.doesNotMatch(tripCover, /fetch\(|axios|WebView/i);
 });
 
@@ -87,6 +89,6 @@ test("trip detail supports cached data and direct deep-link resolution", () => {
   assert.match(dynamicRoute, /TripDetailScreen tripId=\{tripId\}/);
   assert.match(detail, /findTrip\(tripId\)/);
   assert.match(detail, /ensureTrip\(tripId\)/);
-  assert.match(detail, /Version synchronisée/);
+  assert.doesNotMatch(detail, /Version synchronisée|contrat de session mobile|COR-\d+/);
   assert.doesNotMatch(detail, /fetch\(|axios/i);
 });
