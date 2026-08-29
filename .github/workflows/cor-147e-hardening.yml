@@ -41,11 +41,11 @@ jobs:
           from pathlib import Path
           path = Path('src/providers/auth-provider.tsx')
           content = path.read_text()
-          old = '''      if (nextState === "anonymous") {
+          old = '''if (nextState === "anonymous") {
                 setUser(null);
                 resetBiometricRuntimeState();
               }'''
-          new = '''      if (nextState !== "authenticated") {
+          new = '''if (nextState !== "authenticated") {
                 setUser(null);
               }
 
@@ -61,7 +61,7 @@ jobs:
       - name: Commit hardening
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+CorentinLepy@users.noreply.github.com"
           git add src/providers/auth-provider.tsx tests/cor-147-offline-trips.test.mjs tests/cor-147-offline-session.test.mjs tests/cor-135-auth-flow.test.mjs
           if git diff --cached --quiet; then
             echo "No changes to commit."
