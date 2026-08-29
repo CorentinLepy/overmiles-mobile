@@ -1,4 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "expo-router";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PropsWithChildren,
+} from "react";
 
 import { useTripsData } from "@/src/features/trips/trips-data-provider";
 import type { TripSummary } from "@/src/features/trips/trips.types";
@@ -19,13 +30,17 @@ type MapLoadResult = Readonly<{
   failures: readonly unknown[];
 }>;
 
-type UseMapDataResult = Readonly<{
+type MapDataContextValue = Readonly<{
   state: MapDataState;
   isRefreshing: boolean;
   refresh(): Promise<void>;
 }>;
 
-export function useMapData(enabled: boolean): UseMapDataResult {
+const MapDataContext = createContext<MapDataContextValue | null>(null);
+
+export function MapDataProvider({ children }: PropsWithChildren) {
+  const pathname = usePathname();
+  const isMapActive = pathname === "/map" || pathname.startsWith("/map/");
   const { apiClient, status } = useAuth();
   const { trips, isLoading: tripsLoading } = useTripsData();
   const repositories = useMemo<MapRepositories | null>(
@@ -46,8 +61,11 @@ export function useMapData(enabled: boolean): UseMapDataResult {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    if (!enabled || status !== "authenticated" || !repositories || tripsLoading) return;
-    if (loadedTripsKeyRef.current === tripsKey || inFlightTripsKeyRef.current === tripsKey) {
+    if (!isMapActive || status !== "authenticated" || !repositories || tripsLoading) return;
+    if (
+      loadedTripsKeyRef.current === tripsKey ||
+      inFlightTripsKeyRef.current === tripsKey
+    ) {
       return;
     }
 
@@ -80,10 +98,10 @@ export function useMapData(enabled: boolean): UseMapDataResult {
     }
 
     void loadActiveMapData();
-  }, [enabled, repositories, status, trips, tripsKey, tripsLoading]);
+  }, [isMapActive, repositories, status, trips, tripsKey, tripsLoading]);
 
   const refresh = useCallback(async () => {
-    if (!enabled || status !== "authenticated" || !repositories || tripsLoading) return;
+    if (!isMapActive || status !== "authenticated" || !repositories || tripsLoading) return;
     if (inFlightTripsKeyRef.current === tripsKey) return;
 
     const activeTrips = trips;
@@ -108,9 +126,22 @@ export function useMapData(enabled: boolean): UseMapDataResult {
       }
       setIsRefreshing(false);
     }
-  }, [enabled, repositories, status, trips, tripsKey, tripsLoading]);
+  }, [isMapActive, repositories, status, trips, tripsKey, tripsLoading]);
 
-  return { state, isRefreshing, refresh };
+  const value = useMemo<MapDataContextValue>(
+    () => ({ state, isRefreshing, refresh }),
+    [isRefreshing, refresh, state],
+  );
+
+  return createElement(MapDataContext.Provider, { value }, children);
+}
+
+export function useMapData(): MapDataContextValue {
+  const context = useContext(MapDataContext);
+  if (!context) {
+    throw new Error("useMapData doit être utilisé sous MapDataProvider.");
+  }
+  return context;
 }
 
 function createTripsKey(trips: readonly TripSummary[]): string {
