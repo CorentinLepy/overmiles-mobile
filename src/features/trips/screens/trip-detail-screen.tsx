@@ -198,25 +198,12 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
 
       <SectionCard>
         <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "800" }}>
-          Prêt pour la suite
+          Tout votre voyage, au même endroit
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Les prochaines tranches ouvriront ici les étapes, la carte, les documents, le budget et
-          les souvenirs. Cette page utilise déjà le vrai voyage OverMiles et le contrat de session
-          mobile.
+          Retrouvez ici progressivement vos étapes, la carte, les documents, le budget et vos
+          souvenirs.
         </Text>
-        {trip.version ? (
-          <Text
-            selectable
-            style={{
-              color: theme.color.muted,
-              fontSize: 12,
-              fontVariant: ["tabular-nums"],
-            }}
-          >
-            Version synchronisée : {trip.version}
-          </Text>
-        ) : null}
       </SectionCard>
     </AppScreen>
   );
