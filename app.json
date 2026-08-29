@@ -37,6 +37,12 @@
         }
       ],
       "expo-secure-store",
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
       "@maplibre/maplibre-react-native"
     ],
     "experiments": {
