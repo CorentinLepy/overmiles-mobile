@@ -38,17 +38,17 @@ export function ProfileAccountScreen() {
           </Text>
         ) : null}
         <Text selectable style={{ color: theme.color.muted, fontSize: 16, lineHeight: 23 }}>
-          Votre compte, vos appareils et vos réglages de sécurité mobile.
+          Retrouvez ici votre compte et les réglages liés à votre application OverMiles.
         </Text>
       </View>
 
       <SectionCard>
         <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "700" }}>
-          Session mobile sécurisée
+          Sécurité du compte
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Votre session longue durée est protégée par le stockage sécurisé de l’appareil. Les accès
-          courts restent uniquement en mémoire pendant l’utilisation.
+          Votre connexion est protégée par le stockage sécurisé de l’appareil et les contrôles de
+          sécurité de votre compte OverMiles.
         </Text>
         <Pressable
           accessibilityRole="button"
@@ -70,16 +70,6 @@ export function ProfileAccountScreen() {
             {isBusy ? "Déconnexion…" : "Se déconnecter"}
           </Text>
         </Pressable>
-      </SectionCard>
-
-      <SectionCard>
-        <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "700" }}>
-          Protection de l’appareil
-        </Text>
-        <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Un verrou biométrique local pourra protéger l’ouverture de l’application sans remplacer la
-          vérification de votre session par OverMiles.
-        </Text>
       </SectionCard>
     </AppScreen>
   );
