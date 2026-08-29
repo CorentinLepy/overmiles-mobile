@@ -1,50 +1,14 @@
 name: COR-135 Formatter
 
 on:
-  push:
-    branches:
-      - cor-135-mobile-auth-flow
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  format:
+  deprecated:
+    if: ${{ false }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11.20.0
-          run_install: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Format validated auth files
-        run: |
-          pnpm exec prettier --write \
-            src/features/auth/screens/login-screen.tsx \
-            src/features/auth/screens/mfa-screen.tsx \
-            src/features/auth/screens/profile-account-screen.tsx \
-            src/providers/auth-provider.tsx \
-            tests/cor-135-auth-flow.test.mjs
-          if ! git diff --quiet -- \
-            src/features/auth/screens/login-screen.tsx \
-            src/features/auth/screens/mfa-screen.tsx \
-            src/features/auth/screens/profile-account-screen.tsx \
-            src/providers/auth-provider.tsx \
-            tests/cor-135-auth-flow.test.mjs; then
-            git config user.name "overmiles-ci"
-            git config user.email "actions@users.noreply.github.com"
-            git add \
-              src/features/auth/screens/login-screen.tsx \
-              src/features/auth/screens/mfa-screen.tsx \
-              src/features/auth/screens/profile-account-screen.tsx \
-              src/providers/auth-provider.tsx \
-              tests/cor-135-auth-flow.test.mjs
-            git commit -m "COR-135 format native auth flow"
-            git push origin HEAD:cor-135-mobile-auth-flow
-          fi
+      - run: echo "Deprecated branch-specific formatter; formatting is enforced by pnpm verify."
