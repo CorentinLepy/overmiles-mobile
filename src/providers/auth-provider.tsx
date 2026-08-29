@@ -239,7 +239,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const normalizedCode = code.trim();
       if (!normalizedCode) {
         setErrorMessage(
-          factor === "totp" ? "Saisissez le code à 6 chiffres." : "Saisissez votre code de récupération.",
+          factor === "totp"
+            ? "Saisissez le code à 6 chiffres."
+            : "Saisissez votre code de récupération.",
         );
         return false;
       }
