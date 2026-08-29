@@ -17,6 +17,8 @@ export function LoginScreen() {
   useEffect(() => {
     if (status === "authenticated") {
       router.replace("/home");
+    } else if (status === "mfa_required") {
+      router.replace("/mfa");
     }
   }, [router, status]);
 
