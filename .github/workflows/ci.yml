@@ -1,10 +1,9 @@
 name: Mobile CI
 
 on:
+  # Keep the PR workflow unconditional: COR-180 will require `Mobile CI / quality`,
+  # and GitHub leaves required checks pending when a workflow is skipped by path filters.
   pull_request:
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
   push:
     branches:
       - main
