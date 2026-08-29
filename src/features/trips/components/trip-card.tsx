@@ -27,7 +27,6 @@ export function TripCard({ trip }: { trip: TripSummary }) {
             style={{
               flexDirection: "row",
               alignItems: "center",
-              justifyContent: "space-between",
               gap: theme.spacing.sm,
             }}
           >
@@ -51,11 +50,6 @@ export function TripCard({ trip }: { trip: TripSummary }) {
                 {tripTemporalLabel(trip)}
               </Text>
             </View>
-            {trip.version ? (
-              <Text selectable style={{ color: theme.color.muted, fontSize: 12 }}>
-                v{trip.version}
-              </Text>
-            ) : null}
           </View>
 
           <View style={{ gap: theme.spacing.xs }}>
