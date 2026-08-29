@@ -41,13 +41,7 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status !== "authenticated" || !repository) {
-      setTrips([]);
-      setIsLoading(status === "authenticated");
-      setIsOffline(false);
-      setErrorMessage(null);
-      return;
-    }
+    if (status !== "authenticated" || !repository) return;
 
     const activeRepository = repository;
     let active = true;
