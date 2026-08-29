@@ -47,12 +47,13 @@ test("Trips provider renders encrypted local data before attempting network hydr
   assert.match(provider, /if \(cachedTrips\.length > 0\) setIsLoading\(false\)/);
 });
 
-test("offline cache never bypasses authenticated account scoping", () => {
+test("offline cache stays account-scoped and remote detail loading stays authenticated-only", () => {
   assert.match(
     provider,
     /apiClient && user \? createTripsRepository\(apiClient, user\.id\) : null/,
   );
-  assert.match(provider, /status !== "authenticated" \|\| !repository/);
+  assert.match(provider, /status === "offline_auth_pending" && user !== null/);
+  assert.match(provider, /if \(status !== "authenticated"\) return null/);
   assert.match(repository, /localStore\.list\(accountUserId\)/);
   assert.match(repository, /localStore\.getById\(accountUserId, tripId\)/);
 });

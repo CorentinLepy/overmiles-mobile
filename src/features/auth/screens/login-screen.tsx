@@ -10,17 +10,17 @@ import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 export function LoginScreen() {
   const theme = useOverMilesTheme();
   const router = useRouter();
-  const { status, errorMessage, isBusy, login, retryRestore } = useAuth();
+  const { status, user, errorMessage, isBusy, login, retryRestore } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (status === "authenticated" || (status === "offline_auth_pending" && user)) {
       router.replace("/home");
     } else if (status === "mfa_required") {
       router.replace("/mfa");
     }
-  }, [router, status]);
+  }, [router, status, user]);
 
   async function submit() {
     const normalizedEmail = email.trim();
