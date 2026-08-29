@@ -37,14 +37,12 @@ jobs:
       - name: Regenerate lockfile without lifecycle scripts
         run: pnpm install --lockfile-only --ignore-scripts
 
-      - name: Commit generated lockfile through GitHub API
+      - name: Commit generated lockfile
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          lock_sha="$(gh api "repos/${GITHUB_REPOSITORY}/contents/pnpm-lock.yaml?ref=${GITHUB_REF_NAME}" --jq .sha)"
-          lock_content="$(base64 -w 0 pnpm-lock.yaml)"
-          gh api --method PUT "repos/${GITHUB_REPOSITORY}/contents/pnpm-lock.yaml" \
-            -f message='chore(storage): regenerate pnpm lockfile' \
-            -f content="$lock_content" \
-            -f sha="$lock_sha" \
-            -f branch="$GITHUB_REF_NAME" >/dev/null
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pnpm-lock.yaml
+          git commit -m 'chore(storage): regenerate pnpm lockfile'
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:"${GITHUB_REF_NAME}"
