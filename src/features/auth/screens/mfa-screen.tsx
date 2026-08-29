@@ -74,7 +74,8 @@ export function MfaScreen() {
             Confirmez que c’est bien vous.
           </Text>
           <Text selectable style={{ color: theme.color.muted, fontSize: 16, lineHeight: 23 }}>
-            Votre mot de passe est validé. Un second facteur est nécessaire avant d’ouvrir votre session mobile.
+            Votre mot de passe est validé. Un second facteur est nécessaire avant d’ouvrir votre
+            session mobile.
           </Text>
         </View>
 
@@ -197,7 +198,8 @@ export function MfaScreen() {
           </Pressable>
 
           <Text selectable style={{ color: theme.color.muted, fontSize: 13, lineHeight: 19 }}>
-            Aucun jeton de session n’est créé ni enregistré sur cet appareil avant la réussite de cette vérification.
+            Aucun jeton de session n’est créé ni enregistré sur cet appareil avant la réussite de
+            cette vérification.
           </Text>
         </SectionCard>
       </AppScreen>
