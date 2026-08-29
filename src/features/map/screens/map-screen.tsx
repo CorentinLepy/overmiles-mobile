@@ -14,8 +14,8 @@ import { useMapData } from "../use-map-data";
 export function MapScreen() {
   const theme = useOverMilesTheme();
   const pathname = usePathname();
-  const isMapActive = pathname === "/map" || pathname.startsWith("/map/");
   const runtimeConfig = useMemo(() => readPublicRuntimeConfig(), []);
+  const isMapActive = pathname === "/map";
   const { state, isRefreshing, refresh } = useMapData(isMapActive);
   const points = pointsFromState(state);
   const featureCollection = useMemo(() => createVisitedPointsFeatureCollection(points), [points]);
