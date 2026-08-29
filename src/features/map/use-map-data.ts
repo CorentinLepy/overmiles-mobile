@@ -1,5 +1,5 @@
 import { useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useTripsData } from "@/src/features/trips/trips-data-provider";
 import type { TripSummary } from "@/src/features/trips/trips.types";
@@ -40,12 +40,15 @@ export function useMapData(): UseMapDataResult {
     [apiClient],
   );
   const tripsRef = useRef(trips);
-  tripsRef.current = trips;
   const tripsKey = useMemo(() => createTripsKey(trips), [trips]);
   const loadedTripsKeyRef = useRef<string | null>(null);
   const inFlightTripsKeyRef = useRef<string | null>(null);
   const [state, setState] = useState<MapDataState>({ status: "idle" });
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    tripsRef.current = trips;
+  }, [trips]);
 
   useFocusEffect(
     useCallback(() => {
