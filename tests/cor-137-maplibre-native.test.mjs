@@ -68,12 +68,14 @@ test("map detail fan-out is gated by active pathname and cached above native tab
   assert.match(mapData, /export function useMapData\(\)/);
   assert.match(screen, /useMapData\(\)/);
   assert.doesNotMatch(screen, /usePathname/);
-  assert.match(mapData, /loadedTripsKeyRef/);
-  assert.match(mapData, /inFlightTripsKeyRef/);
-  assert.match(mapData, /loadedTripsKeyRef\.current === tripsKey/);
+  assert.match(mapData, /useReducer\(mapRuntimeReducer, initialRuntimeState\)/);
+  assert.match(mapData, /runtime\.loadedTripsKey === tripsKey/);
+  assert.match(mapData, /runtime\.inFlightTripsKey === tripsKey/);
+  assert.match(mapData, /state\.inFlightTripsKey !== action\.tripsKey/);
   assert.match(mapData, /createTripsKey/);
   assert.match(mapData, /trip\.updatedAt/);
   assert.match(mapData, /trip\.version/);
+  assert.doesNotMatch(mapData, /useRef|\.current/);
 });
 
 test("visited map points preserve longitude-latitude GeoJSON order and provenance", () => {
