@@ -1,4 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { usePathname } from "expo-router";
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  type PropsWithChildren,
+} from "react";
 
 import { useTripsData } from "@/src/features/trips/trips-data-provider";
 import type { TripSummary } from "@/src/features/trips/trips.types";
@@ -19,13 +29,36 @@ type MapLoadResult = Readonly<{
   failures: readonly unknown[];
 }>;
 
-type UseMapDataResult = Readonly<{
+type MapDataContextValue = Readonly<{
   state: MapDataState;
   isRefreshing: boolean;
   refresh(): Promise<void>;
 }>;
 
-export function useMapData(): UseMapDataResult {
+type MapRuntimeState = Readonly<{
+  data: MapDataState;
+  loadedTripsKey: string | null;
+  inFlightTripsKey: string | null;
+  isRefreshing: boolean;
+}>;
+
+type MapRuntimeAction =
+  | Readonly<{ type: "load-started"; tripsKey: string; refreshing: boolean }>
+  | Readonly<{ type: "load-finished"; tripsKey: string; result: MapLoadResult }>
+  | Readonly<{ type: "load-empty"; tripsKey: string }>;
+
+const initialRuntimeState: MapRuntimeState = {
+  data: { status: "idle" },
+  loadedTripsKey: null,
+  inFlightTripsKey: null,
+  isRefreshing: false,
+};
+
+const MapDataContext = createContext<MapDataContextValue | null>(null);
+
+export function MapDataProvider({ children }: PropsWithChildren) {
+  const pathname = usePathname();
+  const isMapActive = pathname === "/map" || pathname.startsWith("/map/");
   const { apiClient, status } = useAuth();
   const { trips, isLoading: tripsLoading } = useTripsData();
   const repositories = useMemo<MapRepositories | null>(
@@ -38,53 +71,109 @@ export function useMapData(): UseMapDataResult {
         : null,
     [apiClient],
   );
-  const [state, setState] = useState<MapDataState>({ status: "idle" });
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const tripsKey = useMemo(() => createTripsKey(trips), [trips]);
+  const [runtime, dispatch] = useReducer(mapRuntimeReducer, initialRuntimeState);
 
   useEffect(() => {
-    if (status !== "authenticated" || !repositories || tripsLoading) return;
+    if (!isMapActive || status !== "authenticated" || !repositories || tripsLoading) return;
+    if (runtime.loadedTripsKey === tripsKey || runtime.inFlightTripsKey === tripsKey) return;
 
     const activeRepositories = repositories;
     const activeTrips = trips;
-    let active = true;
+    const activeTripsKey = tripsKey;
+    dispatch({ type: "load-started", tripsKey: activeTripsKey, refreshing: false });
 
-    async function loadInitialMapData() {
+    async function loadActiveMapData() {
       if (activeTrips.length === 0) {
-        await Promise.resolve();
-        if (active) setState({ status: "ready", points: [] });
+        dispatch({ type: "load-empty", tripsKey: activeTripsKey });
         return;
       }
 
       const result = await collectMapData(activeRepositories, activeTrips);
-      if (!active) return;
-      setState((current) => stateFromLoadResult(result, current));
+      dispatch({ type: "load-finished", tripsKey: activeTripsKey, result });
     }
 
-    void loadInitialMapData();
-
-    return () => {
-      active = false;
-    };
-  }, [repositories, status, trips, tripsLoading]);
+    void loadActiveMapData();
+  }, [
+    isMapActive,
+    repositories,
+    runtime.inFlightTripsKey,
+    runtime.loadedTripsKey,
+    status,
+    trips,
+    tripsKey,
+    tripsLoading,
+  ]);
 
   const refresh = useCallback(async () => {
-    if (status !== "authenticated" || !repositories || tripsLoading) return;
+    if (!isMapActive || status !== "authenticated" || !repositories || tripsLoading) return;
+    if (runtime.inFlightTripsKey === tripsKey) return;
 
-    setIsRefreshing(true);
-    try {
-      if (trips.length === 0) {
-        setState({ status: "ready", points: [] });
-        return;
-      }
+    const activeTrips = trips;
+    const activeTripsKey = tripsKey;
+    dispatch({ type: "load-started", tripsKey: activeTripsKey, refreshing: true });
 
-      const result = await collectMapData(repositories, trips);
-      setState((current) => stateFromLoadResult(result, current));
-    } finally {
-      setIsRefreshing(false);
+    if (activeTrips.length === 0) {
+      dispatch({ type: "load-empty", tripsKey: activeTripsKey });
+      return;
     }
-  }, [repositories, status, trips, tripsLoading]);
 
-  return { state, isRefreshing, refresh };
+    const result = await collectMapData(repositories, activeTrips);
+    dispatch({ type: "load-finished", tripsKey: activeTripsKey, result });
+  }, [isMapActive, repositories, runtime.inFlightTripsKey, status, trips, tripsKey, tripsLoading]);
+
+  const value = useMemo<MapDataContextValue>(
+    () => ({ state: runtime.data, isRefreshing: runtime.isRefreshing, refresh }),
+    [refresh, runtime.data, runtime.isRefreshing],
+  );
+
+  return createElement(MapDataContext.Provider, { value }, children);
+}
+
+export function useMapData(): MapDataContextValue {
+  const context = useContext(MapDataContext);
+  if (!context) {
+    throw new Error("useMapData doit être utilisé sous MapDataProvider.");
+  }
+  return context;
+}
+
+function mapRuntimeReducer(state: MapRuntimeState, action: MapRuntimeAction): MapRuntimeState {
+  if (action.type === "load-started") {
+    return {
+      data: state.data.status === "idle" ? { status: "loading" } : state.data,
+      loadedTripsKey: state.loadedTripsKey,
+      inFlightTripsKey: action.tripsKey,
+      isRefreshing: action.refreshing,
+    };
+  }
+
+  if (state.inFlightTripsKey !== action.tripsKey) {
+    return state;
+  }
+
+  if (action.type === "load-empty") {
+    return {
+      data: { status: "ready", points: [] },
+      loadedTripsKey: action.tripsKey,
+      inFlightTripsKey: null,
+      isRefreshing: false,
+    };
+  }
+
+  return {
+    data: stateFromLoadResult(action.result, state.data),
+    loadedTripsKey: action.tripsKey,
+    inFlightTripsKey: null,
+    isRefreshing: false,
+  };
+}
+
+function createTripsKey(trips: readonly TripSummary[]): string {
+  return trips
+    .map((trip) => `${trip.id}:${trip.updatedAt}:${trip.version ?? ""}`)
+    .sort()
+    .join("|");
 }
 
 async function collectMapData(

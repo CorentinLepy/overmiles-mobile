@@ -5,6 +5,7 @@ import test from "node:test";
 const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 const appJson = JSON.parse(await readFile(new URL("../app.json", import.meta.url), "utf8"));
 const env = await readFile(new URL("../src/config/env.ts", import.meta.url), "utf8");
+const tabsLayout = await readFile(new URL("../app/(tabs)/_layout.tsx", import.meta.url), "utf8");
 const route = await readFile(new URL("../app/(tabs)/map/index.tsx", import.meta.url), "utf8");
 const screen = await readFile(
   new URL("../src/features/map/screens/map-screen.tsx", import.meta.url),
@@ -51,6 +52,27 @@ test("native map renders only OverMiles data and never calls geocoding providers
   assert.match(mapData, /Promise\.allSettled/);
   assert.doesNotMatch(screen, /geoapify|google maps|webview|fetch\(|axios/i);
   assert.doesNotMatch(mapData, /geoapify|google maps|webview|fetch\(|axios/i);
+});
+
+test("map detail fan-out is gated by active pathname and cached above native tab remounts", () => {
+  assert.match(tabsLayout, /MapDataProvider/);
+  assert.match(tabsLayout, /<TripsDataProvider>[\s\S]*<MapDataProvider>[\s\S]*<NativeTabs/);
+  assert.match(mapData, /usePathname/);
+  assert.match(mapData, /pathname === "\/map"/);
+  assert.match(mapData, /pathname\.startsWith\("\/map\/"\)/);
+  assert.match(mapData, /const MapDataContext = createContext/);
+  assert.match(mapData, /export function MapDataProvider/);
+  assert.match(mapData, /export function useMapData\(\)/);
+  assert.match(screen, /useMapData\(\)/);
+  assert.doesNotMatch(screen, /usePathname/);
+  assert.match(mapData, /useReducer\(mapRuntimeReducer, initialRuntimeState\)/);
+  assert.match(mapData, /runtime\.loadedTripsKey === tripsKey/);
+  assert.match(mapData, /runtime\.inFlightTripsKey === tripsKey/);
+  assert.match(mapData, /state\.inFlightTripsKey !== action\.tripsKey/);
+  assert.match(mapData, /createTripsKey/);
+  assert.match(mapData, /trip\.updatedAt/);
+  assert.match(mapData, /trip\.version/);
+  assert.doesNotMatch(mapData, /useRef|\.current/);
 });
 
 test("visited map points preserve longitude-latitude GeoJSON order and provenance", () => {
