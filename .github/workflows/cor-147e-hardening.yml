@@ -38,30 +38,29 @@ jobs:
       - name: Harden offline restore
         run: |
           python3 - <<'PY'
+          import re
           from pathlib import Path
           path = Path('src/providers/auth-provider.tsx')
           content = path.read_text()
-          old = '''if (nextState === "anonymous") {
-                setUser(null);
-                resetBiometricRuntimeState();
-              }'''
-          new = '''if (nextState !== "authenticated") {
-                setUser(null);
-              }
+          pattern = r'if \(nextState === "anonymous"\) \{\s*setUser\(null\);\s*resetBiometricRuntimeState\(\);\s*\}'
+          replacement = '''if (nextState !== "authenticated") {
+            setUser(null);
+          }
 
-              if (nextState === "anonymous") {
-                resetBiometricRuntimeState();
-              }'''
-          if old not in content:
-              raise SystemExit('Expected applyRestoreState block not found')
-          path.write_text(content.replace(old, new, 1))
+          if (nextState === "anonymous") {
+            resetBiometricRuntimeState();
+          }'''
+          content, count = re.subn(pattern, replacement, content, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected one applyRestoreState block, replaced {count}')
+          path.write_text(content)
           PY
           pnpm exec prettier src/providers/auth-provider.tsx tests/cor-147-offline-trips.test.mjs tests/cor-147-offline-session.test.mjs tests/cor-135-auth-flow.test.mjs --write
 
       - name: Commit hardening
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+CorentinLepy@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add src/providers/auth-provider.tsx tests/cor-147-offline-trips.test.mjs tests/cor-147-offline-session.test.mjs tests/cor-135-auth-flow.test.mjs
           if git diff --cached --quiet; then
             echo "No changes to commit."
