@@ -53,6 +53,17 @@ test("native map renders only OverMiles data and never calls geocoding providers
   assert.doesNotMatch(mapData, /geoapify|google maps|webview|fetch\(|axios/i);
 });
 
+test("map detail fan-out waits for map focus and reuses the same trip snapshot", () => {
+  assert.match(mapData, /useFocusEffect/);
+  assert.doesNotMatch(mapData, /useEffect\(/);
+  assert.match(mapData, /loadedTripsKeyRef/);
+  assert.match(mapData, /inFlightTripsKeyRef/);
+  assert.match(mapData, /loadedTripsKeyRef\.current === activeTripsKey/);
+  assert.match(mapData, /createTripsKey/);
+  assert.match(mapData, /trip\.updatedAt/);
+  assert.match(mapData, /trip\.version/);
+});
+
 test("visited map points preserve longitude-latitude GeoJSON order and provenance", () => {
   assert.match(geojson, /type: "FeatureCollection"/);
   assert.match(geojson, /type: "Point"/);
