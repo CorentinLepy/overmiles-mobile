@@ -198,8 +198,7 @@ export function MfaScreen() {
           </Pressable>
 
           <Text selectable style={{ color: theme.color.muted, fontSize: 13, lineHeight: 19 }}>
-            Aucun jeton de session n’est créé ni enregistré sur cet appareil avant la réussite de
-            cette vérification.
+            Votre session ne s’ouvrira qu’après cette vérification.
           </Text>
         </SectionCard>
       </AppScreen>
