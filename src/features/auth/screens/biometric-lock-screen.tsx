@@ -30,7 +30,7 @@ export function BiometricLockScreen() {
           gap: theme.spacing.md,
           borderWidth: 1,
           borderColor: theme.color.border,
-          borderRadius: theme.radius.lg,
+          borderRadius: theme.radius.card,
           backgroundColor: theme.color.surface,
           padding: theme.spacing.lg,
         }}
@@ -69,7 +69,7 @@ export function BiometricLockScreen() {
               opacity: biometricBusy ? 0.45 : pressed ? 0.78 : 1,
             })}
           >
-            <Text style={{ color: theme.color.accentInk, fontSize: 16, fontWeight: "800" }}>
+            <Text style={{ color: theme.color.canvas, fontSize: 16, fontWeight: "800" }}>
               Se reconnecter
             </Text>
           </Pressable>
@@ -89,7 +89,7 @@ export function BiometricLockScreen() {
               opacity: biometricBusy ? 0.45 : pressed ? 0.78 : 1,
             })}
           >
-            <Text style={{ color: theme.color.accentInk, fontSize: 16, fontWeight: "800" }}>
+            <Text style={{ color: theme.color.canvas, fontSize: 16, fontWeight: "800" }}>
               {biometricBusy ? "Vérification…" : "Déverrouiller"}
             </Text>
           </Pressable>
