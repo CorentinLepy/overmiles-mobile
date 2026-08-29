@@ -22,6 +22,8 @@ export type ApiRequest = Readonly<{
   signal?: AbortSignal;
   kind?: ApiRequestKind;
   auth?: ApiAuthMode;
+  /** Stable operation identifier forwarded as the Idempotency-Key header. */
+  idempotencyKey?: string;
   /** Explicit opt-in for replay after a 401 on non-GET/HEAD requests. */
   allowAuthReplay?: boolean;
 }>;
@@ -54,6 +56,10 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
     const method = request.method ?? "GET";
     const authMode = request.auth ?? "required";
     const url = buildUrl(baseUrl, request.path);
+    const idempotencyKey =
+      request.idempotencyKey === undefined
+        ? undefined
+        : validateIdempotencyKey(request.idempotencyKey);
     const controller = new AbortController();
     const timeoutMs = timeoutFor(request.kind ?? "json");
     const timeoutId = setTimeout(() => controller.abort("timeout"), timeoutMs);
@@ -67,6 +73,9 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
       headers.set("Accept", "application/json");
       if (request.body !== undefined && !headers.has("Content-Type")) {
         headers.set("Content-Type", "application/json");
+      }
+      if (idempotencyKey !== undefined) {
+        headers.set("Idempotency-Key", idempotencyKey);
       }
       if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
 
@@ -170,6 +179,13 @@ function validateBaseUrl(value: string): string {
     throw new Error("La couche réseau refuse une API non HTTPS hors développement local.");
   }
   return parsed.toString().replace(/\/$/, "");
+}
+
+function validateIdempotencyKey(value: string): string {
+  if (!/^[A-Za-z0-9._:-]{1,128}$/.test(value)) {
+    throw new Error("ApiRequest.idempotencyKey contient un format invalide.");
+  }
+  return value;
 }
 
 function isLocalDevelopmentUrl(url: URL): boolean {
