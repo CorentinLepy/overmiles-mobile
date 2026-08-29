@@ -75,10 +75,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         : null,
     [runtimeConfig.apiBaseUrl, sessionManager],
   );
-  const biometricController = useMemo(
-    () => new BiometricLockController(biometricLockService),
-    [],
-  );
+  const biometricController = useMemo(() => new BiometricLockController(biometricLockService), []);
 
   const [status, setStatus] = useState<AuthStatus>("restoring");
   const [user, setUser] = useState<MobileAuthUser | null>(null);

@@ -48,7 +48,10 @@ export function BiometricLockScreen() {
         </Text>
 
         {biometricMessage ? (
-          <Text accessibilityLiveRegion="polite" style={{ color: theme.color.muted, lineHeight: 21 }}>
+          <Text
+            accessibilityLiveRegion="polite"
+            style={{ color: theme.color.muted, lineHeight: 21 }}
+          >
             {biometricMessage}
           </Text>
         ) : null}

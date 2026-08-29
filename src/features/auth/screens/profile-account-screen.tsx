@@ -68,9 +68,7 @@ export function ProfileAccountScreen() {
           }
           accessibilityState={{ disabled: securityBusy, busy: biometricBusy }}
           disabled={securityBusy}
-          onPress={() =>
-            void (biometricEnabled ? disableBiometricLock() : enableBiometricLock())
-          }
+          onPress={() => void (biometricEnabled ? disableBiometricLock() : enableBiometricLock())}
           style={({ pressed }) => ({
             minHeight: 50,
             alignItems: "center",
