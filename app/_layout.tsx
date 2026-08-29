@@ -8,7 +8,8 @@ import { AuthProvider, useAuth } from "@/src/providers/auth-provider";
 function RootNavigator() {
   const { status, user, biometricState } = useAuth();
   const hasLocalContentSession =
-    status === "authenticated" || (status === "offline_auth_pending" && user !== null);
+    status === "authenticated" ||
+    (status === "offline_auth_pending" && user !== null);
   const isLocallyLocked =
     hasLocalContentSession &&
     (biometricState === "locked" || biometricState === "reauth_required");
