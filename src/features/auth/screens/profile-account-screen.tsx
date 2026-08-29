@@ -7,10 +7,21 @@ import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 export function ProfileAccountScreen() {
   const theme = useOverMilesTheme();
-  const { user, isBusy, logout } = useAuth();
+  const {
+    user,
+    isBusy,
+    logout,
+    biometricState,
+    biometricBusy,
+    biometricMessage,
+    enableBiometricLock,
+    disableBiometricLock,
+  } = useAuth();
 
   const identity = user?.displayName || user?.email || "Compte OverMiles";
   const secondaryIdentity = user?.displayName && user.email ? user.email : null;
+  const biometricEnabled = biometricState !== "disabled";
+  const securityBusy = isBusy || biometricBusy;
 
   return (
     <AppScreen>
@@ -44,6 +55,58 @@ export function ProfileAccountScreen() {
 
       <SectionCard>
         <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "700" }}>
+          Verrou biométrique
+        </Text>
+        <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
+          Optionnel, ce verrou protège l’accès local à OverMiles avec Face ID, Touch ID ou une
+          biométrie Android forte. Il ne remplace jamais votre connexion OverMiles.
+        </Text>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            biometricEnabled ? "Désactiver le verrou biométrique" : "Activer le verrou biométrique"
+          }
+          accessibilityState={{ disabled: securityBusy, busy: biometricBusy }}
+          disabled={securityBusy}
+          onPress={() =>
+            void (biometricEnabled ? disableBiometricLock() : enableBiometricLock())
+          }
+          style={({ pressed }) => ({
+            minHeight: 50,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: theme.radius.pill,
+            backgroundColor: biometricEnabled ? theme.color.surfaceMuted : theme.color.accent,
+            opacity: securityBusy ? 0.45 : pressed ? 0.72 : 1,
+          })}
+        >
+          <Text
+            style={{
+              color: biometricEnabled ? theme.color.ink : theme.color.accentInk,
+              fontSize: 15,
+              fontWeight: "800",
+            }}
+          >
+            {biometricBusy
+              ? "Vérification…"
+              : biometricEnabled
+                ? "Désactiver le verrou"
+                : "Activer le verrou"}
+          </Text>
+        </Pressable>
+        {biometricMessage ? (
+          <Text
+            accessibilityLiveRegion="polite"
+            selectable
+            style={{ color: theme.color.muted, fontSize: 14, lineHeight: 20 }}
+          >
+            {biometricMessage}
+          </Text>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard>
+        <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "700" }}>
           Sécurité du compte
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
@@ -53,8 +116,8 @@ export function ProfileAccountScreen() {
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Se déconnecter"
-          accessibilityState={{ disabled: isBusy, busy: isBusy }}
-          disabled={isBusy}
+          accessibilityState={{ disabled: securityBusy, busy: isBusy }}
+          disabled={securityBusy}
           onPress={() => void logout()}
           style={({ pressed }) => ({
             minHeight: 50,
@@ -63,7 +126,7 @@ export function ProfileAccountScreen() {
             borderWidth: 1,
             borderColor: theme.color.border,
             borderRadius: theme.radius.pill,
-            opacity: isBusy ? 0.45 : pressed ? 0.72 : 1,
+            opacity: securityBusy ? 0.45 : pressed ? 0.72 : 1,
           })}
         >
           <Text style={{ color: theme.color.ink, fontSize: 15, fontWeight: "800" }}>
