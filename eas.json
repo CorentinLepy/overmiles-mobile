@@ -9,6 +9,7 @@
       "channel": "development",
       "env": {
         "EXPO_PUBLIC_APP_ENV": "development",
+        "EXPO_PUBLIC_API_BASE_URL": "https://overmiles.app/api/v1",
         "EXPO_PUBLIC_MAP_STYLE_URL": "https://tiles.openfreemap.org/styles/liberty"
       }
     },
@@ -17,6 +18,7 @@
       "channel": "preview",
       "env": {
         "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_API_BASE_URL": "https://overmiles.app/api/v1",
         "EXPO_PUBLIC_MAP_STYLE_URL": "https://tiles.openfreemap.org/styles/liberty"
       }
     },
