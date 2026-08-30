@@ -17,11 +17,13 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Utiliser l’appareil photo pour capturer un moment de voyage dans OverMiles.",
         "NSPhotoLibraryUsageDescription": "Choisir les photos à ajouter à vos voyages OverMiles.",
+        "NSLocationWhenInUseUsageDescription": "Afficher votre position sur la carte pendant l’utilisation d’OverMiles.",
         "LSApplicationQueriesSchemes": ["maps", "comgooglemaps", "waze"]
       }
     },
     "android": {
       "package": "app.overmiles.mobile",
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F4EBDD"
