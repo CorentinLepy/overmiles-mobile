@@ -1,11 +1,15 @@
 import { Camera, GeoJSONSource, Layer, Map } from "@maplibre/maplibre-react-native";
 import { useMemo, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Alert, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
+import {
+  openResolvedExternalNavigationTarget,
+  resolveExternalNavigationTargets,
+} from "../external-navigation";
 import { createVisitedPointsFeatureCollection } from "../map-geojson";
 import { getMapInitialViewState } from "../map-viewport";
 import type { MapDataState, TripMapPoint } from "../map.types";
@@ -243,6 +247,40 @@ function SelectedPointCard({
 }) {
   const theme = useOverMilesTheme();
 
+  async function showNavigationChoices(): Promise<void> {
+    try {
+      const targets = await resolveExternalNavigationTargets({
+        coordinate: point.coordinate,
+        destinationLabel: point.label,
+      });
+
+      Alert.alert(
+        "Naviguer",
+        point.label,
+        [
+          ...targets.map((target) => ({
+            text: target.opensInstalledApp ? target.label : `${target.label} · web`,
+            onPress: () => {
+              void openResolvedExternalNavigationTarget(target).catch(() => {
+                Alert.alert(
+                  "Navigation indisponible",
+                  "Impossible d’ouvrir cette destination pour le moment.",
+                );
+              });
+            },
+          })),
+          { text: "Annuler", style: "cancel" as const },
+        ],
+        { cancelable: true },
+      );
+    } catch {
+      Alert.alert(
+        "Navigation indisponible",
+        "Les coordonnées de ce repère ne permettent pas de lancer un itinéraire.",
+      );
+    }
+  }
+
   return (
     <View
       style={{
@@ -290,6 +328,23 @@ function SelectedPointCard({
           {formatPointDate(point.occurredAt)}
         </Text>
       ) : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Naviguer vers ${point.label}`}
+        onPress={() => void showNavigationChoices()}
+        style={({ pressed }) => ({
+          minHeight: 44,
+          alignItems: "center",
+          justifyContent: "center",
+          paddingHorizontal: theme.spacing.md,
+          borderRadius: theme.radius.control,
+          borderCurve: "continuous",
+          backgroundColor: theme.color.surfaceMuted,
+          opacity: pressed ? 0.72 : 1,
+        })}
+      >
+        <Text style={{ color: theme.color.ink, fontSize: 14, fontWeight: "800" }}>Naviguer</Text>
+      </Pressable>
     </View>
   );
 }
