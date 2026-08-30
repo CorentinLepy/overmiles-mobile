@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
+import { CompanionAvailabilityBadge } from "@/src/features/offline-companion/availability-badge";
 import { TripCover } from "@/src/features/trips/components/trip-cover";
 import {
   daysUntilTrip,
@@ -161,6 +162,8 @@ export function HomeScreen() {
               {formatTripDateRange(nextTrip)}
             </Text>
           </View>
+
+          <CompanionAvailabilityBadge trip={nextTrip} />
 
           <Link
             href={{

@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
+import { CompanionAvailabilityBadge } from "@/src/features/offline-companion/availability-badge";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 import { formatCountries, formatTripDateRange, tripTemporalLabel } from "../trip-formatters";
@@ -165,6 +166,7 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
         <Text selectable style={{ color: theme.color.ink, fontSize: 15, lineHeight: 22 }}>
           {formatTripDateRange(trip)}
         </Text>
+        <CompanionAvailabilityBadge trip={trip} />
       </View>
 
       {trip.description ? (
