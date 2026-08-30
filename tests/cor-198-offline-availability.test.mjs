@@ -137,7 +137,7 @@ test("COR-198 loads snapshot metadata locally in one account-scoped query", () =
 });
 
 test("COR-198 surfaces the same accessible availability state across product entry points", () => {
-  assert.match(badgeSource, /accessibilityLabel={`Disponibilité hors ligne: \$\{label\}`}/);
+  assert.match(badgeSource, /accessibilityLabel={`Disponibilité hors ligne : \$\{label\}`}/);
   assert.match(badgeSource, /formatCompanionAvailability/);
   assert.match(homeSource, /<CompanionAvailabilityBadge trip={nextTrip} \/>/);
   assert.match(tripCardSource, /<CompanionAvailabilityBadge trip={trip} \/>/);
