@@ -40,7 +40,8 @@ export function MapScreen() {
   const points = pointsFromState(state);
   const currentTrip = findCurrentTrip(trips);
   const [isCurrentTripFocused, setIsCurrentTripFocused] = useState(false);
-  const focusedTripId = currentTrip && isCurrentTripFocused ? currentTrip.id : null;
+  const focusedTripId =
+    currentTrip && isCurrentTripFocused ? currentTrip.id : null;
   const visiblePoints = focusedTripId
     ? points.filter((point) => point.tripId === focusedTripId)
     : points;
@@ -50,7 +51,8 @@ export function MapScreen() {
   const [mapStyleFailed, setMapStyleFailed] = useState(false);
   const [isUserLocationEnabled, setIsUserLocationEnabled] = useState(false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
-  const selectedPoint = visiblePoints.find((point) => point.id === selectedPointId) ?? null;
+  const selectedPoint =
+    visiblePoints.find((point) => point.id === selectedPointId) ?? null;
   const cameraKey = `${focusedTripId ?? "all"}:${visiblePoints.length}:${visiblePoints[0]?.id ?? "empty"}:${visiblePoints.at(-1)?.id ?? "empty"}`;
 
   async function toggleUserLocation(): Promise<void> {
@@ -100,7 +102,9 @@ export function MapScreen() {
         <Camera
           key={cameraKey}
           initialViewState={initialViewState}
-          {...(isUserLocationEnabled ? { trackUserLocation: "default" as const, zoom: 15 } : {})}
+          {...(isUserLocationEnabled
+            ? { trackUserLocation: "default" as const, zoom: 15 }
+            : {})}
         />
         <GeoJSONSource
           id="overmiles-visited-points"
@@ -135,7 +139,9 @@ export function MapScreen() {
             }}
           />
         </GeoJSONSource>
-        {isUserLocationEnabled ? <UserLocation animated accuracy minDisplacement={5} /> : null}
+        {isUserLocationEnabled ? (
+          <UserLocation animated accuracy minDisplacement={5} />
+        ) : null}
       </Map>
 
       <View
@@ -164,11 +170,25 @@ export function MapScreen() {
           }}
         >
           <View style={{ flex: 1, gap: 3 }}>
-            <Text selectable style={{ color: theme.color.ink, fontSize: 17, fontWeight: "800" }}>
+            <Text
+              selectable
+              style={{
+                color: theme.color.ink,
+                fontSize: 17,
+                fontWeight: "800",
+              }}
+            >
               Votre carte OverMiles
             </Text>
-            <Text selectable style={{ color: theme.color.muted, fontSize: 13, lineHeight: 18 }}>
-              {statusLabel(state, visiblePoints.length, focusedTripId ? currentTrip?.name : null)}
+            <Text
+              selectable
+              style={{ color: theme.color.muted, fontSize: 13, lineHeight: 18 }}
+            >
+              {statusLabel(
+                state,
+                visiblePoints.length,
+                focusedTripId ? currentTrip?.name : null,
+              )}
             </Text>
           </View>
           <Pressable
@@ -187,7 +207,13 @@ export function MapScreen() {
               opacity: isRefreshing ? 0.55 : pressed ? 0.75 : 1,
             })}
           >
-            <Text style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
+            <Text
+              style={{
+                color: theme.color.ink,
+                fontSize: 13,
+                fontWeight: "800",
+              }}
+            >
               {isRefreshing ? "…" : "↻"}
             </Text>
           </Pressable>
@@ -210,7 +236,9 @@ export function MapScreen() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={
-              isUserLocationEnabled ? "Masquer ma position" : "Afficher ma position sur la carte"
+              isUserLocationEnabled
+                ? "Masquer ma position"
+                : "Afficher ma position sur la carte"
             }
             accessibilityState={{
               busy: isRequestingLocation,
@@ -229,12 +257,21 @@ export function MapScreen() {
               borderRadius: theme.radius.pill,
               backgroundColor: theme.color.surface,
               borderWidth: 1,
-              borderColor: isUserLocationEnabled ? theme.color.accent : theme.color.border,
+              borderColor: isUserLocationEnabled
+                ? theme.color.accent
+                : theme.color.border,
               boxShadow: "0 3px 12px rgba(0, 0, 0, 0.10)",
               opacity: isRequestingLocation ? 0.55 : pressed ? 0.72 : 1,
             })}
           >
-            <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
+            <Text
+              selectable
+              style={{
+                color: theme.color.ink,
+                fontSize: 13,
+                fontWeight: "800",
+              }}
+            >
               {isRequestingLocation
                 ? "Localisation…"
                 : isUserLocationEnabled
@@ -245,11 +282,17 @@ export function MapScreen() {
         </View>
 
         {state.status === "offline" ? (
-          <StatusPill label="Hors-ligne · données disponibles conservées" tone="warning" />
+          <StatusPill
+            label="Hors-ligne · données disponibles conservées"
+            tone="warning"
+          />
         ) : state.status === "error" ? (
           <StatusPill label={state.message} tone="warning" />
         ) : mapStyleFailed ? (
-          <StatusPill label="Le fond de carte n’a pas pu être chargé." tone="warning" />
+          <StatusPill
+            label="Le fond de carte n’a pas pu être chargé."
+            tone="warning"
+          />
         ) : null}
       </View>
 
@@ -289,14 +332,22 @@ export function MapScreen() {
 }
 
 function pointsFromState(state: MapDataState): readonly TripMapPoint[] {
-  return state.status === "ready" || state.status === "offline" || state.status === "error"
+  return state.status === "ready" ||
+    state.status === "offline" ||
+    state.status === "error"
     ? state.points
     : [];
 }
 
-function statusLabel(state: MapDataState, count: number, focusedTripName?: string | null): string {
-  if (state.status === "loading" || state.status === "idle") return "Chargement des repères…";
-  if (focusedTripName && count === 0) return `Aucun repère · ${focusedTripName}`;
+function statusLabel(
+  state: MapDataState,
+  count: number,
+  focusedTripName?: string | null,
+): string {
+  if (state.status === "loading" || state.status === "idle")
+    return "Chargement des repères…";
+  if (focusedTripName && count === 0)
+    return `Aucun repère · ${focusedTripName}`;
   if (focusedTripName) {
     return `${count} repère${count > 1 ? "s" : ""} · ${focusedTripName}`;
   }
@@ -333,7 +384,13 @@ function StatusPill({ label, tone }: { label: string; tone: "warning" }) {
   );
 }
 
-function CenterCard({ title, description }: { title: string; description: string }) {
+function CenterCard({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   const theme = useOverMilesTheme();
 
   return (
@@ -354,10 +411,16 @@ function CenterCard({ title, description }: { title: string; description: string
         boxShadow: "0 6px 24px rgba(0, 0, 0, 0.12)",
       }}
     >
-      <Text selectable style={{ color: theme.color.ink, fontSize: 20, fontWeight: "800" }}>
+      <Text
+        selectable
+        style={{ color: theme.color.ink, fontSize: 20, fontWeight: "800" }}
+      >
         {title}
       </Text>
-      <Text selectable style={{ color: theme.color.muted, fontSize: 14, lineHeight: 20 }}>
+      <Text
+        selectable
+        style={{ color: theme.color.muted, fontSize: 14, lineHeight: 20 }}
+      >
         {description}
       </Text>
     </View>
@@ -435,14 +498,32 @@ function SelectedPointCard({
         boxShadow: "0 8px 28px rgba(0, 0, 0, 0.16)",
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: theme.spacing.md }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-start",
+          gap: theme.spacing.md,
+        }}
+      >
         <View style={{ flex: 1, gap: 4 }}>
-          <Text selectable style={{ color: theme.color.accent, fontSize: 12, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{
+              color: theme.color.accent,
+              fontSize: 12,
+              fontWeight: "800",
+            }}
+          >
             {kindLabel(point.kind).toUpperCase()}
           </Text>
           <Text
             selectable
-            style={{ color: theme.color.ink, fontSize: 21, lineHeight: 25, fontWeight: "800" }}
+            style={{
+              color: theme.color.ink,
+              fontSize: 21,
+              lineHeight: 25,
+              fontWeight: "800",
+            }}
           >
             {point.label}
           </Text>
@@ -457,7 +538,15 @@ function SelectedPointCard({
           hitSlop={8}
           style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
         >
-          <Text style={{ color: theme.color.muted, fontSize: 22, fontWeight: "600" }}>×</Text>
+          <Text
+            style={{
+              color: theme.color.muted,
+              fontSize: 22,
+              fontWeight: "600",
+            }}
+          >
+            ×
+          </Text>
         </Pressable>
       </View>
       <MapOverlappingPointNavigation
@@ -477,7 +566,14 @@ function SelectedPointCard({
             backgroundColor: theme.color.surfaceMuted,
           }}
         >
-          <Text selectable style={{ color: theme.color.muted, fontSize: 12, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{
+              color: theme.color.muted,
+              fontSize: 12,
+              fontWeight: "800",
+            }}
+          >
             Disponible hors ligne
           </Text>
         </View>
@@ -505,12 +601,22 @@ function SelectedPointCard({
           opacity: pressed ? 0.72 : 1,
         })}
       >
-        <Text selectable style={{ color: theme.color.ink, fontSize: 14, fontWeight: "800" }}>
+        <Text
+          selectable
+          style={{ color: theme.color.ink, fontSize: 14, fontWeight: "800" }}
+        >
           Voir le voyage
         </Text>
-        <Text style={{ color: theme.color.muted, fontSize: 18, fontWeight: "700" }}>›</Text>
+        <Text
+          style={{ color: theme.color.muted, fontSize: 18, fontWeight: "700" }}
+        >
+          ›
+        </Text>
       </Pressable>
-      <MapTerrainActions point={point} onNavigate={() => void showNavigationChoices()} />
+      <MapTerrainActions
+        point={point}
+        onNavigate={() => void showNavigationChoices()}
+      />
     </View>
   );
 }
@@ -524,5 +630,8 @@ function kindLabel(kind: TripMapPoint["kind"]): string {
 function formatPointDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
