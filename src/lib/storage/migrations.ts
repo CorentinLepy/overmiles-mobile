@@ -105,6 +105,26 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
         ON cached_map_points (account_user_id, trip_id, point_kind);
     `,
   },
+  {
+    version: 5,
+    name: "offline-map-snapshot-freshness",
+    sql: `
+      CREATE TABLE IF NOT EXISTS cached_map_snapshots (
+        account_user_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        point_kind TEXT NOT NULL
+          CHECK (point_kind IN ('stop', 'timeline', 'location')),
+        item_count INTEGER NOT NULL CHECK (item_count >= 0),
+        trip_version INTEGER,
+        trip_updated_at TEXT,
+        cached_at TEXT NOT NULL,
+        PRIMARY KEY (account_user_id, trip_id, point_kind)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_cached_map_snapshots_account_cached
+        ON cached_map_snapshots (account_user_id, cached_at DESC);
+    `,
+  },
 ];
 
 export async function runLocalMigrations(db: SQLiteDatabase): Promise<void> {
