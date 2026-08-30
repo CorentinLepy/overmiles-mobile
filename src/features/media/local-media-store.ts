@@ -32,6 +32,10 @@ type LocalMediaRow = Readonly<{
   updated_at: string;
 }>;
 
+const MEDIA_COLUMNS = `account_user_id, trip_id, local_media_id, storage_key, original_filename,
+                       mime_type, file_size_bytes, width, height, captured_at, latitude, longitude,
+                       orientation, stop_id, caption, state, created_at, updated_at`;
+
 export class LocalMediaStore {
   private writeQueue: Promise<void> = Promise.resolve();
 
@@ -47,14 +51,31 @@ export class LocalMediaStore {
     if (!db) return [];
 
     const rows = await db.getAllAsync<LocalMediaRow>(
-      `SELECT account_user_id, trip_id, local_media_id, storage_key, original_filename,
-              mime_type, file_size_bytes, width, height, captured_at, latitude, longitude,
-              orientation, stop_id, caption, state, created_at, updated_at
+      `SELECT ${MEDIA_COLUMNS}
        FROM local_media_items
        WHERE account_user_id = ? AND trip_id = ?
        ORDER BY updated_at DESC`,
       accountUserId,
       tripId,
+    );
+
+    return this.database.canUseGeneration(generation) ? rows.map(mapMediaRow) : [];
+  }
+
+  async listForAccount(
+    accountUserId: string,
+    generation: LocalDatabaseGeneration | null,
+  ): Promise<readonly LocalMediaItem[]> {
+    await this.writeQueue.catch(() => undefined);
+    const db = await this.database.openForGeneration(generation);
+    if (!db) return [];
+
+    const rows = await db.getAllAsync<LocalMediaRow>(
+      `SELECT ${MEDIA_COLUMNS}
+       FROM local_media_items
+       WHERE account_user_id = ?
+       ORDER BY updated_at DESC`,
+      accountUserId,
     );
 
     return this.database.canUseGeneration(generation) ? rows.map(mapMediaRow) : [];
@@ -116,9 +137,7 @@ export class LocalMediaStore {
 
       if (!this.database.canUseGeneration(generation)) return null;
       const row = await db.getFirstAsync<LocalMediaRow>(
-        `SELECT account_user_id, trip_id, local_media_id, storage_key, original_filename,
-                mime_type, file_size_bytes, width, height, captured_at, latitude, longitude,
-                orientation, stop_id, caption, state, created_at, updated_at
+        `SELECT ${MEDIA_COLUMNS}
          FROM local_media_items
          WHERE account_user_id = ? AND local_media_id = ?`,
         input.accountUserId,
@@ -126,6 +145,26 @@ export class LocalMediaStore {
       );
 
       return row && this.database.canUseGeneration(generation) ? mapMediaRow(row) : null;
+    });
+  }
+
+  remove(
+    accountUserId: string,
+    localMediaId: string,
+    generation: LocalDatabaseGeneration | null,
+  ): Promise<boolean> {
+    return this.enqueue(async () => {
+      const db = await this.database.openForGeneration(generation);
+      if (!db || !this.database.canUseGeneration(generation)) return false;
+
+      const result = await db.runAsync(
+        `DELETE FROM local_media_items
+         WHERE account_user_id = ? AND local_media_id = ?`,
+        accountUserId,
+        localMediaId,
+      );
+
+      return this.database.canUseGeneration(generation) && result.changes > 0;
     });
   }
 
