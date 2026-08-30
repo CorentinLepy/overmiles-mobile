@@ -95,9 +95,7 @@ test("COR-204 validates normalized image metadata before persistence", () => {
   assert.throws(() => assertLocalMediaInput({ ...base, latitude: 48.8566 }));
   assert.throws(() => assertLocalMediaInput({ ...base, latitude: 120, longitude: 2 }));
   assert.throws(() => assertLocalMediaInput({ ...base, width: 0 }));
-  assert.throws(() =>
-    assertLocalMediaInput({ ...base, storageKey: "media/user-2/media-1.jpg" }),
-  );
+  assert.throws(() => assertLocalMediaInput({ ...base, storageKey: "media/user-2/media-1.jpg" }));
 });
 
 test("COR-204 media store is serialized, generation-guarded and local-only", () => {
