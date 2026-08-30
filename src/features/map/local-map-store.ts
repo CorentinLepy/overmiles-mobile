@@ -36,8 +36,12 @@ export class LocalMapStore {
       const db = await this.database.open();
       const cachedAt = new Date().toISOString();
 
-      await db.withExclusiveTransactionAsync(async (transaction) => {
-        await transaction.runAsync(
+      // SQLCipher is keyed on LocalDatabase's cached connection. Expo's exclusive
+      // transaction helper opens another connection, which does not inherit PRAGMA key.
+      // The store-level queue already guarantees one map writer, so keep this snapshot
+      // transaction on the keyed connection instead of switching connections.
+      await db.withTransactionAsync(async () => {
+        await db.runAsync(
           `DELETE FROM cached_map_points
            WHERE account_user_id = ? AND trip_id = ? AND point_kind = ?`,
           accountUserId,
@@ -47,7 +51,7 @@ export class LocalMapStore {
 
         for (const point of points) {
           assertCacheablePoint(point, tripId, kind);
-          await transaction.runAsync(
+          await db.runAsync(
             `INSERT INTO cached_map_points (
                account_user_id,
                trip_id,
