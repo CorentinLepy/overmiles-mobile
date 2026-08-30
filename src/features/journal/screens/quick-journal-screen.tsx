@@ -20,6 +20,8 @@ export function QuickJournalScreen({ tripId }: { tripId: string }) {
   const { user } = useAuth();
   const { findTrip, isLoading } = useTripsData();
   const trip = findTrip(tripId);
+  const accountUserId = user?.id ?? null;
+  const tripAvailable = trip !== null;
   const generationRef = useRef<LocalDatabaseGeneration | null>(null);
   const saveRevisionRef = useRef(0);
   const [draftId, setDraftId] = useState(() => Crypto.randomUUID());
@@ -29,18 +31,15 @@ export function QuickJournalScreen({ tripId }: { tripId: string }) {
   const [saveState, setSaveState] = useState<SaveState>("loading");
 
   useEffect(() => {
-    if (!user || !trip) return;
+    if (!accountUserId || !tripAvailable) return;
 
     const generation = localDatabase.captureGeneration();
     generationRef.current = generation;
     const revision = ++saveRevisionRef.current;
     let active = true;
 
-    setIsReady(false);
-    setSaveState("loading");
-
     void localJournalDraftStore
-      .getActive(user.id, tripId, generation)
+      .getActive(accountUserId, tripId, generation)
       .then((draft) => {
         if (!active || revision !== saveRevisionRef.current) return;
 
@@ -69,11 +68,11 @@ export function QuickJournalScreen({ tripId }: { tripId: string }) {
       active = false;
       saveRevisionRef.current += 1;
     };
-  }, [trip?.id, tripId, user]);
+  }, [accountUserId, tripAvailable, tripId]);
 
   function updateContent(nextContent: string) {
     setContent(nextContent);
-    if (!user || !trip || !isReady) return;
+    if (!accountUserId || !trip || !isReady) return;
 
     const generation = generationRef.current;
     const revision = ++saveRevisionRef.current;
@@ -82,7 +81,7 @@ export function QuickJournalScreen({ tripId }: { tripId: string }) {
     void localJournalDraftStore
       .save(
         {
-          accountUserId: user.id,
+          accountUserId,
           tripId,
           draftId,
           content: nextContent,
