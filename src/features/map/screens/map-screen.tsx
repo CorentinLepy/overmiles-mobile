@@ -22,6 +22,7 @@ import {
 } from "../external-navigation";
 import { MapCurrentTripFocus } from "../map-current-trip-focus";
 import { createVisitedPointsFeatureCollection } from "../map-geojson";
+import { MapOverlappingPointNavigation } from "../map-overlapping-point-navigation";
 import { MapPointDistance } from "../map-point-distance";
 import { MapTerrainActions } from "../map-terrain-actions";
 import { getMapInitialViewState } from "../map-viewport";
@@ -275,8 +276,10 @@ export function MapScreen() {
       {selectedPoint ? (
         <SelectedPointCard
           point={selectedPoint}
+          points={visiblePoints}
           isOffline={state.status === "offline"}
           showUserDistance={isUserLocationEnabled}
+          onSelectPoint={setSelectedPointId}
           onClose={() => setSelectedPointId(null)}
           bottomInset={insets.bottom}
         />
@@ -363,14 +366,18 @@ function CenterCard({ title, description }: { title: string; description: string
 
 function SelectedPointCard({
   point,
+  points,
   isOffline,
   showUserDistance,
+  onSelectPoint,
   onClose,
   bottomInset,
 }: {
   point: TripMapPoint;
+  points: readonly TripMapPoint[];
   isOffline: boolean;
   showUserDistance: boolean;
+  onSelectPoint: (pointId: string) => void;
   onClose: () => void;
   bottomInset: number;
 }) {
@@ -453,6 +460,11 @@ function SelectedPointCard({
           <Text style={{ color: theme.color.muted, fontSize: 22, fontWeight: "600" }}>×</Text>
         </Pressable>
       </View>
+      <MapOverlappingPointNavigation
+        point={point}
+        points={points}
+        onSelectPoint={onSelectPoint}
+      />
       {isOffline ? (
         <View
           accessibilityRole="text"
