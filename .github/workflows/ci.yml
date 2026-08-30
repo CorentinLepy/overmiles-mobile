@@ -47,8 +47,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify repository
-        run: pnpm verify
+      - name: Diagnose COR-201 Prettier
+        run: |
+          pnpm exec prettier --write \
+            src/features/capture/pending-captures-card.tsx \
+            src/features/media/image-picker-asset.ts \
+            src/features/media/screens/photo-capture-screen.tsx \
+            tests/cor-201-native-photo-capture.test.mjs
+          git diff -- \
+            src/features/capture/pending-captures-card.tsx \
+            src/features/media/image-picker-asset.ts \
+            src/features/media/screens/photo-capture-screen.tsx \
+            tests/cor-201-native-photo-capture.test.mjs
+          exit 1
 
       - name: Validate Expo configuration
         run: npx expo config --type public > /dev/null
