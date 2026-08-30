@@ -4,6 +4,7 @@ import { Pressable, Text, View } from "react-native";
 
 import { SectionCard } from "@/src/components/ui/section-card";
 import { localJournalDraftStore } from "@/src/features/journal/journal-draft-store";
+import { localMediaStore } from "@/src/features/media/local-media-store";
 import { localMomentDraftStore } from "@/src/features/timeline/local-moment-draft-store";
 import { localDatabase } from "@/src/lib/storage/local-database";
 import { useAuth } from "@/src/providers/auth-provider";
@@ -13,12 +14,14 @@ type PendingCaptureState = Readonly<{
   loadKey: string | null;
   journal: boolean;
   moment: boolean;
+  photos: number;
 }>;
 
 const EMPTY_PENDING_CAPTURES: PendingCaptureState = {
   loadKey: null,
   journal: false,
   moment: false,
+  photos: 0,
 };
 
 export function PendingCapturesCard({ tripId }: { tripId: string }) {
@@ -38,18 +41,20 @@ export function PendingCapturesCard({ tripId }: { tripId: string }) {
       void Promise.all([
         localJournalDraftStore.getActive(accountUserId, tripId, generation),
         localMomentDraftStore.getActive(accountUserId, tripId, generation),
+        localMediaStore.listForTrip(accountUserId, tripId, generation),
       ])
-        .then(([journalDraft, momentDraft]) => {
+        .then(([journalDraft, momentDraft, photoItems]) => {
           if (!active || !localDatabase.canUseGeneration(generation)) return;
           setPending({
             loadKey,
             journal: journalDraft !== null,
             moment: momentDraft !== null,
+            photos: photoItems.length,
           });
         })
         .catch(() => {
           if (!active || !localDatabase.canUseGeneration(generation)) return;
-          setPending({ loadKey, journal: false, moment: false });
+          setPending({ loadKey, journal: false, moment: false, photos: 0 });
         });
 
       return () => {
@@ -58,7 +63,10 @@ export function PendingCapturesCard({ tripId }: { tripId: string }) {
     }, [accountUserId, loadKey, tripId]),
   );
 
-  if (pending.loadKey !== loadKey || (!pending.journal && !pending.moment)) {
+  if (
+    pending.loadKey !== loadKey ||
+    (!pending.journal && !pending.moment && pending.photos === 0)
+  ) {
     return null;
   }
 
@@ -88,6 +96,14 @@ export function PendingCapturesCard({ tripId }: { tripId: string }) {
           accessibilityLabel="Reprendre le brouillon du moment"
         />
       ) : null}
+
+      {pending.photos > 0 ? (
+        <PendingCaptureLink
+          href={{ pathname: "/trips/[tripId]/photos", params: { tripId } }}
+          label={`${pending.photos} photo${pending.photos > 1 ? "s" : ""} sur cet appareil`}
+          accessibilityLabel={`Voir les ${pending.photos} photo${pending.photos > 1 ? "s" : ""} enregistrée${pending.photos > 1 ? "s" : ""} sur cet appareil`}
+        />
+      ) : null}
     </SectionCard>
   );
 }
@@ -99,7 +115,8 @@ function PendingCaptureLink({
 }: {
   href:
     | { pathname: "/trips/[tripId]/journal"; params: { tripId: string } }
-    | { pathname: "/trips/[tripId]/moment"; params: { tripId: string } };
+    | { pathname: "/trips/[tripId]/moment"; params: { tripId: string } }
+    | { pathname: "/trips/[tripId]/photos"; params: { tripId: string } };
   label: string;
   accessibilityLabel: string;
 }) {
