@@ -15,6 +15,10 @@ const mapScreenSource = await readFile(
   new URL("../src/features/map/screens/map-screen.tsx", import.meta.url),
   "utf8",
 );
+const terrainActionsSource = await readFile(
+  new URL("../src/features/map/map-terrain-actions.tsx", import.meta.url),
+  "utf8",
+);
 const appConfig = JSON.parse(await readFile(new URL("../app.json", import.meta.url), "utf8"));
 
 function executeTypeScript(source) {
@@ -97,7 +101,9 @@ test("COR-210 exposes one accessible map action without adding OverMiles network
   assert.match(mapScreenSource, /resolveExternalNavigationTargets/);
   assert.match(mapScreenSource, /openResolvedExternalNavigationTarget/);
   assert.match(mapScreenSource, /Alert\.alert/);
-  assert.match(mapScreenSource, />Naviguer<\/Text>/);
-  assert.match(mapScreenSource, /accessibilityLabel=\{`Naviguer vers \$\{point\.label\}`\}/);
+  assert.match(mapScreenSource, /MapTerrainActions/);
+  assert.match(terrainActionsSource, /label: "Naviguer"/);
+  assert.match(terrainActionsSource, /accessibilityLabel: `Naviguer vers \$\{point\.label\}`/);
   assert.doesNotMatch(mapScreenSource, /apiClient|fetch\(|FormData|\/api\//);
+  assert.doesNotMatch(terrainActionsSource, /apiClient|fetch\(|FormData|\/api\//);
 });
