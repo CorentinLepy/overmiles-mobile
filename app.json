@@ -49,6 +49,14 @@
           "useSQLCipher": true
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choisir les photos à ajouter à vos voyages OverMiles.",
+          "cameraPermission": "Utiliser l’appareil photo pour capturer un moment de voyage dans OverMiles.",
+          "microphonePermission": false
+        }
+      ],
       "@maplibre/maplibre-react-native"
     ],
     "experiments": {
