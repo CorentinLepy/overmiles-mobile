@@ -1,3 +1,5 @@
+import { parseLocalMediaStorageKey } from "./secure-media-path";
+
 export type LocalMediaState = "local_only" | "ready_to_upload" | "uploading" | "failed";
 
 export type LocalMediaItem = Readonly<{
@@ -41,8 +43,9 @@ export type SaveLocalMediaItemInput = Readonly<{
 }>;
 
 export function assertLocalMediaInput(input: SaveLocalMediaItemInput): void {
-  if (!isLocalMediaStorageKey(input.storageKey)) {
-    throw new Error("Clé de stockage média locale invalide.");
+  const parsedStorageKey = parseLocalMediaStorageKey(input.storageKey);
+  if (parsedStorageKey.accountUserId !== input.accountUserId) {
+    throw new Error("La clé média locale ne correspond pas au compte actif.");
   }
   if (!input.mimeType.startsWith("image/")) {
     throw new Error("Le média local doit être une image.");
@@ -58,15 +61,12 @@ export function assertLocalMediaInput(input: SaveLocalMediaItemInput): void {
 }
 
 export function isLocalMediaStorageKey(value: string): boolean {
-  return (
-    value.length > "media/".length &&
-    value.length <= 300 &&
-    value === value.trim() &&
-    value.startsWith("media/") &&
-    !value.includes("..") &&
-    !value.includes("\\") &&
-    !value.includes("://")
-  );
+  try {
+    parseLocalMediaStorageKey(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function validateDimension(value: number | null | undefined, label: string): void {
