@@ -1,4 +1,5 @@
 import { Camera, GeoJSONSource, Layer, Map } from "@maplibre/maplibre-react-native";
+import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -246,6 +247,7 @@ function SelectedPointCard({
   onClose: () => void;
   bottomInset: number;
 }) {
+  const router = useRouter();
   const theme = useOverMilesTheme();
 
   async function showNavigationChoices(): Promise<void> {
@@ -329,6 +331,28 @@ function SelectedPointCard({
           {formatPointDate(point.occurredAt)}
         </Text>
       ) : null}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Voir le voyage ${point.tripName}`}
+        onPress={() => router.push(`/trips/${point.tripId}`)}
+        style={({ pressed }) => ({
+          minHeight: 44,
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: theme.spacing.sm,
+          paddingHorizontal: theme.spacing.md,
+          borderRadius: theme.radius.control,
+          borderCurve: "continuous",
+          backgroundColor: theme.color.surfaceMuted,
+          opacity: pressed ? 0.72 : 1,
+        })}
+      >
+        <Text selectable style={{ color: theme.color.ink, fontSize: 14, fontWeight: "800" }}>
+          Voir le voyage
+        </Text>
+        <Text style={{ color: theme.color.muted, fontSize: 18, fontWeight: "700" }}>›</Text>
+      </Pressable>
       <MapTerrainActions point={point} onNavigate={() => void showNavigationChoices()} />
     </View>
   );
