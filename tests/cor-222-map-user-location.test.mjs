@@ -16,8 +16,8 @@ test("COR-222 configures foreground-only native location permissions", () => {
     "Afficher votre position sur la carte pendant l’utilisation d’OverMiles.",
   );
   assert.deepEqual(appJson.expo.android.permissions, [
-    "ACCESS_COARSE_LOCATION",
-    "ACCESS_FINE_LOCATION",
+    "android.permission.ACCESS_COARSE_LOCATION",
+    "android.permission.ACCESS_FINE_LOCATION",
   ]);
   assert.doesNotMatch(JSON.stringify(appJson), /ACCESS_BACKGROUND_LOCATION/);
 });
