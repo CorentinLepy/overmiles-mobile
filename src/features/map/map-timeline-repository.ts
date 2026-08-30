@@ -8,6 +8,8 @@ import type { TripMapPoint } from "./map.types";
 type TripIdentity = Readonly<{
   id: string;
   name: string;
+  version?: number;
+  updatedAt?: string;
 }>;
 
 type TimelineEventResponse = Readonly<{
@@ -64,7 +66,10 @@ export function createMapTimelineRepository(
         }),
       );
 
-      await localStore.replaceTripKind(accountUserId, trip.id, "timeline", points, canPersist);
+      await localStore.replaceTripKind(accountUserId, trip.id, "timeline", points, canPersist, {
+        tripVersion: trip.version ?? null,
+        tripUpdatedAt: trip.updatedAt ?? null,
+      });
       return points;
     },
   };
