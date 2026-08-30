@@ -19,10 +19,7 @@ import { useTripsData } from "@/src/features/trips/trips-data-provider";
 import type { TripSummary } from "@/src/features/trips/trips.types";
 import { useAuth } from "@/src/providers/auth-provider";
 
-import {
-  deriveCompanionAvailability,
-  type CompanionAvailability,
-} from "./availability";
+import { deriveCompanionAvailability, type CompanionAvailability } from "./availability";
 import { createCompanionPrefetchKey, selectCompanionTrips } from "./selection";
 
 type CompanionContextValue = Readonly<{
@@ -121,7 +118,15 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [isLoading, isMapActive, isRefreshing, prefetchKey, priorityTrips, repositories, status]);
+  }, [
+    isLoading,
+    isMapActive,
+    isRefreshing,
+    prefetchKey,
+    priorityTrips,
+    repositories,
+    status,
+  ]);
 
   const value = useMemo<CompanionContextValue>(
     () => ({
@@ -137,7 +142,7 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
 export function useCompanionAvailability(trip: TripSummary): CompanionAvailability {
   const context = useContext(CompanionContext);
   if (!context) {
-    throw new Error("useCompanionAvailability doit être utilisé sous CompanionPrefetchProvider.");
+    throw new Error("CompanionPrefetchProvider manquant.");
   }
 
   return useMemo(
