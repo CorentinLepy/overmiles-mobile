@@ -15,6 +15,14 @@ const storeSource = await readFile(
   new URL("../src/features/media/local-media-store.ts", import.meta.url),
   "utf8",
 );
+const lifecycleSource = await readFile(
+  new URL("../src/lib/storage/private-data-lifecycle.ts", import.meta.url),
+  "utf8",
+);
+const authSource = await readFile(
+  new URL("../src/providers/auth-provider.tsx", import.meta.url),
+  "utf8",
+);
 
 function loadPathModule() {
   const compiled = ts.transpileModule(pathSource, {
@@ -66,7 +74,10 @@ test("COR-205 deletes physical media when metadata commit fails or a capture is 
 test("COR-205 reconciles crash orphans without evicting referenced pending files", () => {
   assert.match(stagingSource, /async reconcileAccount\(/);
   assert.match(stagingSource, /expectedKeys = new Set/);
-  assert.match(stagingSource, /entry\.name\.startsWith\("\."\) \|\| !expectedKeys\.has\(storageKey\)/);
+  assert.match(
+    stagingSource,
+    /entry\.name\.startsWith\("\."\) \|\| !expectedKeys\.has\(storageKey\)/,
+  );
   assert.match(stagingSource, /"failed"/);
   assert.doesNotMatch(stagingSource, /ready_to_upload[\s\S]*delete/);
 });
@@ -79,4 +90,22 @@ test("COR-205 purge locks new staging and deletes the whole private media root",
   assert.match(purgeBlock, /this\.stagingLocked = true/);
   assert.match(purgeBlock, /root\.delete\(\)/);
   assert.match(stagingSource, /allowAfterAuthentication\(\)/);
+});
+
+test("COR-205 coordinates physical wipe with SQLCipher purge for every auth reset", () => {
+  assert.match(lifecycleSource, /Promise\.allSettled/);
+  assert.match(lifecycleSource, /localDatabase\.purge\(\)/);
+  assert.match(lifecycleSource, /secureMediaStaging\.purgeAllAndLock\(\)/);
+  assert.match(authSource, /purgePrivateLocalData/);
+  assert.match(authSource, /invalidateUnauthorizedProfile/);
+  assert.match(authSource, /reauthenticateFromBiometricLock/);
+  assert.match(authSource, /const logout = useCallback/);
+});
+
+test("COR-205 unlocks and reconciles private media only after an authenticated identity exists", () => {
+  assert.match(lifecycleSource, /activatePrivateMediaForAccount/);
+  assert.match(lifecycleSource, /allowAfterAuthentication\(\)/);
+  assert.match(lifecycleSource, /reconcileAccount\(accountUserId\)/);
+  assert.match(authSource, /activatePrivateMedia\(response\.user\)/);
+  assert.match(authSource, /activatePrivateMedia\(restoredUser\)/);
 });
