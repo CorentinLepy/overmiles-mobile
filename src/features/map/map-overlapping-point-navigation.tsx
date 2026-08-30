@@ -19,8 +19,12 @@ export function MapOverlappingPointNavigation({
 
   if (siblings.length < 2 || currentIndex < 0) return null;
 
-  const previous = siblings[(currentIndex - 1 + siblings.length) % siblings.length];
-  const next = siblings[(currentIndex + 1) % siblings.length];
+  const previousIndex = (currentIndex - 1 + siblings.length) % siblings.length;
+  const nextIndex = (currentIndex + 1) % siblings.length;
+  const previous = siblings[previousIndex];
+  const next = siblings[nextIndex];
+
+  if (!previous || !next) return null;
 
   return (
     <View
