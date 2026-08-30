@@ -2,10 +2,7 @@ import type { MapCoordinate } from "./map.types";
 
 const EARTH_RADIUS_METERS = 6_371_008.8;
 
-export function calculateMapDistanceMeters(
-  from: MapCoordinate,
-  to: MapCoordinate,
-): number | null {
+export function calculateMapDistanceMeters(from: MapCoordinate, to: MapCoordinate): number | null {
   if (!isValidCoordinate(from) || !isValidCoordinate(to)) return null;
 
   const latitudeDelta = toRadians(to.latitude - from.latitude);
@@ -15,9 +12,7 @@ export function calculateMapDistanceMeters(
 
   const haversine =
     Math.sin(latitudeDelta / 2) ** 2 +
-    Math.cos(fromLatitude) *
-      Math.cos(toLatitude) *
-      Math.sin(longitudeDelta / 2) ** 2;
+    Math.cos(fromLatitude) * Math.cos(toLatitude) * Math.sin(longitudeDelta / 2) ** 2;
   const angularDistance = 2 * Math.asin(Math.sqrt(Math.min(1, haversine)));
   return EARTH_RADIUS_METERS * angularDistance;
 }

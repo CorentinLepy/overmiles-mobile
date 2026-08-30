@@ -22,6 +22,7 @@ import {
 } from "../external-navigation";
 import { MapCurrentTripFocus } from "../map-current-trip-focus";
 import { createVisitedPointsFeatureCollection } from "../map-geojson";
+import { MapPointDistance } from "../map-point-distance";
 import { MapTerrainActions } from "../map-terrain-actions";
 import { getMapInitialViewState } from "../map-viewport";
 import type { MapDataState, TripMapPoint } from "../map.types";
@@ -275,6 +276,7 @@ export function MapScreen() {
         <SelectedPointCard
           point={selectedPoint}
           isOffline={state.status === "offline"}
+          showUserDistance={isUserLocationEnabled}
           onClose={() => setSelectedPointId(null)}
           bottomInset={insets.bottom}
         />
@@ -362,11 +364,13 @@ function CenterCard({ title, description }: { title: string; description: string
 function SelectedPointCard({
   point,
   isOffline,
+  showUserDistance,
   onClose,
   bottomInset,
 }: {
   point: TripMapPoint;
   isOffline: boolean;
+  showUserDistance: boolean;
   onClose: () => void;
   bottomInset: number;
 }) {
@@ -466,6 +470,7 @@ function SelectedPointCard({
           </Text>
         </View>
       ) : null}
+      {showUserDistance ? <MapPointDistance point={point} /> : null}
       {point.occurredAt ? (
         <Text selectable style={{ color: theme.color.ink, fontSize: 13 }}>
           {formatPointDate(point.occurredAt)}
