@@ -1,11 +1,7 @@
 import type { MapSnapshotMetadata } from "@/src/features/map/local-map-store";
 import type { TripSummary } from "@/src/features/trips/trips.types";
 
-export type CompanionAvailabilityState =
-  | "available"
-  | "preparing"
-  | "stale"
-  | "not_prepared";
+export type CompanionAvailabilityState = "available" | "preparing" | "stale" | "not_prepared";
 
 export type CompanionAvailability = Readonly<{
   state: CompanionAvailabilityState;
