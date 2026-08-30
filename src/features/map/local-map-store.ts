@@ -7,6 +7,8 @@ type CachedMapPointRow = Readonly<{
 }>;
 
 type CachedMapSnapshotRow = Readonly<{
+  trip_id: string;
+  point_kind: MapSourceKind;
   item_count: number;
   trip_version: number | null;
   trip_updated_at: string | null;
@@ -52,6 +54,27 @@ export class LocalMapStore {
     return rows.map(({ payload_json }) => parseCachedMapPoint(payload_json, tripId, kind));
   }
 
+  async listSnapshots(accountUserId: string): Promise<MapSnapshotMetadata[]> {
+    const db = await this.database.open();
+    const rows = await db.getAllAsync<CachedMapSnapshotRow>(
+      `SELECT trip_id, point_kind, item_count, trip_version, trip_updated_at, cached_at
+       FROM cached_map_snapshots
+       WHERE account_user_id = ?
+       ORDER BY trip_id ASC, point_kind ASC`,
+      accountUserId,
+    );
+
+    return rows.map((row) => ({
+      accountUserId,
+      tripId: row.trip_id,
+      kind: row.point_kind,
+      itemCount: row.item_count,
+      tripVersion: row.trip_version,
+      tripUpdatedAt: row.trip_updated_at,
+      cachedAt: row.cached_at,
+    }));
+  }
+
   async getSnapshot(
     accountUserId: string,
     tripId: string,
@@ -59,7 +82,7 @@ export class LocalMapStore {
   ): Promise<MapSnapshotMetadata | null> {
     const db = await this.database.open();
     const row = await db.getFirstAsync<CachedMapSnapshotRow>(
-      `SELECT item_count, trip_version, trip_updated_at, cached_at
+      `SELECT trip_id, point_kind, item_count, trip_version, trip_updated_at, cached_at
        FROM cached_map_snapshots
        WHERE account_user_id = ? AND trip_id = ? AND point_kind = ?`,
       accountUserId,
@@ -70,8 +93,8 @@ export class LocalMapStore {
     if (!row) return null;
     return {
       accountUserId,
-      tripId,
-      kind,
+      tripId: row.trip_id,
+      kind: row.point_kind,
       itemCount: row.item_count,
       tripVersion: row.trip_version,
       tripUpdatedAt: row.trip_updated_at,
