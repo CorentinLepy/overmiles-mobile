@@ -1,4 +1,11 @@
-import { Camera, GeoJSONSource, Layer, Map } from "@maplibre/maplibre-react-native";
+import {
+  Camera,
+  GeoJSONSource,
+  Layer,
+  LocationManager,
+  Map,
+  UserLocation,
+} from "@maplibre/maplibre-react-native";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
@@ -29,8 +36,38 @@ export function MapScreen() {
   const initialViewState = useMemo(() => getMapInitialViewState(points), [points]);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [mapStyleFailed, setMapStyleFailed] = useState(false);
+  const [isUserLocationEnabled, setIsUserLocationEnabled] = useState(false);
+  const [isRequestingLocation, setIsRequestingLocation] = useState(false);
   const selectedPoint = points.find((point) => point.id === selectedPointId) ?? null;
   const cameraKey = `${points.length}:${points[0]?.id ?? "empty"}:${points.at(-1)?.id ?? "empty"}`;
+
+  async function toggleUserLocation(): Promise<void> {
+    if (isUserLocationEnabled) {
+      setIsUserLocationEnabled(false);
+      return;
+    }
+
+    setIsRequestingLocation(true);
+    try {
+      const granted = await LocationManager.requestPermissions();
+      if (!granted) {
+        Alert.alert(
+          "Localisation désactivée",
+          "Autorisez la localisation pendant l’utilisation pour afficher votre position sur la carte.",
+        );
+        return;
+      }
+
+      setIsUserLocationEnabled(true);
+    } catch {
+      Alert.alert(
+        "Localisation indisponible",
+        "OverMiles n’a pas pu accéder à votre position pour le moment.",
+      );
+    } finally {
+      setIsRequestingLocation(false);
+    }
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.color.canvas }}>
@@ -43,7 +80,12 @@ export function MapScreen() {
         onDidFinishLoadingMap={() => setMapStyleFailed(false)}
         onDidFailLoadingMap={() => setMapStyleFailed(true)}
       >
-        <Camera key={cameraKey} initialViewState={initialViewState} />
+        <Camera
+          key={cameraKey}
+          initialViewState={initialViewState}
+          trackUserLocation={isUserLocationEnabled ? "default" : undefined}
+          zoom={isUserLocationEnabled ? 15 : undefined}
+        />
         <GeoJSONSource
           id="overmiles-visited-points"
           data={featureCollection}
@@ -77,6 +119,7 @@ export function MapScreen() {
             }}
           />
         </GeoJSONSource>
+        {isUserLocationEnabled ? <UserLocation animated accuracy minDisplacement={5} /> : null}
       </Map>
 
       <View
@@ -133,6 +176,41 @@ export function MapScreen() {
             </Text>
           </Pressable>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={
+            isUserLocationEnabled ? "Masquer ma position" : "Afficher ma position sur la carte"
+          }
+          accessibilityState={{
+            busy: isRequestingLocation,
+            selected: isUserLocationEnabled,
+          }}
+          disabled={isRequestingLocation}
+          onPress={() => void toggleUserLocation()}
+          style={({ pressed }) => ({
+            minHeight: 44,
+            alignSelf: "flex-end",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: theme.spacing.md,
+            borderRadius: theme.radius.pill,
+            backgroundColor: theme.color.surface,
+            borderWidth: 1,
+            borderColor: isUserLocationEnabled ? theme.color.accent : theme.color.border,
+            boxShadow: "0 3px 12px rgba(0, 0, 0, 0.10)",
+            opacity: isRequestingLocation ? 0.55 : pressed ? 0.72 : 1,
+          })}
+        >
+          <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
+            {isRequestingLocation
+              ? "Localisation…"
+              : isUserLocationEnabled
+                ? "Position affichée"
+                : "Ma position"}
+          </Text>
+        </Pressable>
 
         {state.status === "offline" ? (
           <StatusPill label="Hors-ligne · données disponibles conservées" tone="warning" />
