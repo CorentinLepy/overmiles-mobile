@@ -32,11 +32,8 @@ test("COR-222 only requests location after an explicit map action", () => {
 
 test("COR-222 renders MapLibre user location with accuracy and terrain camera tracking", () => {
   assert.match(mapScreenSource, /<UserLocation animated accuracy minDisplacement=\{5\} \/>/);
-  assert.match(
-    mapScreenSource,
-    /trackUserLocation=\{isUserLocationEnabled \? "default" : undefined\}/,
-  );
-  assert.match(mapScreenSource, /zoom=\{isUserLocationEnabled \? 15 : undefined\}/);
+  assert.match(mapScreenSource, /trackUserLocation: "default" as const/);
+  assert.match(mapScreenSource, /zoom: 15/);
   assert.match(mapScreenSource, /Position affichée/);
   assert.match(mapScreenSource, /minHeight: 44/);
 });
