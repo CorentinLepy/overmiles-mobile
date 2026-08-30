@@ -125,6 +125,33 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
         ON cached_map_snapshots (account_user_id, cached_at DESC);
     `,
   },
+  {
+    version: 6,
+    name: "offline-journal-drafts",
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_journal_drafts (
+        account_user_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        draft_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        occurred_at TEXT NOT NULL,
+        stop_id TEXT,
+        state TEXT NOT NULL DEFAULT 'draft_local'
+          CHECK (state IN ('draft_local', 'ready_to_sync', 'syncing', 'failed')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (account_user_id, draft_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_local_journal_drafts_trip_updated
+        ON local_journal_drafts (account_user_id, trip_id, state, updated_at DESC);
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_local_journal_drafts_active_trip
+        ON local_journal_drafts (account_user_id, trip_id)
+        WHERE state = 'draft_local';
+    `,
+  },
 ];
 
 export async function runLocalMigrations(db: SQLiteDatabase): Promise<void> {
