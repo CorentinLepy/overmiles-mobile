@@ -39,15 +39,11 @@ export function MapScreen() {
   const currentTrip = findCurrentTrip(trips);
   const [isCurrentTripFocused, setIsCurrentTripFocused] = useState(false);
   const focusedTripId = currentTrip && isCurrentTripFocused ? currentTrip.id : null;
-  const visiblePoints = useMemo(
-    () => (focusedTripId ? points.filter((point) => point.tripId === focusedTripId) : points),
-    [focusedTripId, points],
-  );
-  const featureCollection = useMemo(
-    () => createVisitedPointsFeatureCollection(visiblePoints),
-    [visiblePoints],
-  );
-  const initialViewState = useMemo(() => getMapInitialViewState(visiblePoints), [visiblePoints]);
+  const visiblePoints = focusedTripId
+    ? points.filter((point) => point.tripId === focusedTripId)
+    : points;
+  const featureCollection = createVisitedPointsFeatureCollection(visiblePoints);
+  const initialViewState = getMapInitialViewState(visiblePoints);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [mapStyleFailed, setMapStyleFailed] = useState(false);
   const [isUserLocationEnabled, setIsUserLocationEnabled] = useState(false);
@@ -262,7 +258,11 @@ export function MapScreen() {
         />
       ) : visiblePoints.length === 0 ? (
         <CenterCard
-          title={focusedTripId ? "Aucun repère pour ce voyage." : "Aucun repère géolocalisé pour le moment."}
+          title={
+            focusedTripId
+              ? "Aucun repère pour ce voyage."
+              : "Aucun repère géolocalisé pour le moment."
+          }
           description={
             focusedTripId
               ? "Passez sur Tous les voyages pour retrouver vos autres repères."
