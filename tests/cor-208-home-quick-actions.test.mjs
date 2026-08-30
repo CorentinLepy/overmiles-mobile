@@ -79,7 +79,10 @@ test("COR-208 keeps Home Quick Actions contextual to the current trip", () => {
   assert.match(homeSource, /isTripInProgress\(nextTrip\)/);
   assert.match(homeSource, /isCurrentTrip \? "VOYAGE EN COURS" : "PROCHAIN DÉPART"/);
   assert.match(homeSource, /isCurrentTrip \? \(/);
-  assert.match(homeSource, /<CurrentTripQuickActions tripId=\{nextTrip\.id\} tripName=\{nextTrip\.name\} \/>/);
+  assert.match(
+    homeSource,
+    /<CurrentTripQuickActions tripId=\{nextTrip\.id\} tripName=\{nextTrip\.name\} \/>/,
+  );
 });
 
 test("COR-208 routes Carnet and Moment in one accessible tap without networking", () => {
