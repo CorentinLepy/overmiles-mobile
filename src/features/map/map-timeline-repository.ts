@@ -1,4 +1,5 @@
 import type { ApiClient } from "@/src/lib/api/api-client";
+import { localDataSessionGuard } from "@/src/lib/storage/local-data-session-guard";
 
 import { localMapStore, type LocalMapStore } from "./local-map-store";
 import { projectTripMapPoints } from "./map-projection";
@@ -34,6 +35,8 @@ export function createMapTimelineRepository(
     },
 
     async listTripEvents(trip: TripIdentity): Promise<readonly TripMapPoint[]> {
+      const writeToken = localDataSessionGuard.capture();
+      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
       const events = await apiClient.request<TimelineEventResponse[]>({
         path: `/trips/${encodeURIComponent(trip.id)}/events`,
         kind: "json",
@@ -61,7 +64,7 @@ export function createMapTimelineRepository(
         }),
       );
 
-      await localStore.replaceTripKind(accountUserId, trip.id, "timeline", points);
+      await localStore.replaceTripKind(accountUserId, trip.id, "timeline", points, canPersist);
       return points;
     },
   };
