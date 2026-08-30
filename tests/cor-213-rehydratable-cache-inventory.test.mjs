@@ -3,7 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import ts from "typescript";
 
-const migrationSource = await readFile(new URL("../src/lib/storage/migrations.ts", import.meta.url), "utf8");
+const migrationSource = await readFile(
+  new URL("../src/lib/storage/migrations.ts", import.meta.url),
+  "utf8",
+);
 const policySource = await readFile(
   new URL("../src/features/offline-companion/storage-policy.ts", import.meta.url),
   "utf8",
@@ -100,7 +103,9 @@ test("COR-213 storage keys are relative, account-scoped and cannot accept signed
 
 test("COR-213 inventory items feed COR-212 only as explicitly rehydratable artifacts", () => {
   const policy = executeTypeScript(policySource);
-  const { toOfflineStorageArtifact } = executeTypeScript(itemSource, { "./storage-policy": policy });
+  const { toOfflineStorageArtifact } = executeTypeScript(itemSource, {
+    "./storage-policy": policy,
+  });
   const item = {
     accountUserId: "user-1",
     cacheId: "map-porto",
@@ -149,5 +154,8 @@ test("COR-213 exposes cache byte totals but cannot delete physical files", () =>
   assert.match(storeSource, /removeEntry/);
   assert.match(storeSource, /DELETE FROM rehydratable_cache_inventory/);
   assert.doesNotMatch(storeSource, /expo-file-system|new File|new Directory|\.delete\(\)/);
-  assert.doesNotMatch(itemSource, /local_media_items|local_journal_drafts|local_timeline_event_drafts/);
+  assert.doesNotMatch(
+    itemSource,
+    /local_media_items|local_journal_drafts|local_timeline_event_drafts/,
+  );
 });

@@ -1,7 +1,4 @@
-import type {
-  CompanionTripStoragePriority,
-  OfflineStorageArtifact,
-} from "./storage-policy";
+import type { CompanionTripStoragePriority, OfflineStorageArtifact } from "./storage-policy";
 
 export const REHYDRATABLE_CACHE_KINDS = ["remote_media", "document", "map_region"] as const;
 
@@ -56,7 +53,9 @@ export function assertRehydratableCacheInput(input: SaveRehydratableCacheItemInp
   assertStorageKey(input.storageKey, input.accountUserId, input.kind, input.cacheId);
 
   if (!SAFE_FINGERPRINT.test(input.sourceFingerprint)) {
-    throw new Error("sourceFingerprint doit être un identifiant opaque et borné, jamais une URL signée.");
+    throw new Error(
+      "sourceFingerprint doit être un identifiant opaque et borné, jamais une URL signée.",
+    );
   }
   if (!Number.isSafeInteger(input.sizeBytes) || input.sizeBytes < 0) {
     throw new Error("sizeBytes doit être un nombre d’octets entier positif ou nul.");

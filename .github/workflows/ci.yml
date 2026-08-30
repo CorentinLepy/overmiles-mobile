@@ -1,7 +1,15 @@
 name: Mobile CI
 
 on:
+  # Keep the PR workflow unconditional: COR-180 will require `Mobile CI / quality`,
+  # and GitHub leaves required checks pending when a workflow is skipped by path filters.
   pull_request:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
   workflow_dispatch:
 
 permissions:
@@ -14,7 +22,7 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     env:
       EXPO_NO_TELEMETRY: "1"
 
@@ -39,12 +47,36 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Diagnose exact COR-213 formatting
+      - name: Verify repository
+        run: pnpm verify
+
+      - name: Validate Expo configuration
+        run: npx expo config --type public > /dev/null
+
+      - name: Run Expo Doctor
+        run: pnpm doctor
+
+      - name: Report Expo dependency compatibility
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        run: npx expo install --check
+
+      - name: Bundle iOS
+        run: npx expo export --platform ios --output-dir .expo-ci/ios --clear
+
+      - name: Bundle Android
+        run: npx expo export --platform android --output-dir .expo-ci/android --clear
+
+      - name: Validate Android native prebuild
+        run: npx expo prebuild --platform android --no-install --clean
+
+      - name: Validate iOS native prebuild
+        run: npx expo prebuild --platform ios --no-install --clean
+
+      - name: Validate iOS privacy and navigation schemes
         run: |
-          pnpm exec prettier --write \
-            src/features/offline-companion/rehydratable-cache-item.ts \
-            tests/cor-213-rehydratable-cache-inventory.test.mjs
-          git diff -- \
-            src/features/offline-companion/rehydratable-cache-item.ts \
-            tests/cor-213-rehydratable-cache-inventory.test.mjs
-          exit 1
+          grep -q '<key>NSCameraUsageDescription</key>' ios/OVERMILES/Info.plist
+          grep -q '<key>NSPhotoLibraryUsageDescription</key>' ios/OVERMILES/Info.plist
+          grep -q '<key>LSApplicationQueriesSchemes</key>' ios/OVERMILES/Info.plist
+          grep -q '<string>comgooglemaps</string>' ios/OVERMILES/Info.plist
+          grep -q '<string>waze</string>' ios/OVERMILES/Info.plist
