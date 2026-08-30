@@ -1,21 +1,8 @@
-import type {
-  CompanionTripStoragePriority,
-  OfflineStorageClass,
-} from "./storage-policy";
+import type { CompanionTripStoragePriority, OfflineStorageClass } from "./storage-policy";
 
 export type PrefetchContentWeight = "light" | "heavy";
-export type PrefetchNetworkClass =
-  | "offline"
-  | "constrained"
-  | "cellular"
-  | "wifi"
-  | "unknown";
-export type PrefetchBatteryClass =
-  | "critical"
-  | "low"
-  | "normal"
-  | "charging"
-  | "unknown";
+export type PrefetchNetworkClass = "offline" | "constrained" | "cellular" | "wifi" | "unknown";
+export type PrefetchBatteryClass = "critical" | "low" | "normal" | "charging" | "unknown";
 export type ResourcePrefetchDecision = "allow" | "defer";
 
 export type ResourcePrefetchContext = Readonly<{
@@ -53,10 +40,7 @@ export function decideResourcePrefetch(
     return { decision: "allow", reason: "protected_data" };
   }
 
-  if (
-    candidate.storageClass === "durable_business" ||
-    candidate.contentWeight === "light"
-  ) {
+  if (candidate.storageClass === "durable_business" || candidate.contentWeight === "light") {
     return { decision: "allow", reason: "lightweight_business_data" };
   }
 
