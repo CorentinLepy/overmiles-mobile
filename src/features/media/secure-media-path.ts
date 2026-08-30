@@ -59,7 +59,10 @@ export function parseLocalMediaStorageKey(storageKey: string): Readonly<{
   return { accountUserId, filename };
 }
 
-export function isLocalMediaStorageKeyForAccount(storageKey: string, accountUserId: string): boolean {
+export function isLocalMediaStorageKeyForAccount(
+  storageKey: string,
+  accountUserId: string,
+): boolean {
   try {
     return parseLocalMediaStorageKey(storageKey).accountUserId === accountUserId;
   } catch {
