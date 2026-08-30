@@ -40,11 +40,8 @@ function loadAvailabilityModule() {
     },
   }).outputText;
   const module = { exports: {} };
-  new Function("require", "module", "exports", compiled)(
-    () => ({}),
-    module,
-    module.exports,
-  );
+  const evaluate = new Function("require", "module", "exports", compiled);
+  evaluate(() => ({}), module, module.exports);
   return module.exports;
 }
 
@@ -78,54 +75,46 @@ function snapshot(kind, overrides = {}) {
 
 test("COR-198 only marks a trip available when both required snapshots are fresh", () => {
   const { deriveCompanionAvailability } = loadAvailabilityModule();
+  const completeSnapshots = [snapshot("stop"), snapshot("timeline")];
+  const available = deriveCompanionAvailability(trip, completeSnapshots, false);
+  const incomplete = deriveCompanionAvailability(trip, [snapshot("stop")], false);
+  const staleSnapshots = [snapshot("stop"), snapshot("timeline", { tripVersion: 6 })];
+  const stale = deriveCompanionAvailability(trip, staleSnapshots, false);
 
-  assert.deepEqual(
-    deriveCompanionAvailability(trip, [snapshot("stop"), snapshot("timeline")], false),
-    {
-      state: "available",
-      completedAt: "2026-08-30T10:02:00Z",
-    },
-  );
-  assert.equal(deriveCompanionAvailability(trip, [snapshot("stop")], false).state, "not_prepared");
-  assert.equal(
-    deriveCompanionAvailability(
-      trip,
-      [snapshot("stop"), snapshot("timeline", { tripVersion: 6 })],
-      false,
-    ).state,
-    "stale",
-  );
+  assert.deepEqual(available, {
+    state: "available",
+    completedAt: "2026-08-30T10:02:00Z",
+  });
+  assert.equal(incomplete.state, "not_prepared");
+  assert.equal(stale.state, "stale");
 });
 
 test("COR-198 treats valid empty snapshots as prepared and reports real prefetch activity", () => {
   const { deriveCompanionAvailability } = loadAvailabilityModule();
+  const emptySnapshots = [snapshot("stop"), snapshot("timeline")];
+  const available = deriveCompanionAvailability(trip, emptySnapshots, false);
+  const preparing = deriveCompanionAvailability(trip, [snapshot("stop")], true);
 
-  assert.equal(
-    deriveCompanionAvailability(trip, [snapshot("stop"), snapshot("timeline")], false).state,
-    "available",
-  );
-  assert.equal(deriveCompanionAvailability(trip, [snapshot("stop")], true).state, "preparing");
+  assert.equal(available.state, "available");
+  assert.equal(preparing.state, "preparing");
 });
 
 test("COR-198 formats user-facing offline states without claiming unsupported media coverage", () => {
   const { formatCompanionAvailability } = loadAvailabilityModule();
   const now = new Date("2026-08-30T10:14:00Z");
+  const available = formatCompanionAvailability(
+    { state: "available", completedAt: "2026-08-30T10:02:00Z" },
+    now,
+  );
+  const preparing = formatCompanionAvailability(
+    { state: "preparing", completedAt: null },
+    now,
+  );
+  const stale = formatCompanionAvailability({ state: "stale", completedAt: null }, now);
 
-  assert.equal(
-    formatCompanionAvailability(
-      { state: "available", completedAt: "2026-08-30T10:02:00Z" },
-      now,
-    ),
-    "Disponible hors ligne · actualisé il y a 12 min",
-  );
-  assert.equal(
-    formatCompanionAvailability({ state: "preparing", completedAt: null }, now),
-    "Préparation hors ligne…",
-  );
-  assert.equal(
-    formatCompanionAvailability({ state: "stale", completedAt: null }, now),
-    "À actualiser avant le départ",
-  );
+  assert.equal(available, "Disponible hors ligne · actualisé il y a 12 min");
+  assert.equal(preparing, "Préparation hors ligne…");
+  assert.equal(stale, "À actualiser avant le départ");
 });
 
 test("COR-198 loads snapshot metadata locally in one account-scoped query", () => {
@@ -137,7 +126,8 @@ test("COR-198 loads snapshot metadata locally in one account-scoped query", () =
 });
 
 test("COR-198 surfaces the same accessible availability state across product entry points", () => {
-  assert.match(badgeSource, /accessibilityLabel={`Disponibilité hors ligne : \$\{label\}`}/);
+  const accessibilityPattern = /accessibilityLabel={`Disponibilité hors ligne : \$\{label\}`}/;
+  assert.match(badgeSource, accessibilityPattern);
   assert.match(badgeSource, /formatCompanionAvailability/);
   assert.match(homeSource, /<CompanionAvailabilityBadge trip={nextTrip} \/>/);
   assert.match(tripCardSource, /<CompanionAvailabilityBadge trip={trip} \/>/);
