@@ -47,18 +47,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Diagnose Prettier diff for COR-198
-        run: |
-          pnpm prettier --write \
-            src/features/offline-companion/prefetch-provider.tsx \
-            tests/cor-194-companion-prefetch.test.mjs \
-            tests/cor-198-offline-availability.test.mjs
-          git diff -- \
-            src/features/offline-companion/prefetch-provider.tsx \
-            tests/cor-194-companion-prefetch.test.mjs \
-            tests/cor-198-offline-availability.test.mjs
-          exit 1
-
       - name: Verify repository
         run: pnpm verify
 
