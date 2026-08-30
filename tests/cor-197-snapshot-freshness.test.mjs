@@ -20,6 +20,9 @@ const timelineRepository = await readFile(
   "utf8",
 );
 
+const deletePointsPattern = /DELETE FROM cached_map_points WHERE account_user_id = \?/;
+const deleteSnapshotsPattern = /DELETE FROM cached_map_snapshots WHERE account_user_id = \?/;
+
 function loadLocalMapStore() {
   const compiled = ts.transpileModule(storeSource, {
     compilerOptions: {
@@ -34,8 +37,8 @@ function loadLocalMapStore() {
     }
     throw new Error(`Unexpected dependency: ${specifier}`);
   };
-
-  new Function("require", "module", "exports", compiled)(mockRequire, module, module.exports);
+  const evaluate = new Function("require", "module", "exports", compiled);
+  evaluate(mockRequire, module, module.exports);
   return module.exports.LocalMapStore;
 }
 
@@ -111,21 +114,25 @@ test("COR-197 never marks a snapshot complete after session invalidation", async
     tripVersion: 8,
   });
 
-  assert.equal(writes.some(({ sql }) => /cached_map_snapshots/.test(sql)), false);
+  const wroteSnapshot = writes.some(({ sql }) => /cached_map_snapshots/.test(sql));
+  assert.equal(wroteSnapshot, false);
 });
 
 test("COR-197 exposes persisted snapshot metadata for future Companion UX", async () => {
   const LocalMapStore = loadLocalMapStore();
   const { database } = createDatabase();
   database.getFirstAsync = async () => ({
+    trip_id: "trip-1",
+    point_kind: "stop",
     item_count: 0,
     trip_version: 7,
     trip_updated_at: "2026-08-30T10:00:00Z",
     cached_at: "2026-08-30T10:01:00Z",
   });
   const store = new LocalMapStore(database);
+  const snapshot = await store.getSnapshot("user-1", "trip-1", "stop");
 
-  assert.deepEqual(await store.getSnapshot("user-1", "trip-1", "stop"), {
+  assert.deepEqual(snapshot, {
     accountUserId: "user-1",
     tripId: "trip-1",
     kind: "stop",
@@ -138,8 +145,8 @@ test("COR-197 exposes persisted snapshot metadata for future Companion UX", asyn
 
 test("COR-197 clears points and freshness metadata for the account", () => {
   const clearAccount = storeSource.slice(storeSource.indexOf("clearAccount("));
-  assert.match(clearAccount, /DELETE FROM cached_map_points WHERE account_user_id = \?/);
-  assert.match(clearAccount, /DELETE FROM cached_map_snapshots WHERE account_user_id = \?/);
+  assert.match(clearAccount, deletePointsPattern);
+  assert.match(clearAccount, deleteSnapshotsPattern);
 });
 
 test("COR-197 repositories attach current Trip freshness to snapshots", () => {
