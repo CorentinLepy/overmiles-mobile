@@ -6,7 +6,29 @@ type CachedMapPointRow = Readonly<{
   payload_json: string;
 }>;
 
+type CachedMapSnapshotRow = Readonly<{
+  item_count: number;
+  trip_version: number | null;
+  trip_updated_at: string | null;
+  cached_at: string;
+}>;
+
 type LocalWriteGuard = () => boolean;
+
+export type MapSnapshotSource = Readonly<{
+  tripVersion?: number | null;
+  tripUpdatedAt?: string | null;
+}>;
+
+export type MapSnapshotMetadata = Readonly<{
+  accountUserId: string;
+  tripId: string;
+  kind: MapSourceKind;
+  itemCount: number;
+  tripVersion: number | null;
+  tripUpdatedAt: string | null;
+  cachedAt: string;
+}>;
 
 const ALWAYS_WRITE: LocalWriteGuard = () => true;
 
@@ -30,12 +52,40 @@ export class LocalMapStore {
     return rows.map(({ payload_json }) => parseCachedMapPoint(payload_json, tripId, kind));
   }
 
+  async getSnapshot(
+    accountUserId: string,
+    tripId: string,
+    kind: MapSourceKind,
+  ): Promise<MapSnapshotMetadata | null> {
+    const db = await this.database.open();
+    const row = await db.getFirstAsync<CachedMapSnapshotRow>(
+      `SELECT item_count, trip_version, trip_updated_at, cached_at
+       FROM cached_map_snapshots
+       WHERE account_user_id = ? AND trip_id = ? AND point_kind = ?`,
+      accountUserId,
+      tripId,
+      kind,
+    );
+
+    if (!row) return null;
+    return {
+      accountUserId,
+      tripId,
+      kind,
+      itemCount: row.item_count,
+      tripVersion: row.trip_version,
+      tripUpdatedAt: row.trip_updated_at,
+      cachedAt: row.cached_at,
+    };
+  }
+
   replaceTripKind(
     accountUserId: string,
     tripId: string,
     kind: MapSourceKind,
     points: readonly TripMapPoint[],
     shouldWrite: LocalWriteGuard = ALWAYS_WRITE,
+    source: MapSnapshotSource = {},
   ): Promise<void> {
     return this.enqueueWrite(async () => {
       const db = await this.database.openIf(shouldWrite);
@@ -77,6 +127,31 @@ export class LocalMapStore {
             cachedAt,
           );
         }
+
+        if (!shouldWrite()) return;
+        await db.runAsync(
+          `INSERT INTO cached_map_snapshots (
+             account_user_id,
+             trip_id,
+             point_kind,
+             item_count,
+             trip_version,
+             trip_updated_at,
+             cached_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(account_user_id, trip_id, point_kind) DO UPDATE SET
+             item_count = excluded.item_count,
+             trip_version = excluded.trip_version,
+             trip_updated_at = excluded.trip_updated_at,
+             cached_at = excluded.cached_at`,
+          accountUserId,
+          tripId,
+          kind,
+          points.length,
+          source.tripVersion ?? null,
+          source.tripUpdatedAt ?? null,
+          cachedAt,
+        );
       });
     });
   }
@@ -84,7 +159,13 @@ export class LocalMapStore {
   clearAccount(accountUserId: string): Promise<void> {
     return this.enqueueWrite(async () => {
       const db = await this.database.open();
-      await db.runAsync("DELETE FROM cached_map_points WHERE account_user_id = ?", accountUserId);
+      await db.withTransactionAsync(async () => {
+        await db.runAsync("DELETE FROM cached_map_points WHERE account_user_id = ?", accountUserId);
+        await db.runAsync(
+          "DELETE FROM cached_map_snapshots WHERE account_user_id = ?",
+          accountUserId,
+        );
+      });
     });
   }
 
