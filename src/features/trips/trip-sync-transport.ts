@@ -1,5 +1,6 @@
 import { ApiError } from "@/src/lib/api/api-error";
 import type { ApiClient } from "@/src/lib/api/api-client";
+import { localDataSessionGuard } from "@/src/lib/storage/local-data-session-guard";
 import type { SyncTransport } from "@/src/lib/sync/sync-engine";
 
 import { localTripsStore, type LocalTripsStore } from "./local-trips-store";
@@ -28,6 +29,10 @@ export function createTripSyncTransport(
       return { outcome: "fatal", errorCode: INVALID_PAYLOAD };
     }
 
+    const writeToken = localDataSessionGuard.capture();
+    if (writeToken === null) return { outcome: "aborted" };
+    const canPersist = () => localDataSessionGuard.canCommit(writeToken);
+
     try {
       const updatedTrip = await apiClient.request<TripSummary>({
         path: `/trips/${encodeURIComponent(operation.entityId)}`,
@@ -42,6 +47,8 @@ export function createTripSyncTransport(
         },
       });
 
+      if (!canPersist()) return { outcome: "aborted" };
+
       if (
         updatedTrip.id !== operation.entityId ||
         !isServerVersion(updatedTrip.version) ||
@@ -50,7 +57,8 @@ export function createTripSyncTransport(
         return { outcome: "fatal", errorCode: INVALID_RESPONSE };
       }
 
-      await localStore.upsert(accountUserId, updatedTrip);
+      await localStore.upsert(accountUserId, updatedTrip, canPersist);
+      if (!canPersist()) return { outcome: "aborted" };
 
       return {
         outcome: "applied",
@@ -59,6 +67,7 @@ export function createTripSyncTransport(
         serverUpdatedBy: updatedTrip.updatedByUserId ?? null,
       };
     } catch (error) {
+      if (!canPersist()) return { outcome: "aborted" };
       if (!(error instanceof ApiError)) throw error;
 
       if (error.kind === "conflict" && error.code === "SYNC_VERSION_CONFLICT") {
