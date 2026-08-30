@@ -26,6 +26,9 @@ export function QuickMomentScreen({
   const trip = findTrip(tripId);
   const accountUserId = user?.id ?? null;
   const tripAvailable = trip !== null;
+  const mapContextLabel = mapContext?.label ?? null;
+  const mapContextLatitude = mapContext?.latitude ?? null;
+  const mapContextLongitude = mapContext?.longitude ?? null;
   const generationRef = useRef<LocalDatabaseGeneration | null>(null);
   const saveRevisionRef = useRef(0);
   const [draftId, setDraftId] = useState(() => Crypto.randomUUID());
@@ -64,18 +67,22 @@ export function QuickMomentScreen({
           const nextDraftId = Crypto.randomUUID();
           const nextOccurredAt = new Date().toISOString();
 
-          if (mapContext) {
+          if (
+            mapContextLabel !== null &&
+            mapContextLatitude !== null &&
+            mapContextLongitude !== null
+          ) {
             const seededDraft = await localMomentDraftStore.save(
               {
                 accountUserId,
                 tripId,
                 draftId: nextDraftId,
                 type: "MANUAL",
-                title: mapContext.label,
+                title: mapContextLabel,
                 description: null,
                 occurredAt: nextOccurredAt,
-                latitude: mapContext.latitude,
-                longitude: mapContext.longitude,
+                latitude: mapContextLatitude,
+                longitude: mapContextLongitude,
                 state: "draft_local",
               },
               generation,
@@ -94,7 +101,7 @@ export function QuickMomentScreen({
             setDescription(seededDraft.description ?? "");
             setLatitude(seededDraft.latitude);
             setLongitude(seededDraft.longitude);
-            setLocationLabel(mapContext.label);
+            setLocationLabel(mapContextLabel);
             setSaveState("saved");
           } else {
             setDraftId(nextDraftId);
@@ -123,9 +130,9 @@ export function QuickMomentScreen({
     };
   }, [
     accountUserId,
-    mapContext?.label,
-    mapContext?.latitude,
-    mapContext?.longitude,
+    mapContextLabel,
+    mapContextLatitude,
+    mapContextLongitude,
     tripAvailable,
     tripId,
   ]);
@@ -175,7 +182,9 @@ export function QuickMomentScreen({
 
   const statusLabel = saveStateLabel(saveState);
   const hasLocation = latitude !== null && longitude !== null;
-  const locationContextLabel = locationLabel ? `Lieu associé · ${locationLabel}` : "Position associée";
+  const locationContextLabel = locationLabel
+    ? `Lieu associé · ${locationLabel}`
+    : "Position associée";
 
   return (
     <ScrollView
