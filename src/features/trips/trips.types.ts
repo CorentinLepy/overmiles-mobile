@@ -44,7 +44,7 @@ export type TripUpdatePatch = Readonly<
       | "startsAt"
       | "endsAt"
       | "countries"
-      | "coverImageUrl"
+      | "coverImageUrl",
     >
   >
 >;
