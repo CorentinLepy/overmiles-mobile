@@ -22,7 +22,10 @@ test(
       revisitSource,
       /candidate\.coordinate\.longitude === point\.coordinate\.longitude/,
     );
-    assert.doesNotMatch(revisitSource, /toFixed\(|precision|coordinateBucketKey/);
+    assert.doesNotMatch(
+      revisitSource,
+      /toFixed\(|precision|coordinateBucketKey/,
+    );
   },
 );
 
