@@ -44,6 +44,14 @@ const tripSyncTransport = await readFile(
   "utf8",
 );
 
+function deferred() {
+  let resolve;
+  const promise = new Promise((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+  return { promise, resolve };
+}
+
 function loadGuardClass() {
   const compiled = ts.transpileModule(guardSource, {
     compilerOptions: {
@@ -54,6 +62,34 @@ function loadGuardClass() {
   const module = { exports: {} };
   new Function("require", "module", "exports", compiled)(() => ({}), module, module.exports);
   return module.exports.LocalDataSessionGuard;
+}
+
+function loadAuthManager(localDataSessionGuard) {
+  const compiled = ts.transpileModule(authSession, {
+    compilerOptions: {
+      module: ts.ModuleKind.CommonJS,
+      target: ts.ScriptTarget.ES2022,
+    },
+  }).outputText;
+  const module = { exports: {} };
+
+  class ApiError extends Error {
+    constructor(init) {
+      super(init.userMessage);
+      Object.assign(this, init);
+    }
+  }
+
+  const mockRequire = (specifier) => {
+    if (specifier === "../api/api-error") return { ApiError };
+    if (specifier === "../storage/local-data-session-guard") {
+      return { localDataSessionGuard };
+    }
+    throw new Error(`Unexpected dependency: ${specifier}`);
+  };
+
+  new Function("require", "module", "exports", compiled)(mockRequire, module, module.exports);
+  return module.exports.AuthSessionManager;
 }
 
 test("COR-195 write tokens only belong to the active server session", () => {
@@ -107,6 +143,89 @@ test("COR-195 stale refreshes cannot republish an invalidated session", () => {
   assert.match(authSession, /LOCAL_SESSION_INVALIDATED/);
   assert.match(authSession, /!this\.endingSession/);
   assert.match(authSession, /error\.code !== "LOCAL_SESSION_INVALIDATED"/);
+});
+
+test("COR-195 stale refresh cannot restore access after clear", async () => {
+  const events = [];
+  const refreshStarted = deferred();
+  const releaseRefresh = deferred();
+  let storedRefreshToken = "refresh-old";
+  const guard = {
+    activate() {
+      events.push("activate");
+    },
+    invalidate() {
+      events.push("invalidate");
+    },
+  };
+  const tokenStore = {
+    async readRefreshToken() {
+      return storedRefreshToken;
+    },
+    async writeRefreshToken(token) {
+      storedRefreshToken = token;
+    },
+    async clearRefreshToken() {
+      storedRefreshToken = null;
+    },
+  };
+  const refreshTransport = async () => {
+    refreshStarted.resolve();
+    await releaseRefresh.promise;
+    return { accessToken: "access-new", refreshToken: "refresh-new" };
+  };
+  const AuthSessionManager = loadAuthManager(guard);
+  const manager = new AuthSessionManager(tokenStore, refreshTransport, async () => {});
+
+  const refresh = manager.refresh();
+  await refreshStarted.promise;
+  await manager.clearLocalSession();
+  releaseRefresh.resolve();
+
+  await assert.rejects(refresh, (error) => error.code === "LOCAL_SESSION_INVALIDATED");
+  assert.equal(manager.getAccessToken(), null);
+  assert.equal(storedRefreshToken, null);
+  assert.deepEqual(events, ["invalidate"]);
+});
+
+test("COR-195 logout refresh never reactivates local writes", async () => {
+  const events = [];
+  let storedRefreshToken = "refresh-old";
+  let revokedAccessToken = null;
+  const guard = {
+    activate() {
+      events.push("activate");
+    },
+    invalidate() {
+      events.push("invalidate");
+    },
+  };
+  const tokenStore = {
+    async readRefreshToken() {
+      return storedRefreshToken;
+    },
+    async writeRefreshToken(token) {
+      storedRefreshToken = token;
+    },
+    async clearRefreshToken() {
+      storedRefreshToken = null;
+    },
+  };
+  const AuthSessionManager = loadAuthManager(guard);
+  const manager = new AuthSessionManager(
+    tokenStore,
+    async () => ({ accessToken: "access-new", refreshToken: "refresh-new" }),
+    async (accessToken) => {
+      revokedAccessToken = accessToken;
+    },
+  );
+
+  await manager.logout();
+
+  assert.equal(revokedAccessToken, "access-new");
+  assert.equal(manager.getAccessToken(), null);
+  assert.equal(storedRefreshToken, null);
+  assert.equal(events.includes("activate"), false);
 });
 
 test("COR-195 remote hydration uses guarded database opens", () => {
