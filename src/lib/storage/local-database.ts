@@ -6,6 +6,8 @@ import { runLocalMigrations } from "./migrations";
 const DATABASE_NAME = "overmiles.db";
 const DATABASE_KEY_PATTERN = /^[0-9a-f]{64}$/;
 
+export type LocalDatabaseGeneration = number;
+
 function sqlCipherKeyPragma(hexKey: string): string {
   if (!DATABASE_KEY_PATTERN.test(hexKey)) {
     throw new Error("Format de clé SQLCipher invalide.");
@@ -18,12 +20,36 @@ export class LocalDatabase {
   private opening: Promise<SQLite.SQLiteDatabase> | null = null;
   private closing: Promise<void> | null = null;
   private purging: Promise<void> | null = null;
+  private purgeRequested = false;
+  private lifecycleGeneration = 0;
 
   constructor(private readonly keyStore = new DatabaseKeyStore()) {}
 
+  captureGeneration(): LocalDatabaseGeneration | null {
+    return this.purgeRequested ? null : this.lifecycleGeneration;
+  }
+
+  canUseGeneration(generation: LocalDatabaseGeneration | null): boolean {
+    return (
+      generation !== null &&
+      !this.purgeRequested &&
+      generation === this.lifecycleGeneration
+    );
+  }
+
+  async openForGeneration(
+    generation: LocalDatabaseGeneration | null,
+  ): Promise<SQLite.SQLiteDatabase | null> {
+    return this.openIf(() => this.canUseGeneration(generation));
+  }
+
   async open(): Promise<SQLite.SQLiteDatabase> {
-    if (this.purging) {
-      await this.purging;
+    if (this.purgeRequested) {
+      if (this.purging) {
+        await this.purging;
+      } else {
+        await Promise.resolve();
+      }
       return this.open();
     }
 
@@ -49,8 +75,12 @@ export class LocalDatabase {
   async openIf(shouldOpen: () => boolean): Promise<SQLite.SQLiteDatabase | null> {
     if (!shouldOpen()) return null;
 
-    if (this.purging) {
-      await this.purging;
+    if (this.purgeRequested) {
+      if (this.purging) {
+        await this.purging;
+      } else {
+        await Promise.resolve();
+      }
       return this.openIf(shouldOpen);
     }
 
@@ -96,6 +126,9 @@ export class LocalDatabase {
       return this.purging;
     }
 
+    this.lifecycleGeneration += 1;
+    this.purgeRequested = true;
+
     const purging = (async () => {
       const closing = this.closing;
       if (closing) {
@@ -137,6 +170,7 @@ export class LocalDatabase {
     trackedPurge = purging.finally(() => {
       if (this.purging === trackedPurge) {
         this.purging = null;
+        this.purgeRequested = false;
       }
     });
     this.purging = trackedPurge;

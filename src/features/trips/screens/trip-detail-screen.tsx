@@ -1,3 +1,4 @@
+import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
@@ -179,6 +180,36 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
           </Text>
         </SectionCard>
       ) : null}
+
+      <SectionCard>
+        <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "800" }}>
+          Enrichir sur le terrain
+        </Text>
+        <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
+          Capturez une note en quelques secondes, même hors ligne.
+        </Text>
+        <Link
+          href={{ pathname: "/trips/[tripId]/journal", params: { tripId: trip.id } }}
+          asChild
+        >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Écrire dans le Carnet de ${trip.name}`}
+            style={({ pressed }) => ({
+              minHeight: 48,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: theme.radius.pill,
+              backgroundColor: theme.color.ink,
+              opacity: pressed ? 0.8 : 1,
+            })}
+          >
+            <Text style={{ color: theme.color.surface, fontSize: 14, fontWeight: "800" }}>
+              Écrire dans le Carnet
+            </Text>
+          </Pressable>
+        </Link>
+      </SectionCard>
 
       <View style={{ gap: theme.spacing.md }}>
         <Text selectable style={{ color: theme.color.ink, fontSize: 20, fontWeight: "800" }}>
