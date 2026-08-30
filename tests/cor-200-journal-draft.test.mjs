@@ -94,7 +94,7 @@ test("COR-200 draft store is local-only, serialized and account plus trip scoped
   assert.match(storeSource, /canUseGeneration\(generation\)/);
   assert.match(storeSource, /WHERE account_user_id = \? AND trip_id = \?/);
   assert.match(storeSource, /ON CONFLICT\(account_user_id, draft_id\) DO UPDATE/);
-  assert.doesNotMatch(storeSource, /apiClient|fetch\(|\/journal/);
+  assert.doesNotMatch(storeSource, /apiClient|fetch\(|\.request\(/);
 });
 
 test("COR-200 Quick Capture autosaves a keyboard-safe native draft without networking", () => {
@@ -108,7 +108,7 @@ test("COR-200 Quick Capture autosaves a keyboard-safe native draft without netwo
   assert.match(screenSource, /automaticallyAdjustKeyboardInsets/);
   assert.match(screenSource, /keyboardShouldPersistTaps="handled"/);
   assert.match(screenSource, /Enregistré sur cet appareil/);
-  assert.doesNotMatch(screenSource, /apiClient|fetch\(|\/journal/);
+  assert.doesNotMatch(screenSource, /apiClient|fetch\(|\.request\(/);
 });
 
 test("COR-200 is reachable from Trip detail through the native Trips stack", () => {
