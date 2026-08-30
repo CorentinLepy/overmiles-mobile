@@ -6,7 +6,10 @@ import { createMapTimelineRepository } from "@/src/features/map/map-timeline-rep
 import { useTripsData } from "@/src/features/trips/trips-data-provider";
 import { useAuth } from "@/src/providers/auth-provider";
 
-import { createCompanionPrefetchKey, selectCompanionTrips } from "./companion-trip-selection";
+import {
+  createCompanionPrefetchKey,
+  selectCompanionTrips,
+} from "./companion-trip-selection";
 
 export function OfflineCompanionPrefetchProvider({ children }: PropsWithChildren) {
   const pathname = usePathname();
