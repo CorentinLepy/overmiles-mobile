@@ -86,10 +86,7 @@ export function PhotoCaptureScreen({ tripId }: { tripId: string }) {
     };
   }, [accountUserId, loadKey, reloadItems, tripId]);
 
-  async function runCapture(
-    capture: () => Promise<NativePhotoCaptureResult>,
-    busyMessage: string,
-  ) {
+  async function runCapture(capture: () => Promise<NativePhotoCaptureResult>, busyMessage: string) {
     if (status.kind === "busy") return;
     setStatus({ kind: "busy", message: busyMessage });
 
@@ -317,7 +314,8 @@ function LocalPhotoRow({
   onDiscard: () => void;
 }) {
   const theme = useOverMilesTheme();
-  const title = item.originalFilename || `Photo ${formatLocalDate(item.capturedAt ?? item.createdAt)}`;
+  const title =
+    item.originalFilename || `Photo ${formatLocalDate(item.capturedAt ?? item.createdAt)}`;
 
   return (
     <View
@@ -331,7 +329,11 @@ function LocalPhotoRow({
         backgroundColor: theme.color.surfaceMuted,
       }}
     >
-      <Text selectable numberOfLines={1} style={{ color: theme.color.ink, fontSize: 14, fontWeight: "700" }}>
+      <Text
+        selectable
+        numberOfLines={1}
+        style={{ color: theme.color.ink, fontSize: 14, fontWeight: "700" }}
+      >
         {title}
       </Text>
       <Text selectable style={{ color: theme.color.muted, fontSize: 12, lineHeight: 18 }}>
@@ -344,9 +346,14 @@ function LocalPhotoRow({
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onDiscard}
-        style={({ pressed }) => ({ alignSelf: "flex-start", opacity: disabled ? 0.4 : pressed ? 0.65 : 1 })}
+        style={({ pressed }) => ({
+          alignSelf: "flex-start",
+          opacity: disabled ? 0.4 : pressed ? 0.65 : 1,
+        })}
       >
-        <Text style={{ color: theme.color.warning, fontSize: 12, fontWeight: "800" }}>Supprimer</Text>
+        <Text style={{ color: theme.color.warning, fontSize: 12, fontWeight: "800" }}>
+          Supprimer
+        </Text>
       </Pressable>
     </View>
   );
