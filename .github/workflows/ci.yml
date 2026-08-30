@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Diagnose COR-212 formatting
+      - name: Diagnose exact COR-212 formatting
         run: |
           pnpm exec prettier --write \
             src/features/offline-companion/storage-policy.ts \
