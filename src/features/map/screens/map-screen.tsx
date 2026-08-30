@@ -259,7 +259,7 @@ function SelectedPointCard({
         point.label,
         [
           ...targets.map((target) => ({
-            text: target.opensInstalledApp ? target.label : `${target.label} · web`,
+            text: target.label,
             onPress: () => {
               void openResolvedExternalNavigationTarget(target).catch(() => {
                 Alert.alert(
