@@ -47,6 +47,14 @@ La priorité de conservation est :
 3. voyage récent explicitement préparé ;
 4. historique ancien.
 
-La première tranche COR-212 ne supprime aucun fichier. Elle fournit uniquement une politique déterministe `keep / evictable / stop_prefetch`. La suppression physique ne sera activée qu’après introduction d’un inventaire central des caches réhydratables et de tests de cycle de vie correspondants.
+La première tranche COR-212 ne supprime aucun fichier. Elle fournit uniquement une politique déterministe `keep / evictable / stop_prefetch`. Les seuils de réserve disque et de budget de cache sont des paramètres explicites de politique. Ils ne doivent pas être disséminés sous forme de constantes cachées dans les features médias, documents ou carte.
 
-Les seuils de réserve disque et de budget de cache sont des paramètres explicites de politique. Ils ne doivent pas être disséminés sous forme de constantes cachées dans les features médias, documents ou carte.
+## Inventaire des caches réhydratables
+
+COR-213 introduit une table SQLCipher dédiée `rehydratable_cache_inventory`. Elle sert uniquement à décrire des artefacts qu’OverMiles sait récupérer à nouveau depuis une source canonique : médias distants, documents téléchargés et futures régions cartographiques.
+
+Chaque entrée est account-scoped et possède un identifiant stable, un type, une clé de stockage relative détenue par OverMiles, une taille, une date de dernier accès et un `sourceFingerprint` opaque. Le fingerprint doit représenter une version ou une empreinte de la source ; il ne doit jamais contenir une URL signée, un token ou un secret.
+
+Les captures terrain `local_only`, brouillons Carnet et brouillons Moment restent dans leurs tables privées dédiées et ne sont jamais inscrits implicitement dans cet inventaire.
+
+L’inventaire permet de calculer le volume total de cache réhydratable par compte et de fournir les métadonnées nécessaires à la politique COR-212. COR-213 ne supprime toujours aucun fichier physique : une future tranche devra d’abord associer de façon explicite l’inventaire à un gestionnaire de cache propriétaire, mesurer la pression disque réelle et tester le cycle suppression → réhydratation avant d’activer une éviction automatique.
