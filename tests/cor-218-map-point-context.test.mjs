@@ -19,7 +19,7 @@ test("COR-218 keeps point context readable and terrain actions together", () => 
   assert.match(mapScreenSource, /\{point\.label\}/);
   assert.match(mapScreenSource, /\{point\.tripName\}/);
   assert.match(mapScreenSource, /formatPointDate\(point\.occurredAt\)/);
-  assert.match(mapScreenSource, /MapTerrainActions point={point}/);
+  assert.match(mapScreenSource, /<MapTerrainActions\s+[\s\S]*?point=\{point\}/);
   assert.match(mapScreenSource, /minHeight: 44/);
 });
 
