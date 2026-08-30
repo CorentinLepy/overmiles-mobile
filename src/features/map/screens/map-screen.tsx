@@ -11,6 +11,7 @@ import {
   resolveExternalNavigationTargets,
 } from "../external-navigation";
 import { createVisitedPointsFeatureCollection } from "../map-geojson";
+import { MapTerrainActions } from "../map-terrain-actions";
 import { getMapInitialViewState } from "../map-viewport";
 import type { MapDataState, TripMapPoint } from "../map.types";
 import { useMapData } from "../use-map-data";
@@ -328,23 +329,7 @@ function SelectedPointCard({
           {formatPointDate(point.occurredAt)}
         </Text>
       ) : null}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Naviguer vers ${point.label}`}
-        onPress={() => void showNavigationChoices()}
-        style={({ pressed }) => ({
-          minHeight: 44,
-          alignItems: "center",
-          justifyContent: "center",
-          paddingHorizontal: theme.spacing.md,
-          borderRadius: theme.radius.control,
-          borderCurve: "continuous",
-          backgroundColor: theme.color.surfaceMuted,
-          opacity: pressed ? 0.72 : 1,
-        })}
-      >
-        <Text style={{ color: theme.color.ink, fontSize: 14, fontWeight: "800" }}>Naviguer</Text>
-      </Pressable>
+      <MapTerrainActions point={point} onNavigate={() => void showNavigationChoices()} />
     </View>
   );
 }
