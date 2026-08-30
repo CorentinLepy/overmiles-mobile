@@ -167,7 +167,11 @@ function toFiniteNumber(value: unknown): number | null {
   if (typeof value !== "string") return null;
 
   if (value.includes("/")) {
-    const [numerator, denominator] = value.split("/", 2).map(Number);
+    const parts = value.split("/", 2);
+    if (parts.length !== 2) return null;
+
+    const numerator = Number(parts[0]);
+    const denominator = Number(parts[1]);
     if (Number.isFinite(numerator) && Number.isFinite(denominator) && denominator !== 0) {
       return numerator / denominator;
     }
