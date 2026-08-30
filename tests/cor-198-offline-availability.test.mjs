@@ -106,10 +106,7 @@ test("COR-198 formats user-facing offline states without claiming unsupported me
     { state: "available", completedAt: "2026-08-30T10:02:00Z" },
     now,
   );
-  const preparing = formatCompanionAvailability(
-    { state: "preparing", completedAt: null },
-    now,
-  );
+  const preparing = formatCompanionAvailability({ state: "preparing", completedAt: null }, now);
   const stale = formatCompanionAvailability({ state: "stale", completedAt: null }, now);
 
   assert.equal(available, "Disponible hors ligne · actualisé il y a 12 min");
