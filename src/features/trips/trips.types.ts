@@ -34,17 +34,13 @@ export type TripSummary = Readonly<{
   _count?: TripCounts;
 }>;
 
-export type TripUpdatePatch = Readonly<
-  Partial<
-    Pick<
-      TripSummary,
-      | "name"
-      | "description"
-      | "status"
-      | "startsAt"
-      | "endsAt"
-      | "countries"
-      | "coverImageUrl",
-    >
-  >
->;
+type TripUpdateField =
+  | "name"
+  | "description"
+  | "status"
+  | "startsAt"
+  | "endsAt"
+  | "countries"
+  | "coverImageUrl";
+
+export type TripUpdatePatch = Readonly<Partial<Pick<TripSummary, TripUpdateField>>>;
