@@ -33,11 +33,12 @@ test("COR-147F stores map business points in SQLCipher with account and trip sco
   assert.match(localStore, /WHERE account_user_id = \? AND trip_id = \? AND point_kind = \?/);
 });
 
-test("map cache snapshots serialize exclusive writes without poisoning the queue", () => {
+test("map cache snapshots serialize writes on the already-keyed SQLCipher connection", () => {
   assert.match(localStore, /private writeQueue: Promise<void> = Promise\.resolve\(\)/);
   assert.match(localStore, /return this\.enqueueWrite\(async \(\) =>/);
-  assert.match(localStore, /withExclusiveTransactionAsync/);
-  assert.match(localStore, /transaction\.runAsync/);
+  assert.match(localStore, /withTransactionAsync/);
+  assert.doesNotMatch(localStore, /withExclusiveTransactionAsync/);
+  assert.match(localStore, /await db\.runAsync/);
   assert.match(localStore, /DELETE FROM cached_map_points/);
   assert.match(localStore, /point_kind = \?/);
   assert.match(localStore, /INSERT INTO cached_map_points/);
