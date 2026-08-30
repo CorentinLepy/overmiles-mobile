@@ -114,10 +114,11 @@ test("camera framing handles empty single-point and multi-point histories withou
   assert.doesNotMatch(mapData, /clusterRadius|clusterMaxZoom|clusterMinPoints/);
 });
 
-test("Phase B does not request live device location or GPS permissions", () => {
+test("live location stays inside MapLibre and never enables background tracking", () => {
   assert.equal(packageJson.dependencies["expo-location"], undefined);
-  assert.doesNotMatch(screen, /UserLocation|trackUserLocation|requestForegroundPermissionsAsync/);
-  assert.doesNotMatch(JSON.stringify(appJson), /ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION/);
+  assert.match(screen, /LocationManager/);
+  assert.match(screen, /UserLocation/);
+  assert.doesNotMatch(JSON.stringify(appJson), /ACCESS_BACKGROUND_LOCATION/);
 });
 
 test("partial network failures retain successful map data instead of blanking the map", () => {
