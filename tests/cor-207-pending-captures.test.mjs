@@ -24,7 +24,7 @@ test("COR-207 reloads local pending captures whenever Trip detail regains focus"
 test("COR-207 stays invisible when the current trip has no local capture to resume", () => {
   assert.match(
     pendingSource,
-    /pending\.loadKey !== loadKey \|\| \(!pending\.journal && !pending\.moment && pending\.photos === 0\)/,
+    /pending\.loadKey !== loadKey \|\|\s*\(!pending\.journal && !pending\.moment && pending\.photos === 0\)/,
   );
   assert.match(pendingSource, /return null/);
   assert.doesNotMatch(pendingSource, /badge|counter|error|warning/i);
