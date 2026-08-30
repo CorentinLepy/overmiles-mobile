@@ -62,7 +62,7 @@ test("remote stops and timeline hydration persist projected points before return
   assert.match(stopsRepository, /localStore\.list\(accountUserId, trip\.id, "stop"\)/);
   assert.match(
     remoteStops,
-    /localStore\.replaceTripKind\(accountUserId, trip\.id, "stop", points, canPersist\)/,
+    /localStore\.replaceTripKind\(accountUserId, trip\.id, "stop", points, canPersist,/,
   );
   assert.match(remoteStops, /return points;/);
   assert.doesNotMatch(remoteStops, /return localStore\.list/);
@@ -71,7 +71,7 @@ test("remote stops and timeline hydration persist projected points before return
   assert.match(timelineRepository, /localStore\.list\(accountUserId, trip\.id, "timeline"\)/);
   assert.match(
     remoteTimeline,
-    /localStore\.replaceTripKind\(accountUserId, trip\.id, "timeline", points, canPersist\)/,
+    /localStore\.replaceTripKind\(accountUserId, trip\.id, "timeline", points, canPersist,/,
   );
   assert.match(remoteTimeline, /return points;/);
   assert.doesNotMatch(remoteTimeline, /return localStore\.list/);
