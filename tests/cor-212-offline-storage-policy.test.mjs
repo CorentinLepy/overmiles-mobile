@@ -79,11 +79,7 @@ test("COR-212 stops new rehydratable prefetch before violating disk reserve or c
     "stop_prefetch",
   );
   assert.equal(
-    decideOfflineStorageAction(
-      candidate,
-      context({ rehydratableBytes: 4_600 }),
-      "prefetch",
-    ),
+    decideOfflineStorageAction(candidate, context({ rehydratableBytes: 4_600 }), "prefetch"),
     "stop_prefetch",
   );
   assert.equal(

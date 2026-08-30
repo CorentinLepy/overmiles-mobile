@@ -1,13 +1,6 @@
-export type OfflineStorageClass =
-  | "private_unsynced"
-  | "durable_business"
-  | "rehydratable_cache";
+export type OfflineStorageClass = "private_unsynced" | "durable_business" | "rehydratable_cache";
 
-export type CompanionTripStoragePriority =
-  | "current"
-  | "upcoming"
-  | "prepared_recent"
-  | "history";
+export type CompanionTripStoragePriority = "current" | "upcoming" | "prepared_recent" | "history";
 
 export type OfflineStorageDecision = "keep" | "evictable" | "stop_prefetch";
 export type OfflineStorageIntent = "retain" | "prefetch";
