@@ -31,6 +31,7 @@ type CompanionContextValue = Readonly<{
 }>;
 
 const CompanionContext = createContext<CompanionContextValue | null>(null);
+const EMPTY_PREPARING_TRIPS: ReadonlySet<string> = new Set();
 
 export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
   const pathname = usePathname();
@@ -55,14 +56,11 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
   const [preparingTripIds, setPreparingTripIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
+  const hasLocalContentSession =
+    user !== null && (status === "authenticated" || status === "offline_auth_pending");
 
   useEffect(() => {
-    if (!user || (status !== "authenticated" && status !== "offline_auth_pending")) {
-      setSnapshots([]);
-      setPreparingTripIds(new Set());
-      completedKeyRef.current = null;
-      return;
-    }
+    if (!user || !hasLocalContentSession) return;
 
     let active = true;
     void localMapStore
@@ -77,7 +75,7 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [snapshotRevision, status, user]);
+  }, [hasLocalContentSession, snapshotRevision, user]);
 
   useEffect(() => {
     if (
@@ -98,9 +96,11 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
     const activePriorityTrips = priorityTrips;
     let active = true;
 
-    setPreparingTripIds(new Set(activePriorityTrips.map((trip) => trip.id)));
-
     async function prefetchPriorityTrips() {
+      await Promise.resolve();
+      if (!active) return;
+      setPreparingTripIds(new Set(activePriorityTrips.map((trip) => trip.id)));
+
       const tasks = activePriorityTrips.flatMap((trip) => [
         activeRepositories.stops.listTripStops(trip),
         activeRepositories.timeline.listTripEvents(trip),
@@ -124,8 +124,11 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
   }, [isLoading, isMapActive, isRefreshing, prefetchKey, priorityTrips, repositories, status]);
 
   const value = useMemo<CompanionContextValue>(
-    () => ({ snapshots, preparingTripIds }),
-    [preparingTripIds, snapshots],
+    () => ({
+      snapshots: hasLocalContentSession ? snapshots : [],
+      preparingTripIds: hasLocalContentSession ? preparingTripIds : EMPTY_PREPARING_TRIPS,
+    }),
+    [hasLocalContentSession, preparingTripIds, snapshots],
   );
 
   return <CompanionContext.Provider value={value}>{children}</CompanionContext.Provider>;
