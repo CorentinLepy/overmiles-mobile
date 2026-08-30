@@ -24,7 +24,7 @@ export function MapOverlappingPointNavigation({
 
   return (
     <View
-      accessibilityRole="summary"
+      accessible
       accessibilityLabel={`Repère ${currentIndex + 1} sur ${siblings.length} à cet emplacement`}
       style={{
         flexDirection: "row",
@@ -68,7 +68,8 @@ export function findExactOverlappingPoints(
         candidate.coordinate.latitude === point.coordinate.latitude &&
         candidate.coordinate.longitude === point.coordinate.longitude,
     )
-    .toSorted(compareMapPoints);
+    .slice()
+    .sort(compareMapPoints);
 }
 
 function compareMapPoints(left: TripMapPoint, right: TripMapPoint): number {
