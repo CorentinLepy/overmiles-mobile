@@ -27,6 +27,7 @@ export type ResourcePrefetchResult = Readonly<{
     | "constrained_network"
     | "cellular_non_current"
     | "battery_critical"
+    | "battery_low"
     | "low_power_mode"
     | "unknown_resources";
 }>;
@@ -61,6 +62,10 @@ export function decideResourcePrefetch(
 
   if (context.network === "constrained") {
     return { decision: "defer", reason: "constrained_network" };
+  }
+
+  if (context.battery === "low" && candidate.tripPriority !== "current") {
+    return { decision: "defer", reason: "battery_low" };
   }
 
   if (
