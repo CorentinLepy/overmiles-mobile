@@ -22,6 +22,7 @@ import {
 } from "../external-navigation";
 import { MapCurrentTripFocus } from "../map-current-trip-focus";
 import { createVisitedPointsFeatureCollection } from "../map-geojson";
+import { MapOverlappingPointNavigation } from "../map-overlapping-point-navigation";
 import { MapPointDistance } from "../map-point-distance";
 import { MapTerrainActions } from "../map-terrain-actions";
 import { getMapInitialViewState } from "../map-viewport";
@@ -163,7 +164,14 @@ export function MapScreen() {
           }}
         >
           <View style={{ flex: 1, gap: 3 }}>
-            <Text selectable style={{ color: theme.color.ink, fontSize: 17, fontWeight: "800" }}>
+            <Text
+              selectable
+              style={{
+                color: theme.color.ink,
+                fontSize: 17,
+                fontWeight: "800",
+              }}
+            >
               Votre carte OverMiles
             </Text>
             <Text selectable style={{ color: theme.color.muted, fontSize: 13, lineHeight: 18 }}>
@@ -186,7 +194,13 @@ export function MapScreen() {
               opacity: isRefreshing ? 0.55 : pressed ? 0.75 : 1,
             })}
           >
-            <Text style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
+            <Text
+              style={{
+                color: theme.color.ink,
+                fontSize: 13,
+                fontWeight: "800",
+              }}
+            >
               {isRefreshing ? "…" : "↻"}
             </Text>
           </Pressable>
@@ -233,7 +247,14 @@ export function MapScreen() {
               opacity: isRequestingLocation ? 0.55 : pressed ? 0.72 : 1,
             })}
           >
-            <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
+            <Text
+              selectable
+              style={{
+                color: theme.color.ink,
+                fontSize: 13,
+                fontWeight: "800",
+              }}
+            >
               {isRequestingLocation
                 ? "Localisation…"
                 : isUserLocationEnabled
@@ -275,8 +296,10 @@ export function MapScreen() {
       {selectedPoint ? (
         <SelectedPointCard
           point={selectedPoint}
+          points={visiblePoints}
           isOffline={state.status === "offline"}
           showUserDistance={isUserLocationEnabled}
+          onSelectPoint={setSelectedPointId}
           onClose={() => setSelectedPointId(null)}
           bottomInset={insets.bottom}
         />
@@ -363,14 +386,18 @@ function CenterCard({ title, description }: { title: string; description: string
 
 function SelectedPointCard({
   point,
+  points,
   isOffline,
   showUserDistance,
+  onSelectPoint,
   onClose,
   bottomInset,
 }: {
   point: TripMapPoint;
+  points: readonly TripMapPoint[];
   isOffline: boolean;
   showUserDistance: boolean;
+  onSelectPoint: (pointId: string) => void;
   onClose: () => void;
   bottomInset: number;
 }) {
@@ -428,14 +455,32 @@ function SelectedPointCard({
         boxShadow: "0 8px 28px rgba(0, 0, 0, 0.16)",
       }}
     >
-      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: theme.spacing.md }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-start",
+          gap: theme.spacing.md,
+        }}
+      >
         <View style={{ flex: 1, gap: 4 }}>
-          <Text selectable style={{ color: theme.color.accent, fontSize: 12, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{
+              color: theme.color.accent,
+              fontSize: 12,
+              fontWeight: "800",
+            }}
+          >
             {kindLabel(point.kind).toUpperCase()}
           </Text>
           <Text
             selectable
-            style={{ color: theme.color.ink, fontSize: 21, lineHeight: 25, fontWeight: "800" }}
+            style={{
+              color: theme.color.ink,
+              fontSize: 21,
+              lineHeight: 25,
+              fontWeight: "800",
+            }}
           >
             {point.label}
           </Text>
@@ -450,9 +495,18 @@ function SelectedPointCard({
           hitSlop={8}
           style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
         >
-          <Text style={{ color: theme.color.muted, fontSize: 22, fontWeight: "600" }}>×</Text>
+          <Text
+            style={{
+              color: theme.color.muted,
+              fontSize: 22,
+              fontWeight: "600",
+            }}
+          >
+            ×
+          </Text>
         </Pressable>
       </View>
+      <MapOverlappingPointNavigation point={point} points={points} onSelectPoint={onSelectPoint} />
       {isOffline ? (
         <View
           accessibilityRole="text"
@@ -465,7 +519,14 @@ function SelectedPointCard({
             backgroundColor: theme.color.surfaceMuted,
           }}
         >
-          <Text selectable style={{ color: theme.color.muted, fontSize: 12, fontWeight: "800" }}>
+          <Text
+            selectable
+            style={{
+              color: theme.color.muted,
+              fontSize: 12,
+              fontWeight: "800",
+            }}
+          >
             Disponible hors ligne
           </Text>
         </View>
@@ -512,5 +573,8 @@ function kindLabel(kind: TripMapPoint["kind"]): string {
 function formatPointDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
 }
