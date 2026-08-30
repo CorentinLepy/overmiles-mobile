@@ -23,8 +23,10 @@ export async function resolveExternalNavigationTargets(
 ): Promise<readonly ResolvedExternalNavigationTarget[]> {
   const targets = createExternalNavigationTargets({
     coordinate: input.coordinate,
-    destinationLabel: input.destinationLabel,
     platform: currentNavigationPlatform(),
+    ...(input.destinationLabel !== undefined
+      ? { destinationLabel: input.destinationLabel }
+      : {}),
   });
 
   return Promise.all(
