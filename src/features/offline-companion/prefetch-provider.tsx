@@ -9,10 +9,7 @@ import {
   type PropsWithChildren,
 } from "react";
 
-import {
-  localMapStore,
-  type MapSnapshotMetadata,
-} from "@/src/features/map/local-map-store";
+import { localMapStore, type MapSnapshotMetadata } from "@/src/features/map/local-map-store";
 import { createMapStopsRepository } from "@/src/features/map/map-stops-repository";
 import { createMapTimelineRepository } from "@/src/features/map/map-timeline-repository";
 import { useTripsData } from "@/src/features/trips/trips-data-provider";
@@ -50,9 +47,7 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
   const completedKeyRef = useRef<string | null>(null);
   const [snapshotRevision, setSnapshotRevision] = useState(0);
   const [snapshots, setSnapshots] = useState<readonly MapSnapshotMetadata[]>([]);
-  const [preparingTripIds, setPreparingTripIds] = useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
+  const [preparingTripIds, setPreparingTripIds] = useState<ReadonlySet<string>>(() => new Set());
   const hasLocalContentSession =
     user !== null && (status === "authenticated" || status === "offline_auth_pending");
 
@@ -118,15 +113,7 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [
-    isLoading,
-    isMapActive,
-    isRefreshing,
-    prefetchKey,
-    priorityTrips,
-    repositories,
-    status,
-  ]);
+  }, [isLoading, isMapActive, isRefreshing, prefetchKey, priorityTrips, repositories, status]);
 
   const value = useMemo<CompanionContextValue>(
     () => ({
@@ -147,11 +134,7 @@ export function useCompanionAvailability(trip: TripSummary): CompanionAvailabili
 
   return useMemo(
     () =>
-      deriveCompanionAvailability(
-        trip,
-        context.snapshots,
-        context.preparingTripIds.has(trip.id),
-      ),
+      deriveCompanionAvailability(trip, context.snapshots, context.preparingTripIds.has(trip.id)),
     [context.preparingTripIds, context.snapshots, trip],
   );
 }
