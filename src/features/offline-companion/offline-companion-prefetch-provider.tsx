@@ -41,18 +41,21 @@ export function OfflineCompanionPrefetchProvider({ children }: PropsWithChildren
       return;
     }
 
+    const activeRepositories = repositories;
+    const activePrefetchKey = prefetchKey;
+    const activePriorityTrips = priorityTrips;
     let active = true;
 
     async function prefetchPriorityTrips() {
-      const tasks = priorityTrips.flatMap((trip) => [
-        repositories.stops.listTripStops(trip),
-        repositories.timeline.listTripEvents(trip),
+      const tasks = activePriorityTrips.flatMap((trip) => [
+        activeRepositories.stops.listTripStops(trip),
+        activeRepositories.timeline.listTripEvents(trip),
       ]);
       const results = await Promise.allSettled(tasks);
       if (!active) return;
 
       if (results.every((result) => result.status === "fulfilled")) {
-        completedKeyRef.current = prefetchKey;
+        completedKeyRef.current = activePrefetchKey;
       }
     }
 
