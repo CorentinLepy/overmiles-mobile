@@ -47,6 +47,30 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Diagnose Prettier diff for COR-200
+        run: |
+          pnpm prettier --write \
+            'app/(tabs)/trips/_layout.tsx' \
+            'app/(tabs)/trips/[tripId]/journal.tsx' \
+            src/features/journal/journal-draft-store.ts \
+            src/features/journal/journal-draft.ts \
+            src/features/journal/screens/quick-journal-screen.tsx \
+            src/features/trips/screens/trip-detail-screen.tsx \
+            src/lib/storage/local-database.ts \
+            src/lib/storage/migrations.ts \
+            tests/cor-200-journal-draft.test.mjs
+          git diff -- \
+            'app/(tabs)/trips/_layout.tsx' \
+            'app/(tabs)/trips/[tripId]/journal.tsx' \
+            src/features/journal/journal-draft-store.ts \
+            src/features/journal/journal-draft.ts \
+            src/features/journal/screens/quick-journal-screen.tsx \
+            src/features/trips/screens/trip-detail-screen.tsx \
+            src/lib/storage/local-database.ts \
+            src/lib/storage/migrations.ts \
+            tests/cor-200-journal-draft.test.mjs
+          exit 1
+
       - name: Verify repository
         run: pnpm verify
 
