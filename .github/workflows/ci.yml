@@ -47,11 +47,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Diagnose Prettier COR-204
-        run: |
-          pnpm exec prettier --write tests/cor-204-local-media-foundation.test.mjs
-          git diff -- tests/cor-204-local-media-foundation.test.mjs
-          exit 1
+      - name: Verify repository
+        run: pnpm verify
 
       - name: Validate Expo configuration
         run: npx expo config --type public > /dev/null
