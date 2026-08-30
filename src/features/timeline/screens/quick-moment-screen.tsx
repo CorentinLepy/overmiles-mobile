@@ -9,10 +9,17 @@ import { useAuth } from "@/src/providers/auth-provider";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 import { localMomentDraftStore } from "../local-moment-draft-store";
+import type { MapMomentContext } from "../map-moment-context";
 
 type SaveState = "loading" | "idle" | "saving" | "saved" | "error";
 
-export function QuickMomentScreen({ tripId }: { tripId: string }) {
+export function QuickMomentScreen({
+  tripId,
+  mapContext = null,
+}: {
+  tripId: string;
+  mapContext?: MapMomentContext | null;
+}) {
   const theme = useOverMilesTheme();
   const { user } = useAuth();
   const { findTrip, isLoading } = useTripsData();
@@ -25,6 +32,9 @@ export function QuickMomentScreen({ tripId }: { tripId: string }) {
   const [occurredAt, setOccurredAt] = useState(() => new Date().toISOString());
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationLabel, setLocationLabel] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("loading");
 
@@ -38,7 +48,7 @@ export function QuickMomentScreen({ tripId }: { tripId: string }) {
 
     void localMomentDraftStore
       .getActive(accountUserId, tripId, generation)
-      .then((draft) => {
+      .then(async (draft) => {
         if (!active || revision !== saveRevisionRef.current) return;
 
         if (draft) {
@@ -46,13 +56,56 @@ export function QuickMomentScreen({ tripId }: { tripId: string }) {
           setOccurredAt(draft.occurredAt);
           setTitle(draft.title);
           setDescription(draft.description ?? "");
+          setLatitude(draft.latitude);
+          setLongitude(draft.longitude);
+          setLocationLabel(null);
           setSaveState("saved");
         } else if (generation !== null && localDatabase.canUseGeneration(generation)) {
-          setDraftId(Crypto.randomUUID());
-          setOccurredAt(new Date().toISOString());
-          setTitle("");
-          setDescription("");
-          setSaveState("idle");
+          const nextDraftId = Crypto.randomUUID();
+          const nextOccurredAt = new Date().toISOString();
+
+          if (mapContext) {
+            const seededDraft = await localMomentDraftStore.save(
+              {
+                accountUserId,
+                tripId,
+                draftId: nextDraftId,
+                type: "MANUAL",
+                title: mapContext.label,
+                description: null,
+                occurredAt: nextOccurredAt,
+                latitude: mapContext.latitude,
+                longitude: mapContext.longitude,
+                state: "draft_local",
+              },
+              generation,
+            );
+            if (!active || revision !== saveRevisionRef.current) return;
+
+            if (!seededDraft) {
+              setSaveState("error");
+              setIsReady(true);
+              return;
+            }
+
+            setDraftId(seededDraft.draftId);
+            setOccurredAt(seededDraft.occurredAt);
+            setTitle(seededDraft.title);
+            setDescription(seededDraft.description ?? "");
+            setLatitude(seededDraft.latitude);
+            setLongitude(seededDraft.longitude);
+            setLocationLabel(mapContext.label);
+            setSaveState("saved");
+          } else {
+            setDraftId(nextDraftId);
+            setOccurredAt(nextOccurredAt);
+            setTitle("");
+            setDescription("");
+            setLatitude(null);
+            setLongitude(null);
+            setLocationLabel(null);
+            setSaveState("idle");
+          }
         } else {
           setSaveState("error");
         }
@@ -68,7 +121,14 @@ export function QuickMomentScreen({ tripId }: { tripId: string }) {
       active = false;
       saveRevisionRef.current += 1;
     };
-  }, [accountUserId, tripAvailable, tripId]);
+  }, [
+    accountUserId,
+    mapContext?.label,
+    mapContext?.latitude,
+    mapContext?.longitude,
+    tripAvailable,
+    tripId,
+  ]);
 
   function saveDraft(nextTitle: string, nextDescription: string) {
     if (!accountUserId || !trip || !isReady) return;
@@ -87,6 +147,8 @@ export function QuickMomentScreen({ tripId }: { tripId: string }) {
           title: nextTitle,
           description: nextDescription || null,
           occurredAt,
+          latitude,
+          longitude,
           state: "draft_local",
         },
         generation,
@@ -112,6 +174,8 @@ export function QuickMomentScreen({ tripId }: { tripId: string }) {
   }
 
   const statusLabel = saveStateLabel(saveState);
+  const hasLocation = latitude !== null && longitude !== null;
+  const locationContextLabel = locationLabel ? `Lieu associé · ${locationLabel}` : "Position associée";
 
   return (
     <ScrollView
@@ -156,6 +220,28 @@ export function QuickMomentScreen({ tripId }: { tripId: string }) {
         </SectionCard>
       ) : (
         <SectionCard>
+          {hasLocation ? (
+            <View
+              accessible
+              accessibilityRole="text"
+              accessibilityLabel={locationContextLabel}
+              style={{
+                alignSelf: "flex-start",
+                paddingHorizontal: 10,
+                paddingVertical: 7,
+                borderRadius: theme.radius.pill,
+                backgroundColor: theme.color.accentSoft,
+              }}
+            >
+              <Text
+                selectable
+                style={{ color: theme.color.accent, fontSize: 12, fontWeight: "800" }}
+              >
+                {locationContextLabel}
+              </Text>
+            </View>
+          ) : null}
+
           <TextInput
             accessibilityLabel={`Titre du moment pour ${trip?.name ?? "ce voyage"}`}
             autoFocus
