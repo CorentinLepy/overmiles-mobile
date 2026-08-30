@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
+import { PendingCapturesCard } from "@/src/features/capture/pending-captures-card";
 import { CompanionAvailabilityBadge } from "@/src/features/offline-companion/availability-badge";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
@@ -180,6 +181,8 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
           </Text>
         </SectionCard>
       ) : null}
+
+      <PendingCapturesCard tripId={trip.id} />
 
       <SectionCard>
         <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "800" }}>
