@@ -1,3 +1,6 @@
+// Diagnostic temporaire COR-205 : Expo 57 fournit déjà ce module transitivement.
+// Si Metro le résout pendant la gate native, la dépendance directe sera alignée avec COR-199.
+// @ts-expect-error expo-file-system n'est pas encore déclaré comme dépendance directe.
 import { Directory, File, Paths } from "expo-file-system";
 
 import {
@@ -84,13 +87,7 @@ export class SecureMediaStaging {
 
       try {
         const saved = await this.mediaStore.save(
-          {
-            ...input,
-            sourceUri: undefined,
-            storageKey,
-            fileSizeBytes: input.fileSizeBytes ?? stagedFile.size,
-            state: "local_only",
-          } as SaveLocalMediaItemInput,
+          createSaveInput(input, storageKey, input.fileSizeBytes ?? stagedFile.size),
           databaseGeneration,
         );
 
@@ -210,6 +207,31 @@ export class SecureMediaStaging {
     );
     return result;
   }
+}
+
+function createSaveInput(
+  input: StageLocalMediaInput,
+  storageKey: string,
+  fileSizeBytes: number,
+): SaveLocalMediaItemInput {
+  return {
+    accountUserId: input.accountUserId,
+    tripId: input.tripId,
+    localMediaId: input.localMediaId,
+    storageKey,
+    originalFilename: input.originalFilename,
+    mimeType: input.mimeType,
+    fileSizeBytes,
+    width: input.width,
+    height: input.height,
+    capturedAt: input.capturedAt,
+    latitude: input.latitude,
+    longitude: input.longitude,
+    orientation: input.orientation,
+    stopId: input.stopId,
+    caption: input.caption,
+    state: "local_only",
+  };
 }
 
 export const secureMediaStaging = new SecureMediaStaging();
