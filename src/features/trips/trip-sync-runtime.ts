@@ -16,12 +16,7 @@ export function createTripSyncRuntime(
   accountUserId: string,
 ): TripSyncRuntime {
   const pendingStore = new PendingOperationsStore();
-  const repository = createTripsRepository(
-    apiClient,
-    accountUserId,
-    localTripsStore,
-    pendingStore,
-  );
+  const repository = createTripsRepository(apiClient, accountUserId, localTripsStore, pendingStore);
   const transport = createTripSyncTransport(apiClient, accountUserId, localTripsStore);
   const syncEngine = new OfflineSyncEngine(pendingStore, transport);
 
