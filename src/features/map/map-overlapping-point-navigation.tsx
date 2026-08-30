@@ -15,9 +15,7 @@ export function MapOverlappingPointNavigation({
 }) {
   const theme = useOverMilesTheme();
   const siblings = findExactOverlappingPoints(point, points);
-  const currentIndex = siblings.findIndex(
-    (candidate) => candidate.id === point.id,
-  );
+  const currentIndex = siblings.findIndex((candidate) => candidate.id === point.id);
 
   if (siblings.length < 2 || currentIndex < 0) return null;
 
@@ -79,18 +77,10 @@ export function findExactOverlappingPoints(
 }
 
 function compareMapPoints(left: TripMapPoint, right: TripMapPoint): number {
-  const leftTime = left.occurredAt
-    ? Date.parse(left.occurredAt)
-    : Number.POSITIVE_INFINITY;
-  const rightTime = right.occurredAt
-    ? Date.parse(right.occurredAt)
-    : Number.POSITIVE_INFINITY;
-  const safeLeftTime = Number.isFinite(leftTime)
-    ? leftTime
-    : Number.POSITIVE_INFINITY;
-  const safeRightTime = Number.isFinite(rightTime)
-    ? rightTime
-    : Number.POSITIVE_INFINITY;
+  const leftTime = left.occurredAt ? Date.parse(left.occurredAt) : Number.POSITIVE_INFINITY;
+  const rightTime = right.occurredAt ? Date.parse(right.occurredAt) : Number.POSITIVE_INFINITY;
+  const safeLeftTime = Number.isFinite(leftTime) ? leftTime : Number.POSITIVE_INFINITY;
+  const safeRightTime = Number.isFinite(rightTime) ? rightTime : Number.POSITIVE_INFINITY;
 
   if (safeLeftTime !== safeRightTime) return safeLeftTime - safeRightTime;
   return left.id.localeCompare(right.id);
@@ -124,10 +114,7 @@ function SiblingButton({
         opacity: pressed ? 0.72 : 1,
       })}
     >
-      <Text
-        selectable
-        style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}
-      >
+      <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
         {label}
       </Text>
     </Pressable>
