@@ -16,32 +16,121 @@ function sqlCipherKeyPragma(hexKey: string): string {
 export class LocalDatabase {
   private database: SQLite.SQLiteDatabase | null = null;
   private opening: Promise<SQLite.SQLiteDatabase> | null = null;
+  private closing: Promise<void> | null = null;
+  private purging: Promise<void> | null = null;
 
   constructor(private readonly keyStore = new DatabaseKeyStore()) {}
 
   async open(): Promise<SQLite.SQLiteDatabase> {
+    if (this.purging) {
+      await this.purging;
+      return this.open();
+    }
+
+    if (this.closing) {
+      await this.closing;
+      return this.open();
+    }
+
     if (this.database) return this.database;
     if (!this.opening) {
-      this.opening = this.openEncryptedDatabase().finally(() => {
-        this.opening = null;
+      const opening = this.openEncryptedDatabase();
+      let trackedOpening: Promise<SQLite.SQLiteDatabase>;
+      trackedOpening = opening.finally(() => {
+        if (this.opening === trackedOpening) {
+          this.opening = null;
+        }
       });
+      this.opening = trackedOpening;
     }
     return this.opening;
   }
 
   async close(): Promise<void> {
-    if (!this.database) return;
-    await this.database.closeAsync();
-    this.database = null;
+    if (this.purging) {
+      await this.purging;
+      return;
+    }
+
+    if (!this.closing) {
+      const closing = (async () => {
+        const opening = this.opening;
+        if (opening) {
+          await opening.catch(() => undefined);
+        }
+        await this.closeActiveDatabase();
+      })();
+
+      let trackedClosing: Promise<void>;
+      trackedClosing = closing.finally(() => {
+        if (this.closing === trackedClosing) {
+          this.closing = null;
+        }
+      });
+      this.closing = trackedClosing;
+    }
+
+    return this.closing;
   }
 
   async purge(): Promise<void> {
-    await this.close();
-    try {
-      await SQLite.deleteDatabaseAsync(DATABASE_NAME);
-    } finally {
-      await this.keyStore.clearKey();
+    if (this.purging) {
+      return this.purging;
     }
+
+    const purging = (async () => {
+      const closing = this.closing;
+      if (closing) {
+        await closing.catch(() => undefined);
+      }
+
+      const opening = this.opening;
+      if (opening) {
+        await opening.catch(() => undefined);
+      }
+
+      let closeError: unknown;
+      try {
+        await this.closeActiveDatabase();
+      } catch (error) {
+        closeError = error;
+      }
+
+      let purgeError: unknown;
+      try {
+        try {
+          await SQLite.deleteDatabaseAsync(DATABASE_NAME);
+        } catch (error) {
+          purgeError = error;
+        }
+      } finally {
+        try {
+          await this.keyStore.clearKey();
+        } catch (error) {
+          purgeError ??= error;
+        }
+      }
+
+      if (closeError) throw closeError;
+      if (purgeError) throw purgeError;
+    })();
+
+    let trackedPurge: Promise<void>;
+    trackedPurge = purging.finally(() => {
+      if (this.purging === trackedPurge) {
+        this.purging = null;
+      }
+    });
+    this.purging = trackedPurge;
+
+    return trackedPurge;
+  }
+
+  private async closeActiveDatabase(): Promise<void> {
+    const database = this.database;
+    this.database = null;
+    if (!database) return;
+    await database.closeAsync();
   }
 
   private async configureDatabase(

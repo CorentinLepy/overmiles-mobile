@@ -82,6 +82,22 @@ test("secure purge clears the key even when database deletion fails", () => {
   );
 });
 
+test("database lifecycle serializes open close and secure purge", () => {
+  assert.match(database, /private closing: Promise<void> \| null = null/);
+  assert.match(database, /private purging: Promise<void> \| null = null/);
+  assert.match(
+    database,
+    /if \(this\.purging\) \{[\s\S]*await this\.purging[\s\S]*return this\.open\(\)/,
+  );
+  assert.match(database, /const opening = this\.opening;[\s\S]*await opening\.catch/);
+  assert.match(database, /const database = this\.database;[\s\S]*this\.database = null/);
+
+  const purgeIndex = database.indexOf("async purge()");
+  const openingIndex = database.indexOf("const opening = this.opening", purgeIndex);
+  const deleteIndex = database.indexOf("SQLite.deleteDatabaseAsync(DATABASE_NAME)", purgeIndex);
+  assert.ok(purgeIndex >= 0 && openingIndex > purgeIndex && deleteIndex > openingIndex);
+});
+
 test("SDK 57 purge safety keeps DELETE journaling until Expo WAL cleanup is fixed", () => {
   assert.match(database, /PRAGMA journal_mode = DELETE/);
   assert.doesNotMatch(database, /PRAGMA journal_mode = WAL/);
