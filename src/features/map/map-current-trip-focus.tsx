@@ -1,7 +1,7 @@
 import { Pressable, Text } from "react-native";
 
-import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 import type { TripSummary } from "@/src/features/trips/trips.types";
+import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 export function MapCurrentTripFocus({
   trip,
@@ -27,6 +27,7 @@ export function MapCurrentTripFocus({
       onPress={onToggle}
       style={({ pressed }) => ({
         minHeight: 44,
+        flexShrink: 1,
         alignSelf: "flex-start",
         alignItems: "center",
         justifyContent: "center",
@@ -43,7 +44,7 @@ export function MapCurrentTripFocus({
         selectable
         numberOfLines={1}
         style={{
-          maxWidth: 260,
+          maxWidth: 220,
           color: isFocused ? theme.color.accent : theme.color.ink,
           fontSize: 13,
           fontWeight: "800",
