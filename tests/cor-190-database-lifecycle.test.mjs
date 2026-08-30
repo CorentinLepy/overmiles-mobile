@@ -77,73 +77,70 @@ function createKeyStore(initialKey, events) {
   };
 }
 
-test(
-  "COR-190 purge waits for an in-flight open, closes it, then wipes database and key",
-  async () => {
-    const events = [];
-    const migrationStarted = deferred();
-    const releaseMigration = deferred();
-    const handles = [
-      createDatabaseHandle("first", events),
-      createDatabaseHandle("second", events),
-    ];
-    let openCount = 0;
+test("COR-190 purge serializes an in-flight database open", async () => {
+  const events = [];
+  const migrationStarted = deferred();
+  const releaseMigration = deferred();
+  const handles = [
+    createDatabaseHandle("first", events),
+    createDatabaseHandle("second", events),
+  ];
+  let openCount = 0;
 
-    const sqlite = {
-      async openDatabaseAsync() {
-        const handle = handles[openCount];
-        openCount += 1;
-        events.push(`open:${handle.name}`);
-        return handle;
-      },
-      async deleteDatabaseAsync() {
-        events.push("delete-database");
-      },
-    };
-    const runLocalMigrations = async () => {
-      if (openCount === 1) {
-        events.push("migration:first:start");
-        migrationStarted.resolve();
-        await releaseMigration.promise;
-        events.push("migration:first:end");
-      }
-    };
-    const keyStore = createKeyStore(VALID_KEY, events);
-    const LocalDatabase = loadLocalDatabase({ sqlite, runLocalMigrations });
-    const localDatabase = new LocalDatabase(keyStore);
+  const sqlite = {
+    async openDatabaseAsync() {
+      const handle = handles[openCount];
+      openCount += 1;
+      events.push(`open:${handle.name}`);
+      return handle;
+    },
+    async deleteDatabaseAsync() {
+      events.push("delete-database");
+    },
+  };
+  const runLocalMigrations = async () => {
+    if (openCount === 1) {
+      events.push("migration:first:start");
+      migrationStarted.resolve();
+      await releaseMigration.promise;
+      events.push("migration:first:end");
+    }
+  };
+  const keyStore = createKeyStore(VALID_KEY, events);
+  const LocalDatabase = loadLocalDatabase({ sqlite, runLocalMigrations });
+  const localDatabase = new LocalDatabase(keyStore);
 
-    const firstOpen = localDatabase.open();
-    await migrationStarted.promise;
+  const firstOpen = localDatabase.open();
+  await migrationStarted.promise;
 
-    const purge = localDatabase.purge();
-    const openRequestedDuringPurge = localDatabase.open();
-    await Promise.resolve();
+  const purge = localDatabase.purge();
+  const openRequestedDuringPurge = localDatabase.open();
+  await Promise.resolve();
 
-    assert.equal(openCount, 1, "an open requested during purge must not start early");
-    assert.equal(events.includes("delete-database"), false);
+  assert.equal(openCount, 1, "an open requested during purge must not start early");
+  assert.equal(events.includes("delete-database"), false);
 
-    releaseMigration.resolve();
-    assert.equal(await firstOpen, handles[0]);
-    await purge;
+  releaseMigration.resolve();
+  assert.equal(await firstOpen, handles[0]);
+  await purge;
 
-    assert.equal(localDatabase.database, null);
-    assert.equal(keyStore.currentKey(), null);
-    assert.deepEqual(events.slice(0, 5), [
-      "open:first",
-      "migration:first:start",
-      "migration:first:end",
-      "close:first",
-      "delete-database",
-    ]);
-    assert.equal(events[5], "clear-key");
+  assert.equal(localDatabase.database, null);
+  assert.equal(keyStore.currentKey(), null);
+  assert.deepEqual(events.slice(0, 5), [
+    "open:first",
+    "migration:first:start",
+    "migration:first:end",
+    "close:first",
+    "delete-database",
+  ]);
+  assert.equal(events[5], "clear-key");
 
-    const reopened = await openRequestedDuringPurge;
-    assert.equal(reopened, handles[1]);
-    assert.equal(openCount, 2);
-    assert.equal(keyStore.currentKey(), NEW_KEY);
-    assert.ok(events.indexOf("open:second") > events.indexOf("clear-key"));
-  },
-);
+  const reopened = await openRequestedDuringPurge;
+  assert.equal(reopened, handles[1]);
+  assert.equal(openCount, 2);
+  assert.equal(keyStore.currentKey(), NEW_KEY);
+  assert.ok(events.indexOf("open:second") > events.indexOf("clear-key"));
+});
 
 test("COR-190 keeps concurrent normal opens single-flight", async () => {
   const events = [];
