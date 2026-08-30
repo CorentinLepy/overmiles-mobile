@@ -3,10 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 const navigationSource = await readFile(
-  new URL(
-    "../src/features/map/map-overlapping-point-navigation.tsx",
-    import.meta.url,
-  ),
+  new URL("../src/features/map/map-overlapping-point-navigation.tsx", import.meta.url),
   "utf8",
 );
 const screenSource = await readFile(
@@ -15,18 +12,12 @@ const screenSource = await readFile(
 );
 
 test("COR-233 only groups points with exactly identical persisted coordinates", () => {
-  assert.match(
-    navigationSource,
-    /candidate\.coordinate\.latitude === point\.coordinate\.latitude/,
-  );
+  assert.match(navigationSource, /candidate\.coordinate\.latitude === point\.coordinate\.latitude/);
   assert.match(
     navigationSource,
     /candidate\.coordinate\.longitude === point\.coordinate\.longitude/,
   );
-  assert.doesNotMatch(
-    navigationSource,
-    /coordinateBucketKey|precision|toFixed\(|haversine/i,
-  );
+  assert.doesNotMatch(navigationSource, /coordinateBucketKey|precision|toFixed\(|haversine/i);
 });
 
 test("COR-233 orders overlapping points deterministically and hides controls for a single point", () => {
