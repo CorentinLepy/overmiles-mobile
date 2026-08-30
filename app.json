@@ -13,7 +13,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.overmiles.mobile"
+      "bundleIdentifier": "app.overmiles.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Utiliser l’appareil photo pour capturer un moment de voyage dans OverMiles.",
+        "NSPhotoLibraryUsageDescription": "Choisir les photos à ajouter à vos voyages OverMiles."
+      }
     },
     "android": {
       "package": "app.overmiles.mobile",
