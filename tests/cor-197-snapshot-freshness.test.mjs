@@ -35,11 +35,7 @@ function loadLocalMapStore() {
     throw new Error(`Unexpected dependency: ${specifier}`);
   };
 
-  new Function("require", "module", "exports", compiled)(
-    mockRequire,
-    module,
-    module.exports,
-  );
+  new Function("require", "module", "exports", compiled)(mockRequire, module, module.exports);
   return module.exports.LocalMapStore;
 }
 
@@ -143,10 +139,7 @@ test("COR-197 exposes persisted snapshot metadata for future Companion UX", asyn
 test("COR-197 clears points and freshness metadata for the account", () => {
   const clearAccount = storeSource.slice(storeSource.indexOf("clearAccount("));
   assert.match(clearAccount, /DELETE FROM cached_map_points WHERE account_user_id = \?/);
-  assert.match(
-    clearAccount,
-    /DELETE FROM cached_map_snapshots WHERE account_user_id = \?/,
-  );
+  assert.match(clearAccount, /DELETE FROM cached_map_snapshots WHERE account_user_id = \?/);
 });
 
 test("COR-197 repositories attach current Trip freshness to snapshots", () => {
