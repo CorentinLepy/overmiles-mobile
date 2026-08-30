@@ -186,6 +186,39 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
         ON local_media_items (account_user_id, trip_id, state, updated_at DESC);
     `,
   },
+  {
+    version: 8,
+    name: "offline-timeline-event-drafts",
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_timeline_event_drafts (
+        account_user_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        draft_id TEXT NOT NULL,
+        event_type TEXT NOT NULL DEFAULT 'MANUAL'
+          CHECK (event_type IN ('MANUAL', 'LOCATION', 'PHOTO', 'NOTE', 'EXPENSE', 'DOCUMENT', 'TRANSPORT', 'ACTIVITY')),
+        title TEXT NOT NULL,
+        description TEXT,
+        occurred_at TEXT NOT NULL,
+        ends_at TEXT,
+        all_day INTEGER NOT NULL DEFAULT 0 CHECK (all_day IN (0, 1)),
+        stop_id TEXT,
+        latitude REAL CHECK (latitude IS NULL OR (latitude >= -90 AND latitude <= 90)),
+        longitude REAL CHECK (longitude IS NULL OR (longitude >= -180 AND longitude <= 180)),
+        state TEXT NOT NULL DEFAULT 'draft_local'
+          CHECK (state IN ('draft_local', 'ready_to_sync', 'syncing', 'failed')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (account_user_id, draft_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_local_timeline_drafts_trip_updated
+        ON local_timeline_event_drafts (account_user_id, trip_id, state, updated_at DESC);
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_local_timeline_drafts_active_trip
+        ON local_timeline_event_drafts (account_user_id, trip_id)
+        WHERE state = 'draft_local';
+    `,
+  },
 ];
 
 export async function runLocalMigrations(db: SQLiteDatabase): Promise<void> {

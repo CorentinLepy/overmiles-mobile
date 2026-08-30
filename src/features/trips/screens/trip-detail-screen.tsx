@@ -186,7 +186,7 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
           Enrichir sur le terrain
         </Text>
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
-          Capturez une note en quelques secondes, même hors ligne.
+          Capturez une note ou un moment en quelques secondes, même hors ligne.
         </Text>
         <Link href={{ pathname: "/trips/[tripId]/journal", params: { tripId: trip.id } }} asChild>
           <Pressable
@@ -203,6 +203,26 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
           >
             <Text style={{ color: theme.color.surface, fontSize: 14, fontWeight: "800" }}>
               Écrire dans le Carnet
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href={{ pathname: "/trips/[tripId]/moment", params: { tripId: trip.id } }} asChild>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Ajouter un moment à ${trip.name}`}
+            style={({ pressed }) => ({
+              minHeight: 48,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: theme.radius.pill,
+              borderWidth: 1,
+              borderColor: theme.color.border,
+              backgroundColor: theme.color.surface,
+              opacity: pressed ? 0.75 : 1,
+            })}
+          >
+            <Text style={{ color: theme.color.ink, fontSize: 14, fontWeight: "800" }}>
+              Ajouter un moment
             </Text>
           </Pressable>
         </Link>
