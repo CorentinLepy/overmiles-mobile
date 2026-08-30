@@ -73,16 +73,22 @@ export class SecureMediaStaging {
         throw new Error("Un média local avec cet identifiant existe déjà.");
       }
 
-      await source.copy(temporaryFile);
-      if (!this.canStage(stagingGeneration, databaseGeneration)) {
-        if (temporaryFile.exists) temporaryFile.delete();
-        return null;
-      }
+      try {
+        await source.copy(temporaryFile);
+        if (!this.canStage(stagingGeneration, databaseGeneration)) {
+          if (temporaryFile.exists) temporaryFile.delete();
+          return null;
+        }
 
-      await temporaryFile.move(stagedFile);
-      if (!this.canStage(stagingGeneration, databaseGeneration)) {
+        await temporaryFile.move(stagedFile);
+        if (!this.canStage(stagingGeneration, databaseGeneration)) {
+          if (stagedFile.exists) stagedFile.delete();
+          return null;
+        }
+      } catch (error) {
+        if (temporaryFile.exists) temporaryFile.delete();
         if (stagedFile.exists) stagedFile.delete();
-        return null;
+        throw error;
       }
 
       try {
@@ -219,18 +225,18 @@ function createSaveInput(
     tripId: input.tripId,
     localMediaId: input.localMediaId,
     storageKey,
-    originalFilename: input.originalFilename,
     mimeType: input.mimeType,
     fileSizeBytes,
-    width: input.width,
-    height: input.height,
-    capturedAt: input.capturedAt,
-    latitude: input.latitude,
-    longitude: input.longitude,
-    orientation: input.orientation,
-    stopId: input.stopId,
-    caption: input.caption,
     state: "local_only",
+    ...(input.originalFilename !== undefined ? { originalFilename: input.originalFilename } : {}),
+    ...(input.width !== undefined ? { width: input.width } : {}),
+    ...(input.height !== undefined ? { height: input.height } : {}),
+    ...(input.capturedAt !== undefined ? { capturedAt: input.capturedAt } : {}),
+    ...(input.latitude !== undefined ? { latitude: input.latitude } : {}),
+    ...(input.longitude !== undefined ? { longitude: input.longitude } : {}),
+    ...(input.orientation !== undefined ? { orientation: input.orientation } : {}),
+    ...(input.stopId !== undefined ? { stopId: input.stopId } : {}),
+    ...(input.caption !== undefined ? { caption: input.caption } : {}),
   };
 }
 
