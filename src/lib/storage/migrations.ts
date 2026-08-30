@@ -152,6 +152,40 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
         WHERE state = 'draft_local';
     `,
   },
+  {
+    version: 7,
+    name: "offline-media-queue-foundation",
+    sql: `
+      CREATE TABLE IF NOT EXISTS local_media_items (
+        account_user_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        local_media_id TEXT NOT NULL,
+        storage_key TEXT NOT NULL,
+        original_filename TEXT,
+        mime_type TEXT NOT NULL,
+        file_size_bytes INTEGER CHECK (file_size_bytes IS NULL OR file_size_bytes >= 0),
+        width INTEGER CHECK (width IS NULL OR width > 0),
+        height INTEGER CHECK (height IS NULL OR height > 0),
+        captured_at TEXT,
+        latitude REAL CHECK (latitude IS NULL OR (latitude >= -90 AND latitude <= 90)),
+        longitude REAL CHECK (longitude IS NULL OR (longitude >= -180 AND longitude <= 180)),
+        orientation INTEGER,
+        stop_id TEXT,
+        caption TEXT,
+        state TEXT NOT NULL DEFAULT 'local_only'
+          CHECK (state IN ('local_only', 'ready_to_upload', 'uploading', 'failed')),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (account_user_id, local_media_id)
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_local_media_items_storage_key
+        ON local_media_items (account_user_id, storage_key);
+
+      CREATE INDEX IF NOT EXISTS idx_local_media_items_trip_state_updated
+        ON local_media_items (account_user_id, trip_id, state, updated_at DESC);
+    `,
+  },
 ];
 
 export async function runLocalMigrations(db: SQLiteDatabase): Promise<void> {
