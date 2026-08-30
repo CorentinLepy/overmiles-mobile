@@ -90,7 +90,7 @@ test("COR-215 defers heavy rehydratable cache on offline constrained or unknown 
   );
 });
 
-test("COR-215 respects critical battery and low-power mode for heavy cache", () => {
+test("COR-215 respects critical battery low battery and low-power mode for heavy cache", () => {
   assert.equal(
     resourcePolicy.decideResourcePrefetch(heavyUpcomingCache, {
       network: "wifi",
@@ -98,6 +98,21 @@ test("COR-215 respects critical battery and low-power mode for heavy cache", () 
       lowPowerMode: false,
     }).reason,
     "battery_critical",
+  );
+  assert.equal(
+    resourcePolicy.decideResourcePrefetch(heavyUpcomingCache, {
+      network: "wifi",
+      battery: "low",
+      lowPowerMode: false,
+    }).reason,
+    "battery_low",
+  );
+  assert.equal(
+    resourcePolicy.decideResourcePrefetch(
+      { ...heavyUpcomingCache, tripPriority: "current" },
+      { network: "wifi", battery: "low", lowPowerMode: false },
+    ).decision,
+    "allow",
   );
   assert.equal(
     resourcePolicy.decideResourcePrefetch(heavyUpcomingCache, {
@@ -119,7 +134,10 @@ test("COR-215 prioritizes current-trip heavy cache on cellular but defers non-cu
     ).decision,
     "allow",
   );
-  assert.equal(resourcePolicy.decideResourcePrefetch(heavyUpcomingCache, resources).reason, "cellular_non_current");
+  assert.equal(
+    resourcePolicy.decideResourcePrefetch(heavyUpcomingCache, resources).reason,
+    "cellular_non_current",
+  );
 });
 
 test("COR-215 composes storage pressure before device resource policy", () => {
