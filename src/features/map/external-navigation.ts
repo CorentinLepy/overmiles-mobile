@@ -24,9 +24,7 @@ export async function resolveExternalNavigationTargets(
   const targets = createExternalNavigationTargets({
     coordinate: input.coordinate,
     platform: currentNavigationPlatform(),
-    ...(input.destinationLabel !== undefined
-      ? { destinationLabel: input.destinationLabel }
-      : {}),
+    ...(input.destinationLabel !== undefined ? { destinationLabel: input.destinationLabel } : {}),
   });
 
   return Promise.all(
