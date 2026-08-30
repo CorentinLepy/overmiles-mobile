@@ -63,7 +63,10 @@ export function PendingCapturesCard({ tripId }: { tripId: string }) {
     }, [accountUserId, loadKey, tripId]),
   );
 
-  if (pending.loadKey !== loadKey || (!pending.journal && !pending.moment && pending.photos === 0)) {
+  if (
+    pending.loadKey !== loadKey ||
+    (!pending.journal && !pending.moment && pending.photos === 0)
+  ) {
     return null;
   }
 
