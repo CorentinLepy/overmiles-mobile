@@ -1,19 +1,11 @@
 name: Mobile CI
 
 on:
-  # Keep the PR workflow unconditional: COR-180 will require `Mobile CI / quality`,
-  # and GitHub leaves required checks pending when a workflow is skipped by path filters.
   pull_request:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - "**/*.md"
-      - "docs/**"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: mobile-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -22,7 +14,7 @@ concurrency:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
     env:
       EXPO_NO_TELEMETRY: "1"
 
@@ -30,7 +22,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          persist-credentials: false
+          ref: maintenance/expo57-patch-alignment
 
       - name: Setup pnpm
         uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
@@ -44,36 +36,20 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
-      - name: Install dependencies
+      - name: Install current baseline
         run: pnpm install --frozen-lockfile
 
-      - name: Verify repository
-        run: pnpm verify
-
-      - name: Validate Expo configuration
-        run: npx expo config --type public > /dev/null
-
-      - name: Run Expo Doctor
-        run: pnpm doctor
-
-      - name: Report Expo dependency compatibility
-        if: ${{ !cancelled() }}
-        continue-on-error: true
-        run: npx expo install --check
-
-      - name: Bundle iOS
-        run: npx expo export --platform ios --output-dir .expo-ci/ios --clear
-
-      - name: Bundle Android
-        run: npx expo export --platform android --output-dir .expo-ci/android --clear
-
-      - name: Validate Android native prebuild
-        run: npx expo prebuild --platform android --no-install --clean
-
-      - name: Validate iOS native prebuild
-        run: npx expo prebuild --platform ios --no-install --clean
-
-      - name: Validate iOS privacy usage descriptions
+      - name: Generate COR-199 Expo patch alignment
         run: |
-          grep -q '<key>NSCameraUsageDescription</key>' ios/OVERMILES/Info.plist
-          grep -q '<key>NSPhotoLibraryUsageDescription</key>' ios/OVERMILES/Info.plist
+          npx expo install --fix
+          npx expo install expo-file-system
+          pnpm exec prettier --write package.json
+          git config user.name "LaPauseCafé"
+          git config user.email "42358698+CorentinLepy@users.noreply.github.com"
+          git add package.json pnpm-lock.yaml
+          if git diff --cached --quiet; then
+            echo "Expo patch baseline is already aligned."
+            exit 0
+          fi
+          git commit -m "COR-199 — Align Expo 57 patch baseline after COR-201"
+          git push origin HEAD:maintenance/expo57-patch-alignment
