@@ -1,4 +1,5 @@
 import type { ApiClient } from "@/src/lib/api/api-client";
+import { localDataSessionGuard } from "@/src/lib/storage/local-data-session-guard";
 
 import { localMapStore, type LocalMapStore } from "./local-map-store";
 import { projectTripMapPoints } from "./map-projection";
@@ -34,6 +35,8 @@ export function createMapStopsRepository(
     },
 
     async listTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]> {
+      const writeToken = localDataSessionGuard.capture();
+      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
       const stops = await apiClient.request<TripStopResponse[]>({
         path: `/trips/${encodeURIComponent(trip.id)}/stops`,
         kind: "json",
@@ -55,7 +58,7 @@ export function createMapStopsRepository(
           })),
       );
 
-      await localStore.replaceTripKind(accountUserId, trip.id, "stop", points);
+      await localStore.replaceTripKind(accountUserId, trip.id, "stop", points, canPersist);
       return points;
     },
   };
