@@ -63,7 +63,8 @@ function normalizeMimeType(
   fileName: string | null | undefined,
   uri: string,
 ): string {
-  const normalized = mimeType?.toLowerCase() === "image/jpg" ? "image/jpeg" : mimeType?.toLowerCase();
+  const normalized =
+    mimeType?.toLowerCase() === "image/jpg" ? "image/jpeg" : mimeType?.toLowerCase();
   if (normalized && SUPPORTED_MIME_TYPES.has(normalized)) return normalized;
 
   const extension = extensionOf(fileName) ?? extensionOf(uri);
@@ -187,7 +188,12 @@ function readOrientation(
 ): number | null {
   if (!exif) return null;
   const orientation = toFiniteNumber(exif.Orientation);
-  if (orientation === null || !Number.isSafeInteger(orientation) || orientation < 1 || orientation > 8) {
+  if (
+    orientation === null ||
+    !Number.isSafeInteger(orientation) ||
+    orientation < 1 ||
+    orientation > 8
+  ) {
     return null;
   }
   return orientation;
