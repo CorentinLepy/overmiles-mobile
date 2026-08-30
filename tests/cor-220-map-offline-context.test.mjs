@@ -21,6 +21,6 @@ test("COR-220 labels cached point context without claiming provider freshness", 
 
 test("COR-220 preserves all existing local terrain actions without networking", () => {
   assert.match(mapScreenSource, /Voir le voyage/);
-  assert.match(mapScreenSource, /MapTerrainActions point={point}/);
+  assert.match(mapScreenSource, /<MapTerrainActions\s+[\s\S]*?point=\{point\}/);
   assert.doesNotMatch(mapScreenSource, /fetch\s*\(|axios|FormData/);
 });
