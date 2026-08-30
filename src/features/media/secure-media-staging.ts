@@ -1,6 +1,3 @@
-// Diagnostic temporaire COR-205 : Expo 57 fournit déjà ce module transitivement.
-// Si Metro le résout pendant la gate native, la dépendance directe sera alignée avec COR-199.
-// @ts-expect-error expo-file-system n'est pas encore déclaré comme dépendance directe.
 import { Directory, File, Paths } from "expo-file-system";
 
 import {
