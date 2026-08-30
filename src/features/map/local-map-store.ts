@@ -6,6 +6,10 @@ type CachedMapPointRow = Readonly<{
   payload_json: string;
 }>;
 
+type LocalWriteGuard = () => boolean;
+
+const ALWAYS_WRITE: LocalWriteGuard = () => true;
+
 export class LocalMapStore {
   private writeQueue: Promise<void> = Promise.resolve();
 
@@ -31,9 +35,12 @@ export class LocalMapStore {
     tripId: string,
     kind: MapSourceKind,
     points: readonly TripMapPoint[],
+    shouldWrite: LocalWriteGuard = ALWAYS_WRITE,
   ): Promise<void> {
     return this.enqueueWrite(async () => {
-      const db = await this.database.open();
+      const db = await this.database.openIf(shouldWrite);
+      if (!db || !shouldWrite()) return;
+
       const cachedAt = new Date().toISOString();
 
       // SQLCipher is keyed on LocalDatabase's cached connection. Expo's exclusive
@@ -41,6 +48,7 @@ export class LocalMapStore {
       // The store-level queue already guarantees one map writer, so keep this snapshot
       // transaction on the keyed connection instead of switching connections.
       await db.withTransactionAsync(async () => {
+        if (!shouldWrite()) return;
         await db.runAsync(
           `DELETE FROM cached_map_points
            WHERE account_user_id = ? AND trip_id = ? AND point_kind = ?`,
@@ -50,6 +58,7 @@ export class LocalMapStore {
         );
 
         for (const point of points) {
+          if (!shouldWrite()) return;
           assertCacheablePoint(point, tripId, kind);
           await db.runAsync(
             `INSERT INTO cached_map_points (

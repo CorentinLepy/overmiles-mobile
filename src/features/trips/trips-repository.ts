@@ -1,4 +1,5 @@
 import type { ApiClient } from "@/src/lib/api/api-client";
+import { localDataSessionGuard } from "@/src/lib/storage/local-data-session-guard";
 import {
   PendingOperationsStore,
   type PendingOperation,
@@ -27,14 +28,17 @@ export function createTripsRepository(
     },
 
     async refresh(): Promise<TripSummary[]> {
+      const writeToken = localDataSessionGuard.capture();
+      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
       const trips = await apiClient.request<TripSummary[]>({
         path: "/trips",
         method: "GET",
         kind: "json",
         auth: "required",
       });
-      await localStore.replaceAll(accountUserId, trips);
-      return localStore.list(accountUserId);
+
+      await localStore.replaceAll(accountUserId, trips, canPersist);
+      return canPersist() ? localStore.list(accountUserId) : trips;
     },
 
     getCachedById(tripId: string): Promise<TripSummary | null> {
@@ -42,13 +46,16 @@ export function createTripsRepository(
     },
 
     async getById(tripId: string): Promise<TripSummary> {
+      const writeToken = localDataSessionGuard.capture();
+      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
       const remoteTrip = await apiClient.request<TripSummary>({
         path: `/trips/${encodeURIComponent(tripId)}`,
         method: "GET",
         kind: "json",
         auth: "required",
       });
-      await localStore.upsert(accountUserId, remoteTrip);
+
+      await localStore.upsert(accountUserId, remoteTrip, canPersist);
       return remoteTrip;
     },
 

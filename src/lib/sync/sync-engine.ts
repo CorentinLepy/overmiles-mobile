@@ -17,7 +17,8 @@ export type SyncTransportResult =
     }>
   | Readonly<{ outcome: "conflict"; errorCode?: string }>
   | Readonly<{ outcome: "retryable"; errorCode: string }>
-  | Readonly<{ outcome: "fatal"; errorCode: string }>;
+  | Readonly<{ outcome: "fatal"; errorCode: string }>
+  | Readonly<{ outcome: "aborted" }>;
 
 export type SyncTransport = (operation: PendingOperation) => Promise<SyncTransportResult>;
 
@@ -79,6 +80,13 @@ export class OfflineSyncEngine implements SyncEngine {
         result = await this.transport(operation);
       } catch {
         result = { outcome: "retryable", errorCode: "SYNC_TRANSPORT_ERROR" };
+      }
+
+      if (result.outcome === "aborted") {
+        // Do not touch SQLCipher after the authenticated local-write generation is invalidated.
+        // A later run recovers this `sending` operation back to pending if the DB was not purged.
+        summary.deferred += 1;
+        continue;
       }
 
       if (result.outcome === "applied") {

@@ -59,7 +59,7 @@ test("offline cache stays account-scoped and remote detail loading stays authent
 });
 
 test("trip details populate the same local cache used by Home and Voyages", () => {
-  assert.match(repository, /localStore\.upsert\(accountUserId, remoteTrip\)/);
+  assert.match(repository, /localStore\.upsert\(accountUserId, remoteTrip, canPersist\)/);
   assert.match(provider, /repository\.getCachedById\(tripId\)/);
   assert.match(provider, /repository\.getById\(tripId\)/);
 });

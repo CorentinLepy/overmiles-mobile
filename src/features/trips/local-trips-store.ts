@@ -6,6 +6,10 @@ type CachedTripRow = Readonly<{
   payload_json: string;
 }>;
 
+type LocalWriteGuard = () => boolean;
+
+const ALWAYS_WRITE: LocalWriteGuard = () => true;
+
 export class LocalTripsStore {
   constructor(private readonly database: LocalDatabase = localDatabase) {}
 
@@ -35,21 +39,32 @@ export class LocalTripsStore {
     return row ? parseCachedTrip(row.payload_json) : null;
   }
 
-  async replaceAll(accountUserId: string, trips: readonly TripSummary[]): Promise<void> {
-    const db = await this.database.open();
-    const cachedAt = new Date().toISOString();
+  async replaceAll(
+    accountUserId: string,
+    trips: readonly TripSummary[],
+    shouldWrite: LocalWriteGuard = ALWAYS_WRITE,
+  ): Promise<void> {
+    const db = await this.database.openIf(shouldWrite);
+    if (!db || !shouldWrite()) return;
 
+    const cachedAt = new Date().toISOString();
     await db.withTransactionAsync(async () => {
       await db.runAsync("DELETE FROM cached_trips WHERE account_user_id = ?", accountUserId);
 
       for (const trip of trips) {
+        if (!shouldWrite()) return;
         await insertTrip(db, accountUserId, trip, cachedAt);
       }
     });
   }
 
-  async upsert(accountUserId: string, trip: TripSummary): Promise<void> {
-    const db = await this.database.open();
+  async upsert(
+    accountUserId: string,
+    trip: TripSummary,
+    shouldWrite: LocalWriteGuard = ALWAYS_WRITE,
+  ): Promise<void> {
+    const db = await this.database.openIf(shouldWrite);
+    if (!db || !shouldWrite()) return;
     await insertTrip(db, accountUserId, trip, new Date().toISOString());
   }
 

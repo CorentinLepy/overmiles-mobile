@@ -33,7 +33,9 @@ test("COR-193 sends versioned idempotent Trip updates", () => {
 });
 
 test("COR-193 caches the authoritative Trip before completion", () => {
-  const cacheIndex = transport.indexOf("await localStore.upsert(accountUserId, updatedTrip)");
+  const cacheIndex = transport.indexOf(
+    "await localStore.upsert(accountUserId, updatedTrip, canPersist)",
+  );
   const appliedIndex = transport.indexOf('outcome: "applied"', cacheIndex);
 
   assert.ok(cacheIndex >= 0);
