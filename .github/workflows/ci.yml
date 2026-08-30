@@ -47,8 +47,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Export COR-233 Prettier output
-        run: node scripts/cor-233-prettier-export.mjs
+      - name: Format COR-233 files for handoff
+        run: pnpm exec prettier --write src/features/map/map-overlapping-point-navigation.tsx src/features/map/screens/map-screen.tsx tests/cor-233-map-overlapping-points.test.mjs
+
+      - name: Upload formatted COR-233 files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cor-233-prettier-output
+          path: |
+            src/features/map/map-overlapping-point-navigation.tsx
+            src/features/map/screens/map-screen.tsx
+            tests/cor-233-map-overlapping-points.test.mjs
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Stop temporary formatting handoff
+        run: exit 1
 
       - name: Verify repository
         run: pnpm verify
