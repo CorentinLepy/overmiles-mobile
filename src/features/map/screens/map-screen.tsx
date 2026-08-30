@@ -158,6 +158,7 @@ export function MapScreen() {
       {selectedPoint ? (
         <SelectedPointCard
           point={selectedPoint}
+          isOffline={state.status === "offline"}
           onClose={() => setSelectedPointId(null)}
           bottomInset={insets.bottom}
         />
@@ -240,10 +241,12 @@ function CenterCard({ title, description }: { title: string; description: string
 
 function SelectedPointCard({
   point,
+  isOffline,
   onClose,
   bottomInset,
 }: {
   point: TripMapPoint;
+  isOffline: boolean;
   onClose: () => void;
   bottomInset: number;
 }) {
@@ -326,6 +329,23 @@ function SelectedPointCard({
           <Text style={{ color: theme.color.muted, fontSize: 22, fontWeight: "600" }}>×</Text>
         </Pressable>
       </View>
+      {isOffline ? (
+        <View
+          accessibilityRole="text"
+          accessibilityLabel="Disponible hors ligne"
+          style={{
+            alignSelf: "flex-start",
+            paddingHorizontal: theme.spacing.sm,
+            paddingVertical: 6,
+            borderRadius: theme.radius.pill,
+            backgroundColor: theme.color.surfaceMuted,
+          }}
+        >
+          <Text selectable style={{ color: theme.color.muted, fontSize: 12, fontWeight: "800" }}>
+            Disponible hors ligne
+          </Text>
+        </View>
+      ) : null}
       {point.occurredAt ? (
         <Text selectable style={{ color: theme.color.ink, fontSize: 13 }}>
           {formatPointDate(point.occurredAt)}
