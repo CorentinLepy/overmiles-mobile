@@ -18,6 +18,10 @@ export type EvaluatePrefetchStoragePressureInput = Readonly<{
 export async function evaluatePrefetchStoragePressure(
   input: EvaluatePrefetchStoragePressureInput,
 ): Promise<PrefetchStoragePressureResult> {
+  if (input.artifact.accountUserId !== input.accountUserId) {
+    throw new Error("L’artefact de stockage ne correspond pas au compte actif.");
+  }
+
   if (input.artifact.storageClass !== "rehydratable_cache") {
     return decidePrefetchStoragePressure(input.artifact, null, null);
   }
