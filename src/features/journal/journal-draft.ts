@@ -1,8 +1,4 @@
-export type LocalJournalDraftState =
-  | "draft_local"
-  | "ready_to_sync"
-  | "syncing"
-  | "failed";
+export type LocalJournalDraftState = "draft_local" | "ready_to_sync" | "syncing" | "failed";
 
 export type LocalJournalDraft = Readonly<{
   accountUserId: string;

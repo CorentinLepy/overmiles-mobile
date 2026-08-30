@@ -30,11 +30,7 @@ export class LocalDatabase {
   }
 
   canUseGeneration(generation: LocalDatabaseGeneration | null): boolean {
-    return (
-      generation !== null &&
-      !this.purgeRequested &&
-      generation === this.lifecycleGeneration
-    );
+    return generation !== null && !this.purgeRequested && generation === this.lifecycleGeneration;
   }
 
   async openForGeneration(

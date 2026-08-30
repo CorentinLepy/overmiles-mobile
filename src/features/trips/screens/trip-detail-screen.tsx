@@ -188,10 +188,7 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
         <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
           Capturez une note en quelques secondes, même hors ligne.
         </Text>
-        <Link
-          href={{ pathname: "/trips/[tripId]/journal", params: { tripId: trip.id } }}
-          asChild
-        >
+        <Link href={{ pathname: "/trips/[tripId]/journal", params: { tripId: trip.id } }} asChild>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Écrire dans le Carnet de ${trip.name}`}

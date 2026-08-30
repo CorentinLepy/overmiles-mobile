@@ -4,10 +4,7 @@ import { ScrollView, Text, TextInput, View } from "react-native";
 
 import { SectionCard } from "@/src/components/ui/section-card";
 import { useTripsData } from "@/src/features/trips/trips-data-provider";
-import {
-  localDatabase,
-  type LocalDatabaseGeneration,
-} from "@/src/lib/storage/local-database";
+import { localDatabase, type LocalDatabaseGeneration } from "@/src/lib/storage/local-database";
 import { useAuth } from "@/src/providers/auth-provider";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
