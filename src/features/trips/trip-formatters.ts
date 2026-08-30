@@ -50,6 +50,14 @@ export function isTripInProgress(trip: TripSummary, now = Date.now()): boolean {
   return start <= now && end >= now;
 }
 
+export function findCurrentTrip(
+  trips: readonly TripSummary[],
+  now = Date.now(),
+): TripSummary | null {
+  const currentTrips = trips.filter((trip) => isTripInProgress(trip, now));
+  return currentTrips.length === 1 ? (currentTrips[0] ?? null) : null;
+}
+
 export function daysUntilTrip(trip: TripSummary): number | null {
   if (!trip.startsAt) return null;
   const start = Date.parse(trip.startsAt);
