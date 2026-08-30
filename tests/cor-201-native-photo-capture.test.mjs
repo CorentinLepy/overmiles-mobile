@@ -3,9 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import ts from "typescript";
 
-const packageJson = JSON.parse(
-  await readFile(new URL("../package.json", import.meta.url), "utf8"),
-);
+const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 const appConfig = JSON.parse(await readFile(new URL("../app.json", import.meta.url), "utf8"));
 const assetSource = await readFile(
   new URL("../src/features/media/image-picker-asset.ts", import.meta.url),
