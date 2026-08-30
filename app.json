@@ -16,7 +16,8 @@
       "bundleIdentifier": "app.overmiles.mobile",
       "infoPlist": {
         "NSCameraUsageDescription": "Utiliser l’appareil photo pour capturer un moment de voyage dans OverMiles.",
-        "NSPhotoLibraryUsageDescription": "Choisir les photos à ajouter à vos voyages OverMiles."
+        "NSPhotoLibraryUsageDescription": "Choisir les photos à ajouter à vos voyages OverMiles.",
+        "LSApplicationQueriesSchemes": ["maps", "comgooglemaps", "waze"]
       }
     },
     "android": {
