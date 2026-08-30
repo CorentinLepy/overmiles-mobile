@@ -91,13 +91,17 @@ test("COR-194 prefetch freshness key tracks server-updated trip identity", () =>
 });
 
 test("COR-194 prefetch is authenticated-only, silent and skips active Map", () => {
-  assert.match(providerSource, /status !== "authenticated"/);
-  assert.match(providerSource, /isMapActive/);
+  const prefetchEffectStart = providerSource.indexOf("status !== \"authenticated\"");
+  const prefetchEffectEnd = providerSource.indexOf("const value = useMemo", prefetchEffectStart);
+  const prefetchEffect = providerSource.slice(prefetchEffectStart, prefetchEffectEnd);
+
+  assert.match(prefetchEffect, /status !== "authenticated"/);
+  assert.match(prefetchEffect, /isMapActive/);
   assert.match(providerSource, /createMapStopsRepository/);
   assert.match(providerSource, /createMapTimelineRepository/);
-  assert.match(providerSource, /Promise\.allSettled/);
-  assert.match(providerSource, /result\.status === "fulfilled"/);
-  assert.doesNotMatch(providerSource, /offline_auth_pending/);
+  assert.match(prefetchEffect, /Promise\.allSettled/);
+  assert.match(prefetchEffect, /result\.status === "fulfilled"/);
+  assert.doesNotMatch(prefetchEffect, /offline_auth_pending/);
   assert.doesNotMatch(providerSource, /photo|document|tile|MapLibre/i);
 });
 
