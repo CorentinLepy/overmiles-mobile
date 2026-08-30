@@ -1,19 +1,11 @@
-export type TripStatus = "DRAFT" | "ACTIVE" | "ARCHIVED";
-
 export type TripParticipantSummary = Readonly<{
   id: string;
   userId: string;
-  role: "OWNER" | "EDITOR" | "VIEWER";
-  user?: Readonly<{
-    id: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    displayName?: string | null;
-    email?: string | null;
-  }>;
+  role: string;
+  joinedAt: string;
 }>;
 
-export type TripCounters = Readonly<{
+export type TripCounts = Readonly<{
   participants: number;
   events: number;
   locations: number;
@@ -28,15 +20,26 @@ export type TripSummary = Readonly<{
   id: string;
   ownerId: string;
   name: string;
-  description?: string | null;
-  status: TripStatus;
-  startsAt?: string | null;
-  endsAt?: string | null;
+  description: string | null;
+  status: string;
+  startsAt: string | null;
+  endsAt: string | null;
   countries: string[];
-  coverImageUrl?: string | null;
+  coverImageUrl: string | null;
   createdAt: string;
   updatedAt: string;
   version?: number;
+  updatedByUserId?: string | null;
   participants?: TripParticipantSummary[];
-  _count?: TripCounters;
+  _count?: TripCounts;
+}>;
+
+export type TripUpdatePatch = Readonly<{
+  name?: string;
+  description?: string | null;
+  status?: string;
+  startsAt?: string | null;
+  endsAt?: string | null;
+  countries?: string[];
+  coverImageUrl?: string | null;
 }>;
