@@ -1,4 +1,5 @@
 import { ApiError } from "../api/api-error";
+import { localDataSessionGuard } from "../storage/local-data-session-guard";
 import type { TokenStore } from "./token-store";
 
 export type MobileSessionTokens = Readonly<{
@@ -28,12 +29,14 @@ export class AuthSessionManager {
   async acceptSession(tokens: MobileSessionTokens): Promise<void> {
     await this.tokenStore.writeRefreshToken(tokens.refreshToken);
     this.accessToken = tokens.accessToken;
+    localDataSessionGuard.activate();
   }
 
   async restore(): Promise<AuthRestoreState> {
     const refreshToken = await this.tokenStore.readRefreshToken();
     if (!refreshToken) {
       this.accessToken = null;
+      localDataSessionGuard.invalidate();
       return "anonymous";
     }
 
@@ -43,8 +46,10 @@ export class AuthSessionManager {
     } catch (error) {
       if (error instanceof ApiError && (error.kind === "network" || error.kind === "timeout")) {
         this.accessToken = null;
+        localDataSessionGuard.invalidate();
         return "offline_auth_pending";
       }
+      localDataSessionGuard.invalidate();
       return "anonymous";
     }
   }
@@ -64,6 +69,7 @@ export class AuthSessionManager {
   }
 
   async logout(): Promise<void> {
+    localDataSessionGuard.invalidate();
     try {
       const accessToken = this.accessToken ?? (await this.getOrRefreshAccessToken());
       await this.logoutTransport(accessToken);
@@ -76,6 +82,7 @@ export class AuthSessionManager {
   }
 
   async clearLocalSession(): Promise<void> {
+    localDataSessionGuard.invalidate();
     this.accessToken = null;
     await this.tokenStore.clearRefreshToken();
   }
@@ -84,6 +91,7 @@ export class AuthSessionManager {
     const refreshToken = await this.tokenStore.readRefreshToken();
     if (!refreshToken) {
       this.accessToken = null;
+      localDataSessionGuard.invalidate();
       throw new ApiError({
         kind: "unauthorized",
         status: 401,
@@ -98,6 +106,7 @@ export class AuthSessionManager {
       // request can observe/replay with the new in-memory access token.
       await this.tokenStore.writeRefreshToken(next.refreshToken);
       this.accessToken = next.accessToken;
+      localDataSessionGuard.activate();
       return next.accessToken;
     } catch (error) {
       if (error instanceof ApiError && error.kind === "unauthorized") {
