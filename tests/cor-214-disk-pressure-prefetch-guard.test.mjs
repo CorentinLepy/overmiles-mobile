@@ -40,6 +40,7 @@ const pressurePolicy = execute(pressurePolicySource, (specifier) => {
   throw new Error(`Unexpected require: ${specifier}`);
 });
 
+const MIB = 1024 ** 2;
 const GIB = 1024 ** 3;
 const candidate = {
   id: "map-porto",
@@ -47,7 +48,7 @@ const candidate = {
   tripId: "trip-1",
   storageClass: "rehydratable_cache",
   tripPriority: "upcoming",
-  sizeBytes: 256 * 1024 ** 2,
+  sizeBytes: 256 * MIB,
   lastAccessedAt: null,
 };
 
@@ -65,8 +66,8 @@ test("COR-214 allows rehydratable prefetch when reserve and budget stay healthy"
 test("COR-214 stops new rehydratable prefetch before crossing the free-space reserve", () => {
   const result = pressurePolicy.decidePrefetchStoragePressure(
     candidate,
-    { availableBytes: 1.1 * GIB, totalBytes: 64 * GIB },
-    512 * 1024 ** 2,
+    { availableBytes: 1 * GIB + 64 * MIB, totalBytes: 64 * GIB },
+    512 * MIB,
   );
 
   assert.equal(result.decision, "stop_prefetch");
@@ -77,7 +78,7 @@ test("COR-214 stops new rehydratable prefetch when the centralized cache budget 
   const result = pressurePolicy.decidePrefetchStoragePressure(
     candidate,
     { availableBytes: 20 * GIB, totalBytes: 64 * GIB },
-    3.9 * GIB,
+    4 * GIB - 128 * MIB,
   );
 
   assert.equal(result.decision, "stop_prefetch");
