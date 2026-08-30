@@ -47,6 +47,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Export COR-233 Prettier output
+        run: node scripts/cor-233-prettier-export.mjs
+
       - name: Verify repository
         run: pnpm verify
 
