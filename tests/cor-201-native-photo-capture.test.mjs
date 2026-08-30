@@ -62,7 +62,10 @@ test("COR-201 installs ImagePicker with explicit privacy-oriented native permiss
   assert.match(plugin[1].cameraPermission, /appareil photo.*OverMiles/i);
   assert.equal(plugin[1].microphonePermission, false);
 
-  assert.match(appConfig.expo.ios.infoPlist.NSCameraUsageDescription, /appareil photo.*OverMiles/i);
+  assert.match(
+    appConfig.expo.ios.infoPlist.NSCameraUsageDescription,
+    /appareil photo.*OverMiles/i,
+  );
   assert.match(
     appConfig.expo.ios.infoPlist.NSPhotoLibraryUsageDescription,
     /photos.*voyages OverMiles/i,
