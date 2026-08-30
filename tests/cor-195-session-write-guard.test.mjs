@@ -80,12 +80,33 @@ test("COR-195 local write tokens are valid only for the active server session", 
 
 test("COR-195 auth invalidates local writes before logout revocation and reactivates on auth", () => {
   const logoutIndex = authSession.indexOf("async logout()");
+  const endingIndex = authSession.indexOf("this.endingSession = true", logoutIndex);
   const invalidateIndex = authSession.indexOf("localDataSessionGuard.invalidate()", logoutIndex);
   const revokeIndex = authSession.indexOf("this.logoutTransport", logoutIndex);
 
   assert.match(authSession, /localDataSessionGuard\.activate\(\)/);
-  assert.match(authSession, /offline_auth_pending[\s\S]*localDataSessionGuard\.invalidate\(\)/);
-  assert.ok(logoutIndex >= 0 && invalidateIndex > logoutIndex && revokeIndex > invalidateIndex);
+  assert.match(
+    authSession,
+    /localDataSessionGuard\.invalidate\(\);[\s\S]*return "offline_auth_pending"/,
+  );
+  assert.ok(
+    logoutIndex >= 0 &&
+      endingIndex > logoutIndex &&
+      invalidateIndex > endingIndex &&
+      revokeIndex > invalidateIndex,
+  );
+});
+
+test("COR-195 stale refreshes cannot republish a cleared or replaced session", () => {
+  assert.match(authSession, /private sessionEpoch = 0/);
+  assert.match(authSession, /const refreshEpoch = this\.sessionEpoch/);
+  assert.match(authSession, /this\.assertRefreshStillCurrent\(refreshEpoch\)/);
+  assert.match(authSession, /code: "LOCAL_SESSION_INVALIDATED"/);
+  assert.match(authSession, /if \(!this\.endingSession\) \{[\s\S]*localDataSessionGuard\.activate\(\)/);
+  assert.match(
+    authSession,
+    /error\.code !== "LOCAL_SESSION_INVALIDATED"[\s\S]*this\.clearLocalSession\(\)/,
+  );
 });
 
 test("COR-195 remote hydration commits only through a guarded database open", () => {
