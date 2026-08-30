@@ -12,14 +12,8 @@ const actionsSource = await readFile(
 );
 
 test("COR-232 derives revisit context only from exact persisted coordinates", () => {
-  assert.match(
-    revisitSource,
-    /candidate\.coordinate\.latitude === point\.coordinate\.latitude/,
-  );
-  assert.match(
-    revisitSource,
-    /candidate\.coordinate\.longitude === point\.coordinate\.longitude/,
-  );
+  assert.match(revisitSource, /candidate\.coordinate\.latitude === point\.coordinate\.latitude/);
+  assert.match(revisitSource, /candidate\.coordinate\.longitude === point\.coordinate\.longitude/);
   assert.doesNotMatch(revisitSource, /toFixed\(|precision|coordinateBucketKey/);
 });
 
