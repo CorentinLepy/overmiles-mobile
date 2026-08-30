@@ -26,7 +26,15 @@ export function MapRevisitContext({ point }: { point: TripMapPoint }) {
         backgroundColor: theme.color.surfaceMuted,
       }}
     >
-      <Text selectable style={{ color: theme.color.muted, fontSize: 12, lineHeight: 17, fontWeight: "700" }}>
+      <Text
+        selectable
+        style={{
+          color: theme.color.muted,
+          fontSize: 12,
+          lineHeight: 17,
+          fontWeight: "700",
+        }}
+      >
         {label}
       </Text>
     </View>
