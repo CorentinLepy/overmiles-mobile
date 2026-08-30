@@ -74,7 +74,7 @@ export function createTripSyncTransport(
 }
 
 function isServerVersion(value: unknown): value is number {
-  return Number.isSafeInteger(value) && typeof value === "number" && value >= 1;
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 1;
 }
 
 function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
