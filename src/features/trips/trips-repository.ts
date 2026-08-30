@@ -42,14 +42,14 @@ export function createTripsRepository(
     },
 
     async getById(tripId: string): Promise<TripSummary> {
-      const trip = await apiClient.request<TripSummary>({
+      const remoteTrip = await apiClient.request<TripSummary>({
         path: `/trips/${encodeURIComponent(tripId)}`,
         method: "GET",
         kind: "json",
         auth: "required",
       });
-      await localStore.upsert(accountUserId, trip);
-      return trip;
+      await localStore.upsert(accountUserId, remoteTrip);
+      return remoteTrip;
     },
 
     async enqueueUpdate(tripId: string, patch: TripUpdatePatch): Promise<PendingOperation> {
