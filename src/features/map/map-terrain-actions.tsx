@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
+import { MapRevisitContext } from "./map-revisit-context";
 import type { TripMapPoint } from "./map.types";
 
 export function MapTerrainActions({
@@ -53,39 +54,42 @@ export function MapTerrainActions({
   ] as const;
 
   return (
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.sm }}>
-      {actions.map((action) => (
-        <Pressable
-          key={action.key}
-          accessibilityRole="button"
-          accessibilityLabel={action.accessibilityLabel}
-          onPress={action.onPress}
-          style={({ pressed }) => ({
-            minHeight: 44,
-            minWidth: "47%",
-            flexGrow: 1,
-            alignItems: "center",
-            justifyContent: "center",
-            paddingHorizontal: theme.spacing.md,
-            borderRadius: theme.radius.control,
-            borderCurve: "continuous",
-            backgroundColor:
-              action.key === "navigate" ? theme.color.accentSoft : theme.color.surfaceMuted,
-            opacity: pressed ? 0.72 : 1,
-          })}
-        >
-          <Text
-            selectable
-            style={{
-              color: action.key === "navigate" ? theme.color.accent : theme.color.ink,
-              fontSize: 14,
-              fontWeight: "800",
-            }}
+    <View style={{ gap: theme.spacing.sm }}>
+      <MapRevisitContext point={point} />
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.sm }}>
+        {actions.map((action) => (
+          <Pressable
+            key={action.key}
+            accessibilityRole="button"
+            accessibilityLabel={action.accessibilityLabel}
+            onPress={action.onPress}
+            style={({ pressed }) => ({
+              minHeight: 44,
+              minWidth: "47%",
+              flexGrow: 1,
+              alignItems: "center",
+              justifyContent: "center",
+              paddingHorizontal: theme.spacing.md,
+              borderRadius: theme.radius.control,
+              borderCurve: "continuous",
+              backgroundColor:
+                action.key === "navigate" ? theme.color.accentSoft : theme.color.surfaceMuted,
+              opacity: pressed ? 0.72 : 1,
+            })}
           >
-            {action.label}
-          </Text>
-        </Pressable>
-      ))}
+            <Text
+              selectable
+              style={{
+                color: action.key === "navigate" ? theme.color.accent : theme.color.ink,
+                fontSize: 14,
+                fontWeight: "800",
+              }}
+            >
+              {action.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
     </View>
   );
 }
