@@ -12,12 +12,10 @@ const NEW_KEY = "b".repeat(64);
 
 function deferred() {
   let resolve;
-  let reject;
-  const promise = new Promise((promiseResolve, promiseReject) => {
+  const promise = new Promise((promiseResolve) => {
     resolve = promiseResolve;
-    reject = promiseReject;
   });
-  return { promise, resolve, reject };
+  return { promise, resolve };
 }
 
 function loadLocalDatabase({ sqlite, runLocalMigrations }) {
@@ -83,7 +81,10 @@ test("COR-190 purge waits for an in-flight open, closes it, then wipes database 
   const events = [];
   const migrationStarted = deferred();
   const releaseMigration = deferred();
-  const handles = [createDatabaseHandle("first", events), createDatabaseHandle("second", events)];
+  const handles = [
+    createDatabaseHandle("first", events),
+    createDatabaseHandle("second", events),
+  ];
   let openCount = 0;
 
   const sqlite = {
