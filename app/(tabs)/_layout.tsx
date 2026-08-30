@@ -3,7 +3,9 @@ import { NativeTabs } from "expo-router/unstable-native-tabs";
 
 import { AuthLoadingScreen } from "@/src/features/auth/screens/auth-loading-screen";
 import { MapDataProvider } from "@/src/features/map/use-map-data";
-import { OfflineCompanionPrefetchProvider } from "@/src/features/offline-companion/offline-companion-prefetch-provider";
+import {
+  OfflineCompanionPrefetchProvider,
+} from "@/src/features/offline-companion/offline-companion-prefetch-provider";
 import { TripsDataProvider } from "@/src/features/trips/trips-data-provider";
 import { useAuth } from "@/src/providers/auth-provider";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
@@ -29,7 +31,10 @@ export default function TabLayout() {
         <MapDataProvider>
           <NativeTabs tintColor={theme.color.accent} minimizeBehavior="onScrollDown">
             <NativeTabs.Trigger name="home">
-              <NativeTabs.Trigger.Icon sf={{ default: "house", selected: "house.fill" }} md="home" />
+              <NativeTabs.Trigger.Icon
+                sf={{ default: "house", selected: "house.fill" }}
+                md="home"
+              />
               <NativeTabs.Trigger.Label>Accueil</NativeTabs.Trigger.Label>
             </NativeTabs.Trigger>
 
@@ -42,7 +47,10 @@ export default function TabLayout() {
             </NativeTabs.Trigger>
 
             <NativeTabs.Trigger name="map">
-              <NativeTabs.Trigger.Icon sf={{ default: "map", selected: "map.fill" }} md="map" />
+              <NativeTabs.Trigger.Icon
+                sf={{ default: "map", selected: "map.fill" }}
+                md="map"
+              />
               <NativeTabs.Trigger.Label>Carte</NativeTabs.Trigger.Label>
             </NativeTabs.Trigger>
 
