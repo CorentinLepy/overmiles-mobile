@@ -8,6 +8,8 @@ import type { TripMapPoint } from "./map.types";
 type TripIdentity = Readonly<{
   id: string;
   name: string;
+  version?: number;
+  updatedAt?: string;
 }>;
 
 type TripStopResponse = Readonly<{
@@ -58,7 +60,10 @@ export function createMapStopsRepository(
           })),
       );
 
-      await localStore.replaceTripKind(accountUserId, trip.id, "stop", points, canPersist);
+      await localStore.replaceTripKind(accountUserId, trip.id, "stop", points, canPersist, {
+        tripVersion: trip.version ?? null,
+        tripUpdatedAt: trip.updatedAt ?? null,
+      });
       return points;
     },
   };
