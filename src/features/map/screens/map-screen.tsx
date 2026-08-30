@@ -83,8 +83,7 @@ export function MapScreen() {
         <Camera
           key={cameraKey}
           initialViewState={initialViewState}
-          trackUserLocation={isUserLocationEnabled ? "default" : undefined}
-          zoom={isUserLocationEnabled ? 15 : undefined}
+          {...(isUserLocationEnabled ? { trackUserLocation: "default" as const, zoom: 15 } : {})}
         />
         <GeoJSONSource
           id="overmiles-visited-points"
