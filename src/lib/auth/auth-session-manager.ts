@@ -15,6 +15,8 @@ export type AuthRestoreState = "anonymous" | "authenticated" | "offline_auth_pen
 export class AuthSessionManager {
   private accessToken: string | null = null;
   private refreshPromise: Promise<string> | null = null;
+  private sessionEpoch = 0;
+  private endingSession = false;
 
   constructor(
     private readonly tokenStore: TokenStore,
@@ -27,6 +29,8 @@ export class AuthSessionManager {
   }
 
   async acceptSession(tokens: MobileSessionTokens): Promise<void> {
+    this.sessionEpoch += 1;
+    this.endingSession = false;
     await this.tokenStore.writeRefreshToken(tokens.refreshToken);
     this.accessToken = tokens.accessToken;
     localDataSessionGuard.activate();
@@ -69,25 +73,32 @@ export class AuthSessionManager {
   }
 
   async logout(): Promise<void> {
+    this.endingSession = true;
     localDataSessionGuard.invalidate();
     try {
       const accessToken = this.accessToken ?? (await this.getOrRefreshAccessToken());
       await this.logoutTransport(accessToken);
     } finally {
-      // A user-requested logout always removes local credentials, including
-      // when the server is temporarily unreachable. Server sessions still
-      // expire/revoke independently according to backend policy.
-      await this.clearLocalSession();
+      try {
+        // A user-requested logout always removes local credentials, including
+        // when the server is temporarily unreachable. Server sessions still
+        // expire/revoke independently according to backend policy.
+        await this.clearLocalSession();
+      } finally {
+        this.endingSession = false;
+      }
     }
   }
 
   async clearLocalSession(): Promise<void> {
+    this.sessionEpoch += 1;
     localDataSessionGuard.invalidate();
     this.accessToken = null;
     await this.tokenStore.clearRefreshToken();
   }
 
   private async performRefresh(): Promise<string> {
+    const refreshEpoch = this.sessionEpoch;
     const refreshToken = await this.tokenStore.readRefreshToken();
     if (!refreshToken) {
       this.accessToken = null;
@@ -102,11 +113,17 @@ export class AuthSessionManager {
 
     try {
       const next = await this.refreshTransport(refreshToken);
+      this.assertRefreshStillCurrent(refreshEpoch);
+
       // Rotation invariant: persist the successor refresh token before any
       // request can observe/replay with the new in-memory access token.
       await this.tokenStore.writeRefreshToken(next.refreshToken);
+      this.assertRefreshStillCurrent(refreshEpoch);
+
       this.accessToken = next.accessToken;
-      localDataSessionGuard.activate();
+      if (!this.endingSession) {
+        localDataSessionGuard.activate();
+      }
       return next.accessToken;
     } catch (error) {
       if (error instanceof ApiError && error.kind === "unauthorized") {
@@ -114,5 +131,17 @@ export class AuthSessionManager {
       }
       throw error;
     }
+  }
+
+  private assertRefreshStillCurrent(refreshEpoch: number): void {
+    if (refreshEpoch === this.sessionEpoch) return;
+
+    throw new ApiError({
+      kind: "unauthorized",
+      status: 401,
+      retryable: false,
+      code: "LOCAL_SESSION_INVALIDATED",
+      userMessage: "Reconnectez-vous pour continuer.",
+    });
   }
 }
