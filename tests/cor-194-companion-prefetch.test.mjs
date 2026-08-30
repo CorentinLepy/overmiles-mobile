@@ -4,14 +4,11 @@ import test from "node:test";
 import ts from "typescript";
 
 const selectionSource = await readFile(
-  new URL("../src/features/offline-companion/companion-trip-selection.ts", import.meta.url),
+  new URL("../src/features/offline-companion/selection.ts", import.meta.url),
   "utf8",
 );
 const providerSource = await readFile(
-  new URL(
-    "../src/features/offline-companion/offline-companion-prefetch-provider.tsx",
-    import.meta.url,
-  ),
+  new URL("../src/features/offline-companion/prefetch-provider.tsx", import.meta.url),
   "utf8",
 );
 const tabsLayout = await readFile(new URL("../app/(tabs)/_layout.tsx", import.meta.url), "utf8");
@@ -106,7 +103,7 @@ test("COR-194 prefetch is authenticated-only, silent and skips active Map", () =
 
 test("COR-194 mounts after Trips context and before the Map provider", () => {
   const tripsIndex = tabsLayout.indexOf("<TripsDataProvider>");
-  const companionIndex = tabsLayout.indexOf("<OfflineCompanionPrefetchProvider>");
+  const companionIndex = tabsLayout.indexOf("<CompanionPrefetchProvider>");
   const mapIndex = tabsLayout.indexOf("<MapDataProvider>");
 
   assert.ok(tripsIndex >= 0 && companionIndex > tripsIndex && mapIndex > companionIndex);
