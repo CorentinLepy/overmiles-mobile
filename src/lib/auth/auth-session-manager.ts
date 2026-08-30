@@ -126,7 +126,11 @@ export class AuthSessionManager {
       }
       return next.accessToken;
     } catch (error) {
-      if (error instanceof ApiError && error.kind === "unauthorized") {
+      if (
+        error instanceof ApiError &&
+        error.kind === "unauthorized" &&
+        error.code !== "LOCAL_SESSION_INVALIDATED"
+      ) {
         await this.clearLocalSession();
       }
       throw error;
