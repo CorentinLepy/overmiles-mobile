@@ -64,15 +64,7 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [
-    isLoading,
-    isMapActive,
-    isRefreshing,
-    prefetchKey,
-    priorityTrips,
-    repositories,
-    status,
-  ]);
+  }, [isLoading, isMapActive, isRefreshing, prefetchKey, priorityTrips, repositories, status]);
 
   return children;
 }
