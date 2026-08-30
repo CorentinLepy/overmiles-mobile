@@ -11,6 +11,7 @@ export class LocalDataSessionGuard {
   }
 
   invalidate(): void {
+    if (!this.active) return;
     this.generation += 1;
     this.active = false;
   }
