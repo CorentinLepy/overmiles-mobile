@@ -219,6 +219,40 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
         WHERE state = 'draft_local';
     `,
   },
+  {
+    version: 9,
+    name: "rehydratable-cache-inventory",
+    sql: `
+      CREATE TABLE IF NOT EXISTS rehydratable_cache_inventory (
+        account_user_id TEXT NOT NULL,
+        cache_id TEXT NOT NULL,
+        trip_id TEXT,
+        cache_kind TEXT NOT NULL
+          CHECK (cache_kind IN ('remote_media', 'document', 'map_region')),
+        storage_key TEXT NOT NULL,
+        source_fingerprint TEXT NOT NULL,
+        size_bytes INTEGER NOT NULL CHECK (size_bytes >= 0),
+        last_accessed_at TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (account_user_id, cache_id)
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_rehydratable_cache_storage_key
+        ON rehydratable_cache_inventory (account_user_id, storage_key);
+
+      CREATE INDEX IF NOT EXISTS idx_rehydratable_cache_trip_kind_accessed
+        ON rehydratable_cache_inventory (
+          account_user_id,
+          trip_id,
+          cache_kind,
+          last_accessed_at ASC
+        );
+
+      CREATE INDEX IF NOT EXISTS idx_rehydratable_cache_account_accessed
+        ON rehydratable_cache_inventory (account_user_id, last_accessed_at ASC);
+    `,
+  },
 ];
 
 export async function runLocalMigrations(db: SQLiteDatabase): Promise<void> {
