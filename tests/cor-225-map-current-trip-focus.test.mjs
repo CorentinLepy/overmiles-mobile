@@ -54,7 +54,12 @@ test("COR-225 only exposes an unambiguous current trip", () => {
   assert.equal(findCurrentTrip([trip("trip-1"), trip("trip-2")], now), null);
   assert.equal(
     findCurrentTrip(
-      [trip("trip-1", { startsAt: "2026-09-10T08:00:00.000Z", endsAt: "2026-09-12T20:00:00.000Z" })],
+      [
+        trip("trip-1", {
+          startsAt: "2026-09-10T08:00:00.000Z",
+          endsAt: "2026-09-12T20:00:00.000Z",
+        }),
+      ],
       now,
     ),
     null,

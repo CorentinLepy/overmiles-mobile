@@ -289,11 +289,7 @@ function pointsFromState(state: MapDataState): readonly TripMapPoint[] {
     : [];
 }
 
-function statusLabel(
-  state: MapDataState,
-  count: number,
-  focusedTripName?: string | null,
-): string {
+function statusLabel(state: MapDataState, count: number, focusedTripName?: string | null): string {
   if (state.status === "loading" || state.status === "idle") return "Chargement des repères…";
   if (focusedTripName && count === 0) return `Aucun repère · ${focusedTripName}`;
   if (focusedTripName) {
