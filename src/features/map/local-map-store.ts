@@ -88,7 +88,9 @@ function parseCachedMapPoint(
   const parsed = JSON.parse(payload) as Partial<TripMapPoint>;
   const coordinate = parsed.coordinate;
   const invalidOccurredAt =
-    parsed.occurredAt !== undefined && parsed.occurredAt !== null && typeof parsed.occurredAt !== "string";
+    parsed.occurredAt !== undefined &&
+    parsed.occurredAt !== null &&
+    typeof parsed.occurredAt !== "string";
 
   if (
     typeof parsed.id !== "string" ||
