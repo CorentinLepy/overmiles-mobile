@@ -10,6 +10,10 @@ const authProvider = await readFile(
   new URL("../src/providers/auth-provider.tsx", import.meta.url),
   "utf8",
 );
+const privateDataLifecycle = await readFile(
+  new URL("../src/lib/storage/private-data-lifecycle.ts", import.meta.url),
+  "utf8",
+);
 const rootLayout = await readFile(new URL("../app/_layout.tsx", import.meta.url), "utf8");
 const indexRoute = await readFile(new URL("../app/index.tsx", import.meta.url), "utf8");
 const tabsLayout = await readFile(new URL("../app/(tabs)/_layout.tsx", import.meta.url), "utf8");
@@ -31,7 +35,9 @@ test("offline auth pending only enters product routes when an encrypted cached u
   assert.match(tabsLayout, /status === "offline_auth_pending" && user !== null/);
   assert.match(tabsLayout, /if \(!hasLocalContentSession\)/);
   assert.match(authProvider, /const cachedUser = await readCachedUser\(\)/);
-  assert.match(authProvider, /if \(cachedUser\) setUser\(cachedUser\)/);
+  assert.match(authProvider, /if \(cachedUser\) \{/);
+  assert.match(authProvider, /await activatePrivateMedia\(cachedUser\)/);
+  assert.match(authProvider, /setUser\(cachedUser\)/);
 });
 
 test("biometric privacy gate also protects cached offline sessions", () => {
@@ -54,7 +60,9 @@ test("Trips stay local-only while session verification is offline", () => {
 });
 
 test("logout unauthorized recovery and biometric reauth destroy local private data", () => {
-  assert.match(authProvider, /localDatabase\.purge\(\)/);
+  assert.match(privateDataLifecycle, /Promise\.allSettled/);
+  assert.match(privateDataLifecycle, /localDatabase\.purge\(\)/);
+  assert.match(privateDataLifecycle, /secureMediaStaging\.purgeAllAndLock\(\)/);
   assert.match(
     authProvider,
     /await sessionManager\.clearLocalSession\(\);\n      await purgeLocalPrivateData\(\)/,
