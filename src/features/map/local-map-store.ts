@@ -7,6 +7,8 @@ type CachedMapPointRow = Readonly<{
 }>;
 
 export class LocalMapStore {
+  private writeQueue: Promise<void> = Promise.resolve();
+
   constructor(private readonly database: LocalDatabase = localDatabase) {}
 
   async list(accountUserId: string, tripId: string, kind: MapSourceKind): Promise<TripMapPoint[]> {
@@ -24,49 +26,59 @@ export class LocalMapStore {
     return rows.map(({ payload_json }) => parseCachedMapPoint(payload_json, tripId, kind));
   }
 
-  async replaceTripKind(
+  replaceTripKind(
     accountUserId: string,
     tripId: string,
     kind: MapSourceKind,
     points: readonly TripMapPoint[],
   ): Promise<void> {
-    const db = await this.database.open();
-    const cachedAt = new Date().toISOString();
+    return this.enqueueWrite(async () => {
+      const db = await this.database.open();
+      const cachedAt = new Date().toISOString();
 
-    await db.withTransactionAsync(async () => {
-      await db.runAsync(
-        `DELETE FROM cached_map_points
-         WHERE account_user_id = ? AND trip_id = ? AND point_kind = ?`,
-        accountUserId,
-        tripId,
-        kind,
-      );
-
-      for (const point of points) {
-        assertCacheablePoint(point, tripId, kind);
-        await db.runAsync(
-          `INSERT INTO cached_map_points (
-             account_user_id,
-             trip_id,
-             point_kind,
-             point_id,
-             payload_json,
-             cached_at
-           ) VALUES (?, ?, ?, ?, ?, ?)`,
+      await db.withExclusiveTransactionAsync(async (transaction) => {
+        await transaction.runAsync(
+          `DELETE FROM cached_map_points
+           WHERE account_user_id = ? AND trip_id = ? AND point_kind = ?`,
           accountUserId,
           tripId,
           kind,
-          point.id,
-          JSON.stringify(point),
-          cachedAt,
         );
-      }
+
+        for (const point of points) {
+          assertCacheablePoint(point, tripId, kind);
+          await transaction.runAsync(
+            `INSERT INTO cached_map_points (
+               account_user_id,
+               trip_id,
+               point_kind,
+               point_id,
+               payload_json,
+               cached_at
+             ) VALUES (?, ?, ?, ?, ?, ?)`,
+            accountUserId,
+            tripId,
+            kind,
+            point.id,
+            JSON.stringify(point),
+            cachedAt,
+          );
+        }
+      });
     });
   }
 
-  async clearAccount(accountUserId: string): Promise<void> {
-    const db = await this.database.open();
-    await db.runAsync("DELETE FROM cached_map_points WHERE account_user_id = ?", accountUserId);
+  clearAccount(accountUserId: string): Promise<void> {
+    return this.enqueueWrite(async () => {
+      const db = await this.database.open();
+      await db.runAsync("DELETE FROM cached_map_points WHERE account_user_id = ?", accountUserId);
+    });
+  }
+
+  private enqueueWrite(task: () => Promise<void>): Promise<void> {
+    const run = this.writeQueue.then(task);
+    this.writeQueue = run.catch(() => undefined);
+    return run;
   }
 }
 

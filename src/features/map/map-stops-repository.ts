@@ -56,7 +56,7 @@ export function createMapStopsRepository(
       );
 
       await localStore.replaceTripKind(accountUserId, trip.id, "stop", points);
-      return localStore.list(accountUserId, trip.id, "stop");
+      return points;
     },
   };
 }

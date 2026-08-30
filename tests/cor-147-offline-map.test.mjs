@@ -33,27 +33,47 @@ test("COR-147F stores map business points in SQLCipher with account and trip sco
   assert.match(localStore, /WHERE account_user_id = \? AND trip_id = \? AND point_kind = \?/);
 });
 
-test("map cache snapshots replace one source atomically without erasing another source", () => {
-  assert.match(localStore, /withTransactionAsync/);
+test("map cache snapshots serialize exclusive writes without poisoning the queue", () => {
+  assert.match(localStore, /private writeQueue: Promise<void> = Promise\.resolve\(\)/);
+  assert.match(localStore, /return this\.enqueueWrite\(async \(\) =>/);
+  assert.match(localStore, /withExclusiveTransactionAsync/);
+  assert.match(localStore, /transaction\.runAsync/);
   assert.match(localStore, /DELETE FROM cached_map_points/);
   assert.match(localStore, /point_kind = \?/);
   assert.match(localStore, /INSERT INTO cached_map_points/);
   assert.match(localStore, /assertCacheablePoint/);
+  assert.match(localStore, /this\.writeQueue = run\.catch\(\(\) => undefined\)/);
+});
+
+test("account cache clearing is ordered behind pending map writes", () => {
+  const clearAccount = localStore.slice(localStore.indexOf("clearAccount("));
+  assert.match(clearAccount, /return this\.enqueueWrite\(async \(\) =>/);
+  assert.match(clearAccount, /DELETE FROM cached_map_points WHERE account_user_id = \?/);
 });
 
 test("remote stops and timeline hydration persist projected points before returning", () => {
+  const remoteStops = stopsRepository.slice(stopsRepository.indexOf("async listTripStops"));
+  const remoteTimeline = timelineRepository.slice(
+    timelineRepository.indexOf("async listTripEvents"),
+  );
+
   assert.match(stopsRepository, /listCachedTripStops/);
   assert.match(stopsRepository, /localStore\.list\(accountUserId, trip\.id, "stop"\)/);
   assert.match(
-    stopsRepository,
+    remoteStops,
     /localStore\.replaceTripKind\(accountUserId, trip\.id, "stop", points\)/,
   );
+  assert.match(remoteStops, /return points;/);
+  assert.doesNotMatch(remoteStops, /return localStore\.list/);
+
   assert.match(timelineRepository, /listCachedTripEvents/);
   assert.match(timelineRepository, /localStore\.list\(accountUserId, trip\.id, "timeline"\)/);
   assert.match(
-    timelineRepository,
+    remoteTimeline,
     /localStore\.replaceTripKind\(accountUserId, trip\.id, "timeline", points\)/,
   );
+  assert.match(remoteTimeline, /return points;/);
+  assert.doesNotMatch(remoteTimeline, /return localStore\.list/);
 });
 
 test("Map provider reads SQLCipher first and never starts business API fan-out in offline auth", () => {

@@ -62,7 +62,7 @@ export function createMapTimelineRepository(
       );
 
       await localStore.replaceTripKind(accountUserId, trip.id, "timeline", points);
-      return localStore.list(accountUserId, trip.id, "timeline");
+      return points;
     },
   };
 }
