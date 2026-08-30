@@ -36,6 +36,7 @@ type MapDataContextValue = Readonly<{
 }>;
 
 type MapRuntimeState = Readonly<{
+  accountUserId: string | null;
   data: MapDataState;
   loadedTripsKey: string | null;
   inFlightTripsKey: string | null;
@@ -43,11 +44,26 @@ type MapRuntimeState = Readonly<{
 }>;
 
 type MapRuntimeAction =
-  | Readonly<{ type: "load-started"; tripsKey: string; refreshing: boolean }>
+  | Readonly<{
+      type: "load-started";
+      accountUserId: string;
+      tripsKey: string;
+      refreshing: boolean;
+    }>
+  | Readonly<{ type: "cache-loaded"; tripsKey: string; points: readonly TripMapPoint[] }>
   | Readonly<{ type: "load-finished"; tripsKey: string; result: MapLoadResult }>
-  | Readonly<{ type: "load-empty"; tripsKey: string }>;
+  | Readonly<{ type: "load-offline"; tripsKey: string; result: MapLoadResult }>
+  | Readonly<{ type: "load-empty"; tripsKey: string; offline: boolean }>
+  | Readonly<{ type: "reset" }>;
+
+type MapSourceLoadTask = Readonly<{
+  tripId: string;
+  kind: "stop" | "timeline";
+  load(): Promise<readonly TripMapPoint[]>;
+}>;
 
 const initialRuntimeState: MapRuntimeState = {
+  accountUserId: null,
   data: { status: "idle" },
   loadedTripsKey: null,
   inFlightTripsKey: null,
@@ -59,68 +75,136 @@ const MapDataContext = createContext<MapDataContextValue | null>(null);
 export function MapDataProvider({ children }: PropsWithChildren) {
   const pathname = usePathname();
   const isMapActive = pathname === "/map" || pathname.startsWith("/map/");
-  const { apiClient, status } = useAuth();
+  const { apiClient, status, user, retryRestore } = useAuth();
   const { trips, isLoading: tripsLoading } = useTripsData();
+  const hasLocalContentSession =
+    status === "authenticated" || (status === "offline_auth_pending" && user !== null);
   const repositories = useMemo<MapRepositories | null>(
     () =>
-      apiClient
+      apiClient && user
         ? {
-            stops: createMapStopsRepository(apiClient),
-            timeline: createMapTimelineRepository(apiClient),
+            stops: createMapStopsRepository(apiClient, user.id),
+            timeline: createMapTimelineRepository(apiClient, user.id),
           }
         : null,
-    [apiClient],
+    [apiClient, user],
   );
   const tripsKey = useMemo(() => createTripsKey(trips), [trips]);
+  const loadKey = `${user?.id ?? "anonymous"}:${status}:${tripsKey}`;
   const [runtime, dispatch] = useReducer(mapRuntimeReducer, initialRuntimeState);
 
   useEffect(() => {
-    if (!isMapActive || status !== "authenticated" || !repositories || tripsLoading) return;
-    if (runtime.loadedTripsKey === tripsKey || runtime.inFlightTripsKey === tripsKey) return;
+    if (status === "anonymous" || status === "mfa_required") {
+      dispatch({ type: "reset" });
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (!isMapActive || !hasLocalContentSession || !repositories || !user || tripsLoading) return;
+    if (runtime.loadedTripsKey === loadKey || runtime.inFlightTripsKey === loadKey) return;
 
     const activeRepositories = repositories;
     const activeTrips = trips;
-    const activeTripsKey = tripsKey;
-    dispatch({ type: "load-started", tripsKey: activeTripsKey, refreshing: false });
+    const activeLoadKey = loadKey;
+    const offlineOnly = status === "offline_auth_pending";
+    dispatch({
+      type: "load-started",
+      accountUserId: user.id,
+      tripsKey: activeLoadKey,
+      refreshing: false,
+    });
 
     async function loadActiveMapData() {
       if (activeTrips.length === 0) {
-        dispatch({ type: "load-empty", tripsKey: activeTripsKey });
+        dispatch({ type: "load-empty", tripsKey: activeLoadKey, offline: offlineOnly });
         return;
       }
 
-      const result = await collectMapData(activeRepositories, activeTrips);
-      dispatch({ type: "load-finished", tripsKey: activeTripsKey, result });
+      const cachedResult = await collectCachedMapData(activeRepositories, activeTrips);
+      if (offlineOnly) {
+        dispatch({ type: "load-offline", tripsKey: activeLoadKey, result: cachedResult });
+        return;
+      }
+
+      if (cachedResult.successfulPoints.length > 0) {
+        dispatch({
+          type: "cache-loaded",
+          tripsKey: activeLoadKey,
+          points: cachedResult.successfulPoints,
+        });
+      }
+
+      const result = await collectRemoteMapData(
+        activeRepositories,
+        activeTrips,
+        cachedResult.successfulPoints,
+      );
+      dispatch({ type: "load-finished", tripsKey: activeLoadKey, result });
     }
 
     void loadActiveMapData();
   }, [
+    hasLocalContentSession,
     isMapActive,
+    loadKey,
     repositories,
     runtime.inFlightTripsKey,
     runtime.loadedTripsKey,
     status,
     trips,
-    tripsKey,
     tripsLoading,
+    user,
   ]);
 
   const refresh = useCallback(async () => {
-    if (!isMapActive || status !== "authenticated" || !repositories || tripsLoading) return;
-    if (runtime.inFlightTripsKey === tripsKey) return;
+    if (!isMapActive || !hasLocalContentSession || !repositories || !user || tripsLoading) return;
+    if (runtime.inFlightTripsKey === loadKey) return;
 
     const activeTrips = trips;
-    const activeTripsKey = tripsKey;
-    dispatch({ type: "load-started", tripsKey: activeTripsKey, refreshing: true });
+    const activeLoadKey = loadKey;
+    dispatch({
+      type: "load-started",
+      accountUserId: user.id,
+      tripsKey: activeLoadKey,
+      refreshing: true,
+    });
 
     if (activeTrips.length === 0) {
-      dispatch({ type: "load-empty", tripsKey: activeTripsKey });
+      dispatch({
+        type: "load-empty",
+        tripsKey: activeLoadKey,
+        offline: status === "offline_auth_pending",
+      });
+      if (status === "offline_auth_pending") await retryRestore();
       return;
     }
 
-    const result = await collectMapData(repositories, activeTrips);
-    dispatch({ type: "load-finished", tripsKey: activeTripsKey, result });
-  }, [isMapActive, repositories, runtime.inFlightTripsKey, status, trips, tripsKey, tripsLoading]);
+    const cachedResult = await collectCachedMapData(repositories, activeTrips);
+    if (status === "offline_auth_pending") {
+      dispatch({ type: "load-offline", tripsKey: activeLoadKey, result: cachedResult });
+      await retryRestore();
+      return;
+    }
+
+    const fallbackPoints = deduplicatePoints([
+      ...pointsFromState(runtime.data),
+      ...cachedResult.successfulPoints,
+    ]);
+    const result = await collectRemoteMapData(repositories, activeTrips, fallbackPoints);
+    dispatch({ type: "load-finished", tripsKey: activeLoadKey, result });
+  }, [
+    hasLocalContentSession,
+    isMapActive,
+    loadKey,
+    repositories,
+    retryRestore,
+    runtime.data,
+    runtime.inFlightTripsKey,
+    status,
+    trips,
+    tripsLoading,
+    user,
+  ]);
 
   const value = useMemo<MapDataContextValue>(
     () => ({ state: runtime.data, isRefreshing: runtime.isRefreshing, refresh }),
@@ -139,10 +223,14 @@ export function useMapData(): MapDataContextValue {
 }
 
 function mapRuntimeReducer(state: MapRuntimeState, action: MapRuntimeAction): MapRuntimeState {
+  if (action.type === "reset") return initialRuntimeState;
+
   if (action.type === "load-started") {
+    const sameAccount = state.accountUserId === action.accountUserId;
     return {
-      data: state.data.status === "idle" ? { status: "loading" } : state.data,
-      loadedTripsKey: state.loadedTripsKey,
+      accountUserId: action.accountUserId,
+      data: sameAccount && state.data.status !== "idle" ? state.data : { status: "loading" },
+      loadedTripsKey: sameAccount ? state.loadedTripsKey : null,
       inFlightTripsKey: action.tripsKey,
       isRefreshing: action.refreshing,
     };
@@ -152,9 +240,27 @@ function mapRuntimeReducer(state: MapRuntimeState, action: MapRuntimeAction): Ma
     return state;
   }
 
+  if (action.type === "cache-loaded") {
+    return {
+      ...state,
+      data: { status: "ready", points: action.points },
+    };
+  }
+
   if (action.type === "load-empty") {
     return {
-      data: { status: "ready", points: [] },
+      ...state,
+      data: action.offline ? { status: "offline", points: [] } : { status: "ready", points: [] },
+      loadedTripsKey: action.tripsKey,
+      inFlightTripsKey: null,
+      isRefreshing: false,
+    };
+  }
+
+  if (action.type === "load-offline") {
+    return {
+      ...state,
+      data: stateFromOfflineCache(action.result),
       loadedTripsKey: action.tripsKey,
       inFlightTripsKey: null,
       isRefreshing: false,
@@ -162,6 +268,7 @@ function mapRuntimeReducer(state: MapRuntimeState, action: MapRuntimeAction): Ma
   }
 
   return {
+    ...state,
     data: stateFromLoadResult(action.result, state.data),
     loadedTripsKey: action.tripsKey,
     inFlightTripsKey: null,
@@ -176,28 +283,95 @@ function createTripsKey(trips: readonly TripSummary[]): string {
     .join("|");
 }
 
-async function collectMapData(
+function createCachedTasks(
+  repositories: MapRepositories,
+  trips: readonly TripSummary[],
+): MapSourceLoadTask[] {
+  return trips.flatMap((trip) => [
+    {
+      tripId: trip.id,
+      kind: "stop" as const,
+      load: () => repositories.stops.listCachedTripStops(trip),
+    },
+    {
+      tripId: trip.id,
+      kind: "timeline" as const,
+      load: () => repositories.timeline.listCachedTripEvents(trip),
+    },
+  ]);
+}
+
+function createRemoteTasks(
+  repositories: MapRepositories,
+  trips: readonly TripSummary[],
+): MapSourceLoadTask[] {
+  return trips.flatMap((trip) => [
+    {
+      tripId: trip.id,
+      kind: "stop" as const,
+      load: () => repositories.stops.listTripStops(trip),
+    },
+    {
+      tripId: trip.id,
+      kind: "timeline" as const,
+      load: () => repositories.timeline.listTripEvents(trip),
+    },
+  ]);
+}
+
+function collectCachedMapData(
   repositories: MapRepositories,
   trips: readonly TripSummary[],
 ): Promise<MapLoadResult> {
-  const results = await Promise.allSettled(
-    trips.map(async (trip) => {
-      const [stops, events] = await Promise.all([
-        repositories.stops.listTripStops(trip),
-        repositories.timeline.listTripEvents(trip),
-      ]);
-      return [...stops, ...events] as readonly TripMapPoint[];
+  return collectMapTasks(createCachedTasks(repositories, trips), []);
+}
+
+function collectRemoteMapData(
+  repositories: MapRepositories,
+  trips: readonly TripSummary[],
+  fallbackPoints: readonly TripMapPoint[],
+): Promise<MapLoadResult> {
+  return collectMapTasks(createRemoteTasks(repositories, trips), fallbackPoints);
+}
+
+async function collectMapTasks(
+  tasks: readonly MapSourceLoadTask[],
+  fallbackPoints: readonly TripMapPoint[],
+): Promise<MapLoadResult> {
+  const results = await Promise.all(
+    tasks.map(async (task) => {
+      try {
+        return {
+          points: await task.load(),
+          failure: null,
+        } as const;
+      } catch (error) {
+        return {
+          points: fallbackPoints.filter(
+            (point) => point.tripId === task.tripId && point.kind === task.kind,
+          ),
+          failure: error as unknown,
+        } as const;
+      }
     }),
   );
 
   return {
-    successfulPoints: deduplicatePoints(
-      results.flatMap((result) => (result.status === "fulfilled" ? result.value : [])),
-    ),
-    failures: results.flatMap((result) =>
-      result.status === "rejected" ? [result.reason as unknown] : [],
-    ),
+    successfulPoints: deduplicatePoints(results.flatMap((result) => result.points)),
+    failures: results.flatMap((result) => (result.failure === null ? [] : [result.failure])),
   };
+}
+
+function stateFromOfflineCache(result: MapLoadResult): MapDataState {
+  if (result.failures.length > 0 && result.successfulPoints.length === 0) {
+    return {
+      status: "error",
+      message: "Les données cartographiques enregistrées sur cet appareil sont indisponibles.",
+      points: [],
+    };
+  }
+
+  return { status: "offline", points: result.successfulPoints };
 }
 
 function stateFromLoadResult(result: MapLoadResult, current: MapDataState): MapDataState {

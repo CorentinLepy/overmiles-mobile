@@ -1,5 +1,6 @@
 import type { ApiClient } from "@/src/lib/api/api-client";
 
+import { localMapStore, type LocalMapStore } from "./local-map-store";
 import { projectTripMapPoints } from "./map-projection";
 import type { TripMapPoint } from "./map.types";
 
@@ -18,11 +19,20 @@ type TripStopResponse = Readonly<{
 }>;
 
 export type MapStopsRepository = Readonly<{
+  listCachedTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]>;
   listTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]>;
 }>;
 
-export function createMapStopsRepository(apiClient: ApiClient): MapStopsRepository {
+export function createMapStopsRepository(
+  apiClient: ApiClient,
+  accountUserId: string,
+  localStore: LocalMapStore = localMapStore,
+): MapStopsRepository {
   return {
+    listCachedTripStops(trip: TripIdentity) {
+      return localStore.list(accountUserId, trip.id, "stop");
+    },
+
     async listTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]> {
       const stops = await apiClient.request<TripStopResponse[]>({
         path: `/trips/${encodeURIComponent(trip.id)}/stops`,
@@ -30,7 +40,7 @@ export function createMapStopsRepository(apiClient: ApiClient): MapStopsReposito
         auth: "required",
       });
 
-      return projectTripMapPoints(
+      const points = projectTripMapPoints(
         stops
           .filter((stop) => stop.tripId === trip.id)
           .map((stop) => ({
@@ -44,6 +54,9 @@ export function createMapStopsRepository(apiClient: ApiClient): MapStopsReposito
             occurredAt: stop.startsAt ?? null,
           })),
       );
+
+      await localStore.replaceTripKind(accountUserId, trip.id, "stop", points);
+      return localStore.list(accountUserId, trip.id, "stop");
     },
   };
 }

@@ -86,6 +86,25 @@ export const LOCAL_MIGRATIONS: readonly LocalMigration[] = [
         ON cached_trips (account_user_id, server_updated_at DESC);
     `,
   },
+  {
+    version: 4,
+    name: "offline-map-data-cache",
+    sql: `
+      CREATE TABLE IF NOT EXISTS cached_map_points (
+        account_user_id TEXT NOT NULL,
+        trip_id TEXT NOT NULL,
+        point_kind TEXT NOT NULL
+          CHECK (point_kind IN ('stop', 'timeline', 'location')),
+        point_id TEXT NOT NULL,
+        payload_json TEXT NOT NULL,
+        cached_at TEXT NOT NULL,
+        PRIMARY KEY (account_user_id, trip_id, point_kind, point_id)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_cached_map_points_trip_kind
+        ON cached_map_points (account_user_id, trip_id, point_kind);
+    `,
+  },
 ];
 
 export async function runLocalMigrations(db: SQLiteDatabase): Promise<void> {
