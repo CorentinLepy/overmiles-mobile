@@ -9,11 +9,7 @@ type CachedMapPointRow = Readonly<{
 export class LocalMapStore {
   constructor(private readonly database: LocalDatabase = localDatabase) {}
 
-  async list(
-    accountUserId: string,
-    tripId: string,
-    kind: MapSourceKind,
-  ): Promise<TripMapPoint[]> {
+  async list(accountUserId: string, tripId: string, kind: MapSourceKind): Promise<TripMapPoint[]> {
     const db = await this.database.open();
     const rows = await db.getAllAsync<CachedMapPointRow>(
       `SELECT payload_json

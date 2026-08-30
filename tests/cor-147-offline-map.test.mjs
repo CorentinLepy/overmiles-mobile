@@ -29,10 +29,7 @@ test("COR-147F stores map business points in SQLCipher with account and trip sco
   assert.match(migrations, /CREATE TABLE IF NOT EXISTS cached_map_points/);
   assert.match(migrations, /account_user_id TEXT NOT NULL/);
   assert.match(migrations, /point_kind IN \('stop', 'timeline', 'location'\)/);
-  assert.match(
-    migrations,
-    /PRIMARY KEY \(account_user_id, trip_id, point_kind, point_id\)/,
-  );
+  assert.match(migrations, /PRIMARY KEY \(account_user_id, trip_id, point_kind, point_id\)/);
   assert.match(localStore, /WHERE account_user_id = \? AND trip_id = \? AND point_kind = \?/);
 });
 
@@ -59,21 +56,18 @@ test("remote stops and timeline hydration persist projected points before return
   );
 });
 
-test(
-  "Map provider reads SQLCipher first and never starts business API fan-out in offline auth",
-  () => {
-    assert.match(provider, /status === "offline_auth_pending" && user !== null/);
-    const loaderIndex = provider.indexOf("async function loadActiveMapData()");
-    const cachedIndex = provider.indexOf("collectCachedMapData", loaderIndex);
-    const offlineIndex = provider.indexOf("if (offlineOnly)", cachedIndex);
-    const remoteIndex = provider.indexOf("collectRemoteMapData", offlineIndex);
+test("Map provider reads SQLCipher first and never starts business API fan-out in offline auth", () => {
+  assert.match(provider, /status === "offline_auth_pending" && user !== null/);
+  const loaderIndex = provider.indexOf("async function loadActiveMapData()");
+  const cachedIndex = provider.indexOf("collectCachedMapData", loaderIndex);
+  const offlineIndex = provider.indexOf("if (offlineOnly)", cachedIndex);
+  const remoteIndex = provider.indexOf("collectRemoteMapData", offlineIndex);
 
-    assert.ok(loaderIndex >= 0 && cachedIndex > loaderIndex);
-    assert.ok(offlineIndex > cachedIndex && remoteIndex > offlineIndex);
-    assert.match(provider.slice(offlineIndex, remoteIndex), /type: "load-offline"/);
-    assert.match(provider.slice(offlineIndex, remoteIndex), /return;/);
-  },
-);
+  assert.ok(loaderIndex >= 0 && cachedIndex > loaderIndex);
+  assert.ok(offlineIndex > cachedIndex && remoteIndex > offlineIndex);
+  assert.match(provider.slice(offlineIndex, remoteIndex), /type: "load-offline"/);
+  assert.match(provider.slice(offlineIndex, remoteIndex), /return;/);
+});
 
 test("partial remote failures retain the cached points for only the failed trip source", () => {
   assert.match(provider, /fallbackPoints\.filter/);
