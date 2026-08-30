@@ -12,12 +12,15 @@ import { Alert, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
+import { findCurrentTrip } from "@/src/features/trips/trip-formatters";
+import { useTripsData } from "@/src/features/trips/trips-data-provider";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 import {
   openResolvedExternalNavigationTarget,
   resolveExternalNavigationTargets,
 } from "../external-navigation";
+import { MapCurrentTripFocus } from "../map-current-trip-focus";
 import { createVisitedPointsFeatureCollection } from "../map-geojson";
 import { MapTerrainActions } from "../map-terrain-actions";
 import { getMapInitialViewState } from "../map-viewport";
@@ -30,16 +33,27 @@ export function MapScreen() {
   const theme = useOverMilesTheme();
   const insets = useSafeAreaInsets();
   const runtimeConfig = useMemo(() => readPublicRuntimeConfig(), []);
+  const { trips } = useTripsData();
   const { state, isRefreshing, refresh } = useMapData();
   const points = pointsFromState(state);
-  const featureCollection = useMemo(() => createVisitedPointsFeatureCollection(points), [points]);
-  const initialViewState = useMemo(() => getMapInitialViewState(points), [points]);
+  const currentTrip = findCurrentTrip(trips);
+  const [isCurrentTripFocused, setIsCurrentTripFocused] = useState(false);
+  const focusedTripId = currentTrip && isCurrentTripFocused ? currentTrip.id : null;
+  const visiblePoints = useMemo(
+    () => (focusedTripId ? points.filter((point) => point.tripId === focusedTripId) : points),
+    [focusedTripId, points],
+  );
+  const featureCollection = useMemo(
+    () => createVisitedPointsFeatureCollection(visiblePoints),
+    [visiblePoints],
+  );
+  const initialViewState = useMemo(() => getMapInitialViewState(visiblePoints), [visiblePoints]);
   const [selectedPointId, setSelectedPointId] = useState<string | null>(null);
   const [mapStyleFailed, setMapStyleFailed] = useState(false);
   const [isUserLocationEnabled, setIsUserLocationEnabled] = useState(false);
   const [isRequestingLocation, setIsRequestingLocation] = useState(false);
-  const selectedPoint = points.find((point) => point.id === selectedPointId) ?? null;
-  const cameraKey = `${points.length}:${points[0]?.id ?? "empty"}:${points.at(-1)?.id ?? "empty"}`;
+  const selectedPoint = visiblePoints.find((point) => point.id === selectedPointId) ?? null;
+  const cameraKey = `${focusedTripId ?? "all"}:${visiblePoints.length}:${visiblePoints[0]?.id ?? "empty"}:${visiblePoints.at(-1)?.id ?? "empty"}`;
 
   async function toggleUserLocation(): Promise<void> {
     if (isUserLocationEnabled) {
@@ -67,6 +81,11 @@ export function MapScreen() {
     } finally {
       setIsRequestingLocation(false);
     }
+  }
+
+  function toggleCurrentTripFocus(): void {
+    setSelectedPointId(null);
+    setIsCurrentTripFocused((current) => !current);
   }
 
   return (
@@ -151,7 +170,7 @@ export function MapScreen() {
               Votre carte OverMiles
             </Text>
             <Text selectable style={{ color: theme.color.muted, fontSize: 13, lineHeight: 18 }}>
-              {statusLabel(state, points.length)}
+              {statusLabel(state, visiblePoints.length, focusedTripId ? currentTrip?.name : null)}
             </Text>
           </View>
           <Pressable
@@ -176,40 +195,56 @@ export function MapScreen() {
           </Pressable>
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={
-            isUserLocationEnabled ? "Masquer ma position" : "Afficher ma position sur la carte"
-          }
-          accessibilityState={{
-            busy: isRequestingLocation,
-            selected: isUserLocationEnabled,
-          }}
-          disabled={isRequestingLocation}
-          onPress={() => void toggleUserLocation()}
-          style={({ pressed }) => ({
-            minHeight: 44,
-            alignSelf: "flex-end",
+        <View
+          style={{
             flexDirection: "row",
             alignItems: "center",
-            justifyContent: "center",
-            paddingHorizontal: theme.spacing.md,
-            borderRadius: theme.radius.pill,
-            backgroundColor: theme.color.surface,
-            borderWidth: 1,
-            borderColor: isUserLocationEnabled ? theme.color.accent : theme.color.border,
-            boxShadow: "0 3px 12px rgba(0, 0, 0, 0.10)",
-            opacity: isRequestingLocation ? 0.55 : pressed ? 0.72 : 1,
-          })}
+            gap: theme.spacing.sm,
+          }}
         >
-          <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
-            {isRequestingLocation
-              ? "Localisation…"
-              : isUserLocationEnabled
-                ? "Position affichée"
-                : "Ma position"}
-          </Text>
-        </Pressable>
+          {currentTrip ? (
+            <MapCurrentTripFocus
+              trip={currentTrip}
+              isFocused={focusedTripId !== null}
+              onToggle={toggleCurrentTripFocus}
+            />
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={
+              isUserLocationEnabled ? "Masquer ma position" : "Afficher ma position sur la carte"
+            }
+            accessibilityState={{
+              busy: isRequestingLocation,
+              selected: isUserLocationEnabled,
+            }}
+            disabled={isRequestingLocation}
+            onPress={() => void toggleUserLocation()}
+            style={({ pressed }) => ({
+              minHeight: 44,
+              marginLeft: "auto",
+              flexShrink: 0,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "center",
+              paddingHorizontal: theme.spacing.md,
+              borderRadius: theme.radius.pill,
+              backgroundColor: theme.color.surface,
+              borderWidth: 1,
+              borderColor: isUserLocationEnabled ? theme.color.accent : theme.color.border,
+              boxShadow: "0 3px 12px rgba(0, 0, 0, 0.10)",
+              opacity: isRequestingLocation ? 0.55 : pressed ? 0.72 : 1,
+            })}
+          >
+            <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
+              {isRequestingLocation
+                ? "Localisation…"
+                : isUserLocationEnabled
+                  ? "Position affichée"
+                  : "Ma position"}
+            </Text>
+          </Pressable>
+        </View>
 
         {state.status === "offline" ? (
           <StatusPill label="Hors-ligne · données disponibles conservées" tone="warning" />
@@ -225,10 +260,14 @@ export function MapScreen() {
           title="Préparation de votre carte…"
           description="OverMiles rassemble vos étapes et moments géolocalisés."
         />
-      ) : points.length === 0 ? (
+      ) : visiblePoints.length === 0 ? (
         <CenterCard
-          title="Aucun repère géolocalisé pour le moment."
-          description="Les étapes et moments avec coordonnées apparaîtront ici automatiquement."
+          title={focusedTripId ? "Aucun repère pour ce voyage." : "Aucun repère géolocalisé pour le moment."}
+          description={
+            focusedTripId
+              ? "Passez sur Tous les voyages pour retrouver vos autres repères."
+              : "Les étapes et moments avec coordonnées apparaîtront ici automatiquement."
+          }
         />
       ) : null}
 
@@ -250,8 +289,16 @@ function pointsFromState(state: MapDataState): readonly TripMapPoint[] {
     : [];
 }
 
-function statusLabel(state: MapDataState, count: number): string {
+function statusLabel(
+  state: MapDataState,
+  count: number,
+  focusedTripName?: string | null,
+): string {
   if (state.status === "loading" || state.status === "idle") return "Chargement des repères…";
+  if (focusedTripName && count === 0) return `Aucun repère · ${focusedTripName}`;
+  if (focusedTripName) {
+    return `${count} repère${count > 1 ? "s" : ""} · ${focusedTripName}`;
+  }
   if (count === 0) return "Aucun repère visité géolocalisé";
   return `${count} repère${count > 1 ? "s" : ""} visité${count > 1 ? "s" : ""}`;
 }
