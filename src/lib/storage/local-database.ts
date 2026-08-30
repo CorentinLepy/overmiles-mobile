@@ -46,6 +46,24 @@ export class LocalDatabase {
     return this.opening;
   }
 
+  async openIf(shouldOpen: () => boolean): Promise<SQLite.SQLiteDatabase | null> {
+    if (!shouldOpen()) return null;
+
+    if (this.purging) {
+      await this.purging;
+      return this.openIf(shouldOpen);
+    }
+
+    if (this.closing) {
+      await this.closing;
+      return this.openIf(shouldOpen);
+    }
+
+    if (!shouldOpen()) return null;
+    const database = await this.open();
+    return shouldOpen() ? database : null;
+  }
+
   async close(): Promise<void> {
     if (this.purging) {
       await this.purging;
