@@ -41,6 +41,15 @@ export function tripTemporalLabel(trip: TripSummary): string {
   return trip.status === "ACTIVE" ? "Actif" : "Brouillon";
 }
 
+export function isTripInProgress(trip: TripSummary, now = Date.now()): boolean {
+  if (trip.status !== "ACTIVE" || !trip.startsAt || !trip.endsAt) return false;
+
+  const start = Date.parse(trip.startsAt);
+  const end = Date.parse(trip.endsAt);
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return false;
+  return start <= now && end >= now;
+}
+
 export function daysUntilTrip(trip: TripSummary): number | null {
   if (!trip.startsAt) return null;
   const start = Date.parse(trip.startsAt);
