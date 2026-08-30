@@ -15,7 +15,8 @@ test("COR-216 exposes existing local capture routes from a selected map point", 
   assert.match(actionSource, /useRouter/);
   assert.match(actionSource, /`\/trips\/\$\{point\.tripId\}\/journal`/);
   assert.match(actionSource, /`\/trips\/\$\{point\.tripId\}\/photos`/);
-  assert.match(actionSource, /`\/trips\/\$\{point\.tripId\}\/moment`/);
+  assert.match(actionSource, /pathname: "\/trips\/\[tripId\]\/moment"/);
+  assert.match(actionSource, /tripId: point\.tripId/);
   assert.match(actionSource, /Écrire dans le Carnet/);
   assert.match(actionSource, /Ajouter des photos/);
   assert.match(actionSource, /Créer un moment/);
