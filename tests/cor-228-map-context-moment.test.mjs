@@ -90,7 +90,7 @@ test("COR-228 sends selected OverMiles point context through the native Moment r
 
 test("COR-228 always restores an existing draft before considering map context", () => {
   const draftBranch = screenSource.indexOf("if (draft) {");
-  const mapBranch = screenSource.indexOf("if (mapContext) {");
+  const mapBranch = screenSource.indexOf("mapContextLabel !== null");
   assert.ok(draftBranch >= 0);
   assert.ok(mapBranch > draftBranch);
   assert.match(screenSource, /setLatitude\(draft\.latitude\)/);
@@ -99,9 +99,9 @@ test("COR-228 always restores an existing draft before considering map context",
 });
 
 test("COR-228 seeds only a new local MANUAL draft and preserves coordinates on autosave", () => {
-  assert.match(screenSource, /title: mapContext\.label/);
-  assert.match(screenSource, /latitude: mapContext\.latitude/);
-  assert.match(screenSource, /longitude: mapContext\.longitude/);
+  assert.match(screenSource, /title: mapContextLabel/);
+  assert.match(screenSource, /latitude: mapContextLatitude/);
+  assert.match(screenSource, /longitude: mapContextLongitude/);
   assert.match(screenSource, /type: "MANUAL"/);
   assert.match(screenSource, /latitude,\s*\n\s*longitude,/);
   assert.match(screenSource, /Lieu associé · \$\{locationLabel\}/);
