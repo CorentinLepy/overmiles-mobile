@@ -25,9 +25,12 @@ function transpile(source) {
   }).outputText;
 }
 
-function execute(source, requireFn = () => {
-  throw new Error("Unexpected require");
-}) {
+function execute(
+  source,
+  requireFn = () => {
+    throw new Error("Unexpected require");
+  },
+) {
   const module = { exports: {} };
   const evaluate = new Function("module", "exports", "require", transpile(source));
   evaluate(module, module.exports, requireFn);
@@ -109,6 +112,7 @@ test("COR-214 measures modern Expo disk space and consumes the SQLCipher invento
   assert.match(pressureServiceSource, /Paths\.totalDiskSpace/);
   assert.match(pressureServiceSource, /rehydratableCacheStore\.totalBytesForAccount/);
   assert.match(pressureServiceSource, /decidePrefetchStoragePressure/);
+  assert.match(pressureServiceSource, /artifact\.accountUserId !== input\.accountUserId/);
   assert.doesNotMatch(pressureServiceSource, /delete|removeEntry|unlink|\.delete\(/i);
   assert.doesNotMatch(pressureServiceSource, /react|useEffect|useState/i);
 });
