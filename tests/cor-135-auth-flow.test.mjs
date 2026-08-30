@@ -48,7 +48,9 @@ test("offline restore keeps a non-destructive pending state with encrypted cache
   assert.match(provider, /offline_auth_pending/);
   assert.match(provider, /const retryRestore = useCallback/);
   assert.match(provider, /readCachedUser/);
-  assert.match(provider, /if \(cachedUser\) setUser\(cachedUser\)/);
+  assert.match(provider, /if \(cachedUser\) \{/);
+  assert.match(provider, /await activatePrivateMedia\(cachedUser\)/);
+  assert.match(provider, /setUser\(cachedUser\)/);
   assert.match(provider, /retryRestore,/);
   assert.doesNotMatch(provider, /offline_auth_pending[\s\S]{0,200}clearLocalSession/);
 });

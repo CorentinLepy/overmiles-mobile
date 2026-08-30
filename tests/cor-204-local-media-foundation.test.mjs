@@ -11,21 +11,40 @@ const mediaItemSource = await readFile(
   new URL("../src/features/media/local-media-item.ts", import.meta.url),
   "utf8",
 );
+const secureMediaPathSource = await readFile(
+  new URL("../src/features/media/secure-media-path.ts", import.meta.url),
+  "utf8",
+);
 const mediaStoreSource = await readFile(
   new URL("../src/features/media/local-media-store.ts", import.meta.url),
   "utf8",
 );
 
-function loadMediaItemModule() {
-  const compiled = ts.transpileModule(mediaItemSource, {
+function compileCommonJs(source) {
+  return ts.transpileModule(source, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022,
     },
   }).outputText;
+}
+
+function executeCommonJs(source, requireModule = () => ({})) {
   const module = { exports: {} };
-  new Function("require", "module", "exports", compiled)(() => ({}), module, module.exports);
+  new Function("require", "module", "exports", compileCommonJs(source))(
+    requireModule,
+    module,
+    module.exports,
+  );
   return module.exports;
+}
+
+function loadMediaItemModule() {
+  const secureMediaPath = executeCommonJs(secureMediaPathSource);
+  return executeCommonJs(mediaItemSource, (specifier) => {
+    if (specifier === "./secure-media-path") return secureMediaPath;
+    throw new Error(`Unexpected CommonJS dependency: ${specifier}`);
+  });
 }
 
 test("COR-204 adds an account-scoped durable local media queue to SQLCipher", () => {
@@ -45,7 +64,7 @@ test("COR-204 adds an account-scoped durable local media queue to SQLCipher", ()
 test("COR-204 only accepts OverMiles-owned relative storage keys", () => {
   const { isLocalMediaStorageKey } = loadMediaItemModule();
 
-  assert.equal(isLocalMediaStorageKey("media/trip-1/asset-1.heic"), true);
+  assert.equal(isLocalMediaStorageKey("media/user-1/asset-1.heic"), true);
   assert.equal(isLocalMediaStorageKey("file:///tmp/picker/asset-1.heic"), false);
   assert.equal(isLocalMediaStorageKey("media/../private/asset.jpg"), false);
   assert.equal(isLocalMediaStorageKey("/media/asset.jpg"), false);
@@ -58,7 +77,7 @@ test("COR-204 validates normalized image metadata before persistence", () => {
     accountUserId: "user-1",
     tripId: "trip-1",
     localMediaId: "media-1",
-    storageKey: "media/trip-1/media-1.jpg",
+    storageKey: "media/user-1/media-1.jpg",
     mimeType: "image/jpeg",
   };
 
@@ -76,6 +95,9 @@ test("COR-204 validates normalized image metadata before persistence", () => {
   assert.throws(() => assertLocalMediaInput({ ...base, latitude: 48.8566 }));
   assert.throws(() => assertLocalMediaInput({ ...base, latitude: 120, longitude: 2 }));
   assert.throws(() => assertLocalMediaInput({ ...base, width: 0 }));
+  assert.throws(() =>
+    assertLocalMediaInput({ ...base, storageKey: "media/user-2/media-1.jpg" }),
+  );
 });
 
 test("COR-204 media store is serialized, generation-guarded and local-only", () => {
