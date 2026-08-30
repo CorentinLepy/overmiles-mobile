@@ -31,8 +31,18 @@ export function MapTerrainActions({
     {
       key: "moment",
       label: "Moment",
-      accessibilityLabel: `Créer un moment dans ${point.tripName}`,
-      onPress: () => router.push(`/trips/${point.tripId}/moment`),
+      accessibilityLabel: `Créer un moment à ${point.label} dans ${point.tripName}`,
+      onPress: () =>
+        router.push({
+          pathname: "/trips/[tripId]/moment",
+          params: {
+            tripId: point.tripId,
+            source: "map",
+            pointLabel: point.label,
+            latitude: String(point.coordinate.latitude),
+            longitude: String(point.coordinate.longitude),
+          },
+        }),
     },
     {
       key: "navigate",
