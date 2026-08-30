@@ -5,6 +5,7 @@ export class LocalDataSessionGuard {
   private active = false;
 
   activate(): void {
+    if (this.active) return;
     this.generation += 1;
     this.active = true;
   }
