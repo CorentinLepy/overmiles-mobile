@@ -11,23 +11,18 @@ const mapScreenSource = await readFile(
   new URL("../src/features/map/screens/map-screen.tsx", import.meta.url),
   "utf8",
 );
-const packageJson = JSON.parse(
-  await readFile(new URL("../package.json", import.meta.url), "utf8"),
-);
+const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 
 function loadPermissionHelper() {
-  const compiled = ts.transpileModule(helperSource, {
+  const output = ts.transpileModule(helperSource, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022,
     },
   }).outputText;
   const module = { exports: {} };
-  new Function("require", "module", "exports", compiled)(
-    () => ({}),
-    module,
-    module.exports,
-  );
+  const evaluate = new Function("module", "exports", output);
+  evaluate(module, module.exports);
   return module.exports.requestForegroundMapLocation;
 }
 
@@ -35,49 +30,43 @@ function never() {
   return new Promise(() => {});
 }
 
-test(
-  "COR-254 reuses an already available foreground MapLibre position",
-  async () => {
-    const requestForegroundMapLocation = loadPermissionHelper();
-    let permissionRequests = 0;
+test("COR-254 reuses an already available MapLibre position", async () => {
+  const requestForegroundMapLocation = loadPermissionHelper();
+  let permissionRequests = 0;
 
-    const result = await requestForegroundMapLocation(
-      {
-        async getCurrentPosition() {
-          return { coords: { latitude: 48.8566, longitude: 2.3522 } };
-        },
-        async requestPermissions() {
-          permissionRequests += 1;
-          return true;
-        },
+  const result = await requestForegroundMapLocation(
+    {
+      async getCurrentPosition() {
+        return { coords: { latitude: 48.8566, longitude: 2.3522 } };
       },
-      { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
-    );
-
-    assert.equal(result, "granted");
-    assert.equal(permissionRequests, 0);
-  },
-);
-
-test(
-  "COR-254 requests foreground permission when no position is available",
-  async () => {
-    const requestForegroundMapLocation = loadPermissionHelper();
-    const result = await requestForegroundMapLocation(
-      {
-        async getCurrentPosition() {
-          return undefined;
-        },
-        async requestPermissions() {
-          return true;
-        },
+      async requestPermissions() {
+        permissionRequests += 1;
+        return true;
       },
-      { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
-    );
+    },
+    { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
+  );
 
-    assert.equal(result, "granted");
-  },
-);
+  assert.equal(result, "granted");
+  assert.equal(permissionRequests, 0);
+});
+
+test("COR-254 requests permission when no position is available", async () => {
+  const requestForegroundMapLocation = loadPermissionHelper();
+  const result = await requestForegroundMapLocation(
+    {
+      async getCurrentPosition() {
+        return undefined;
+      },
+      async requestPermissions() {
+        return true;
+      },
+    },
+    { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
+  );
+
+  assert.equal(result, "granted");
+});
 
 test("COR-254 keeps an explicit denial non-destructive", async () => {
   const requestForegroundMapLocation = loadPermissionHelper();
@@ -96,23 +85,20 @@ test("COR-254 keeps an explicit denial non-destructive", async () => {
   assert.equal(result, "denied");
 });
 
-test(
-  "COR-254 bounds native bridge stalls instead of leaving Localisation pending forever",
-  async () => {
-    const requestForegroundMapLocation = loadPermissionHelper();
-    const result = await requestForegroundMapLocation(
-      {
-        getCurrentPosition: never,
-        requestPermissions: never,
-      },
-      { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
-    );
+test("COR-254 bounds a stalled native permission bridge", async () => {
+  const requestForegroundMapLocation = loadPermissionHelper();
+  const result = await requestForegroundMapLocation(
+    {
+      getCurrentPosition: never,
+      requestPermissions: never,
+    },
+    { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
+  );
 
-    assert.equal(result, "unavailable");
-  },
-);
+  assert.equal(result, "unavailable");
+});
 
-test("COR-254 remains inside the existing foreground-only MapLibre stack", () => {
+test("COR-254 remains foreground-only without a new location dependency", () => {
   assert.equal(packageJson.dependencies["expo-location"], undefined);
   assert.match(mapScreenSource, /requestForegroundMapLocation/);
   assert.match(mapScreenSource, /LocationManager\.getCurrentPosition\(\)/);
