@@ -11,7 +11,9 @@ const mapScreenSource = await readFile(
   new URL("../src/features/map/screens/map-screen.tsx", import.meta.url),
   "utf8",
 );
-const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+const packageJson = JSON.parse(
+  await readFile(new URL("../package.json", import.meta.url), "utf8"),
+);
 
 function loadPermissionHelper() {
   const compiled = ts.transpileModule(helperSource, {
@@ -103,6 +105,9 @@ test("COR-254 remains inside the existing foreground-only MapLibre stack", () =>
   assert.match(mapScreenSource, /LocationManager\.getCurrentPosition\(\)/);
   assert.match(mapScreenSource, /LocationManager\.requestPermissions\(\)/);
   assert.match(mapScreenSource, /setIsRequestingLocation\(false\)/);
-  assert.doesNotMatch(helperSource + mapScreenSource, /ACCESS_BACKGROUND_LOCATION|startLocationUpdates/);
+  assert.doesNotMatch(
+    helperSource + mapScreenSource,
+    /ACCESS_BACKGROUND_LOCATION|startLocationUpdates/,
+  );
   assert.doesNotMatch(helperSource, /fetch\s*\(|axios|SecureStore|SQLCipher/);
 });
