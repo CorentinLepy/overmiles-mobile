@@ -17,6 +17,7 @@ import type { TripSummary } from "@/src/features/trips/trips.types";
 import { useAuth } from "@/src/providers/auth-provider";
 
 import { deriveCompanionAvailability, type CompanionAvailability } from "./availability";
+import { CompanionPrefetchFlightRegistry } from "./prefetch-flight-registry";
 import { createCompanionPrefetchKey, selectCompanionTrips } from "./selection";
 
 type CompanionContextValue = Readonly<{
@@ -44,12 +45,20 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
   );
   const priorityTrips = useMemo(() => selectCompanionTrips(trips), [trips]);
   const prefetchKey = user ? createCompanionPrefetchKey(user.id, priorityTrips) : null;
-  const completedKeyRef = useRef<string | null>(null);
+  const prefetchFlightsRef = useRef(new CompanionPrefetchFlightRegistry());
+  const mountedRef = useRef(false);
   const [snapshotRevision, setSnapshotRevision] = useState(0);
   const [snapshots, setSnapshots] = useState<readonly MapSnapshotMetadata[]>([]);
   const [preparingTripIds, setPreparingTripIds] = useState<ReadonlySet<string>>(() => new Set());
   const hasLocalContentSession =
     user !== null && (status === "authenticated" || status === "offline_auth_pending");
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!user || !hasLocalContentSession) return;
@@ -77,8 +86,7 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
       priorityTrips.length === 0 ||
       isLoading ||
       isRefreshing ||
-      isMapActive ||
-      completedKeyRef.current === prefetchKey
+      isMapActive
     ) {
       return;
     }
@@ -86,33 +94,41 @@ export function CompanionPrefetchProvider({ children }: PropsWithChildren) {
     const activeRepositories = repositories;
     const activePrefetchKey = prefetchKey;
     const activePriorityTrips = priorityTrips;
-    let active = true;
+    const flights = prefetchFlightsRef.current;
+
+    // Claim the key synchronously before the first async yield. TripsDataProvider can
+    // replace cached trips with a server hydration while this prefetch is running;
+    // a second effect pass for the same freshness key must reuse the in-flight work.
+    if (!flights.tryStart(activePrefetchKey)) return;
+
+    const activeTripIds = new Set(activePriorityTrips.map((trip) => trip.id));
+    setPreparingTripIds((current) => new Set([...current, ...activeTripIds]));
 
     async function prefetchPriorityTrips() {
-      await Promise.resolve();
-      if (!active) return;
-      setPreparingTripIds(new Set(activePriorityTrips.map((trip) => trip.id)));
+      let succeeded = false;
+      try {
+        const tasks = activePriorityTrips.flatMap((trip) => [
+          activeRepositories.stops.listTripStops(trip),
+          activeRepositories.timeline.listTripEvents(trip),
+        ]);
+        const results = await Promise.allSettled(tasks);
+        succeeded = results.every((result) => result.status === "fulfilled");
 
-      const tasks = activePriorityTrips.flatMap((trip) => [
-        activeRepositories.stops.listTripStops(trip),
-        activeRepositories.timeline.listTripEvents(trip),
-      ]);
-      const results = await Promise.allSettled(tasks);
-      if (!active) return;
-
-      setPreparingTripIds(new Set());
-      setSnapshotRevision((revision) => revision + 1);
-
-      if (results.every((result) => result.status === "fulfilled")) {
-        completedKeyRef.current = activePrefetchKey;
+        if (!mountedRef.current) return;
+        setSnapshotRevision((revision) => revision + 1);
+      } finally {
+        flights.finish(activePrefetchKey, succeeded);
+        if (mountedRef.current) {
+          setPreparingTripIds((current) => {
+            const next = new Set(current);
+            for (const tripId of activeTripIds) next.delete(tripId);
+            return next;
+          });
+        }
       }
     }
 
     void prefetchPriorityTrips();
-
-    return () => {
-      active = false;
-    };
   }, [isLoading, isMapActive, isRefreshing, prefetchKey, priorityTrips, repositories, status]);
 
   const value = useMemo<CompanionContextValue>(

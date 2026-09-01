@@ -53,10 +53,20 @@ test("account cache clearing is ordered behind pending map writes", () => {
 });
 
 test("remote stops and timeline hydration persist projected points before returning", () => {
-  const remoteStops = stopsRepository.slice(stopsRepository.indexOf("async listTripStops"));
-  const remoteTimeline = timelineRepository.slice(
-    timelineRepository.indexOf("async listTripEvents"),
+  const stopsImplementationStart = stopsRepository.indexOf(
+    "listTripStops(trip",
+    stopsRepository.indexOf("return {") + 1,
   );
+  const timelineImplementationStart = timelineRepository.indexOf(
+    "listTripEvents(trip",
+    timelineRepository.indexOf("return {") + 1,
+  );
+
+  assert.ok(stopsImplementationStart >= 0);
+  assert.ok(timelineImplementationStart >= 0);
+
+  const remoteStops = stopsRepository.slice(stopsImplementationStart);
+  const remoteTimeline = timelineRepository.slice(timelineImplementationStart);
 
   assert.match(stopsRepository, /listCachedTripStops/);
   assert.match(stopsRepository, /localStore\.list\(accountUserId, trip\.id, "stop"\)/);
