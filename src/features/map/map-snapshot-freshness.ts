@@ -1,14 +1,15 @@
 import type { TripSummary } from "@/src/features/trips/trips.types";
 
 import type { MapSnapshotMetadata } from "./local-map-store";
-import type { MapSourceKind } from "./map.types";
+
+export type RefreshableMapSourceKind = "stop" | "timeline";
 
 export type MapSourceRefresh = Readonly<{
   trip: TripSummary;
-  kind: MapSourceKind;
+  kind: RefreshableMapSourceKind;
 }>;
 
-const MAP_SOURCE_KINDS: readonly MapSourceKind[] = ["stop", "timeline"];
+const MAP_SOURCE_KINDS: readonly RefreshableMapSourceKind[] = ["stop", "timeline"];
 
 export function selectStaleMapSources(
   trips: readonly TripSummary[],
