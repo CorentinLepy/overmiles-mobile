@@ -78,8 +78,14 @@ test("auth POST transport has a bounded timeout and no automatic retry loop", ()
 test("logout invalidates local credentials before best-effort server revocation", () => {
   const logoutIndex = sessionManager.indexOf("async logout(): Promise<void>");
   const clearIndex = sessionManager.indexOf("await this.clearLocalSession()", logoutIndex);
-  const revokeIndex = sessionManager.indexOf("this.revokeAccessTokenBestEffort(accessToken)", logoutIndex);
-  const logoutBody = sessionManager.slice(logoutIndex, sessionManager.indexOf("async clearLocalSession", logoutIndex));
+  const revokeIndex = sessionManager.indexOf(
+    "this.revokeAccessTokenBestEffort(accessToken)",
+    logoutIndex,
+  );
+  const logoutBody = sessionManager.slice(
+    logoutIndex,
+    sessionManager.indexOf("async clearLocalSession", logoutIndex),
+  );
 
   assert.ok(logoutIndex >= 0 && clearIndex > logoutIndex && revokeIndex > clearIndex);
   assert.doesNotMatch(logoutBody, /getOrRefreshAccessToken|await this\.logoutTransport/);
