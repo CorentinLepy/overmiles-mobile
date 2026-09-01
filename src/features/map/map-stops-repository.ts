@@ -3,6 +3,7 @@ import { localDataSessionGuard } from "@/src/lib/storage/local-data-session-guar
 
 import { localMapStore, type LocalMapStore } from "./local-map-store";
 import { projectTripMapPoints } from "./map-projection";
+import { runMapSourceFlight } from "./map-source-flight";
 import type { TripMapPoint } from "./map.types";
 
 type TripIdentity = Readonly<{
@@ -36,35 +37,46 @@ export function createMapStopsRepository(
       return localStore.list(accountUserId, trip.id, "stop");
     },
 
-    async listTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]> {
-      const writeToken = localDataSessionGuard.capture();
-      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
-      const stops = await apiClient.request<TripStopResponse[]>({
-        path: `/trips/${encodeURIComponent(trip.id)}/stops`,
-        kind: "json",
-        auth: "required",
-      });
+    listTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]> {
+      return runMapSourceFlight(
+        {
+          accountUserId,
+          tripId: trip.id,
+          kind: "stop",
+          tripVersion: trip.version ?? null,
+          tripUpdatedAt: trip.updatedAt ?? null,
+        },
+        async () => {
+          const writeToken = localDataSessionGuard.capture();
+          const canPersist = () => localDataSessionGuard.canCommit(writeToken);
+          const stops = await apiClient.request<TripStopResponse[]>({
+            path: `/trips/${encodeURIComponent(trip.id)}/stops`,
+            kind: "json",
+            auth: "required",
+          });
 
-      const points = projectTripMapPoints(
-        stops
-          .filter((stop) => stop.tripId === trip.id)
-          .map((stop) => ({
-            id: stop.id,
-            tripId: trip.id,
-            tripName: trip.name,
-            label: stop.name,
-            latitude: stop.latitude,
-            longitude: stop.longitude,
-            kind: "stop" as const,
-            occurredAt: stop.startsAt ?? null,
-          })),
+          const points = projectTripMapPoints(
+            stops
+              .filter((stop) => stop.tripId === trip.id)
+              .map((stop) => ({
+                id: stop.id,
+                tripId: trip.id,
+                tripName: trip.name,
+                label: stop.name,
+                latitude: stop.latitude,
+                longitude: stop.longitude,
+                kind: "stop" as const,
+                occurredAt: stop.startsAt ?? null,
+              })),
+          );
+
+          await localStore.replaceTripKind(accountUserId, trip.id, "stop", points, canPersist, {
+            tripVersion: trip.version ?? null,
+            tripUpdatedAt: trip.updatedAt ?? null,
+          });
+          return points;
+        },
       );
-
-      await localStore.replaceTripKind(accountUserId, trip.id, "stop", points, canPersist, {
-        tripVersion: trip.version ?? null,
-        tripUpdatedAt: trip.updatedAt ?? null,
-      });
-      return points;
     },
   };
 }
