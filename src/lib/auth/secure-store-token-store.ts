@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import type { TokenStore } from "./token-store";
 
 const REFRESH_TOKEN_KEY = "overmiles.auth.refresh-token.v1";
+const LOGOUT_TOMBSTONE_KEY = "overmiles.auth.logout-tombstone.v1";
 const KEYCHAIN_SERVICE = "app.overmiles.mobile.auth";
 const MAX_REFRESH_TOKEN_LENGTH = 4096;
 
@@ -37,6 +38,20 @@ export class SecureStoreTokenStore implements TokenStore {
 
   async clearRefreshToken(): Promise<void> {
     await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY, SECURE_STORE_OPTIONS);
+  }
+
+  async hasLogoutTombstone(): Promise<boolean> {
+    return (
+      (await SecureStore.getItemAsync(LOGOUT_TOMBSTONE_KEY, SECURE_STORE_OPTIONS)) === "pending"
+    );
+  }
+
+  async writeLogoutTombstone(): Promise<void> {
+    await SecureStore.setItemAsync(LOGOUT_TOMBSTONE_KEY, "pending", SECURE_STORE_OPTIONS);
+  }
+
+  async clearLogoutTombstone(): Promise<void> {
+    await SecureStore.deleteItemAsync(LOGOUT_TOMBSTONE_KEY, SECURE_STORE_OPTIONS);
   }
 }
 
