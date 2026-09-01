@@ -3,6 +3,7 @@ import { localDataSessionGuard } from "@/src/lib/storage/local-data-session-guar
 
 import { localMapStore, type LocalMapStore } from "./local-map-store";
 import { projectTripMapPoints } from "./map-projection";
+import { runMapSourceFlight } from "./map-source-flight";
 import type { TripMapPoint } from "./map.types";
 
 type TripIdentity = Readonly<{
@@ -36,41 +37,52 @@ export function createMapTimelineRepository(
       return localStore.list(accountUserId, trip.id, "timeline");
     },
 
-    async listTripEvents(trip: TripIdentity): Promise<readonly TripMapPoint[]> {
-      const writeToken = localDataSessionGuard.capture();
-      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
-      const events = await apiClient.request<TimelineEventResponse[]>({
-        path: `/trips/${encodeURIComponent(trip.id)}/events`,
-        kind: "json",
-        auth: "required",
-      });
+    listTripEvents(trip: TripIdentity): Promise<readonly TripMapPoint[]> {
+      return runMapSourceFlight(
+        {
+          accountUserId,
+          tripId: trip.id,
+          kind: "timeline",
+          tripVersion: trip.version ?? null,
+          tripUpdatedAt: trip.updatedAt ?? null,
+        },
+        async () => {
+          const writeToken = localDataSessionGuard.capture();
+          const canPersist = () => localDataSessionGuard.canCommit(writeToken);
+          const events = await apiClient.request<TimelineEventResponse[]>({
+            path: `/trips/${encodeURIComponent(trip.id)}/events`,
+            kind: "json",
+            auth: "required",
+          });
 
-      const points = projectTripMapPoints(
-        events.flatMap((event) => {
-          if (event.tripId !== trip.id || event.latitude === null || event.longitude === null) {
-            return [];
-          }
+          const points = projectTripMapPoints(
+            events.flatMap((event) => {
+              if (event.tripId !== trip.id || event.latitude === null || event.longitude === null) {
+                return [];
+              }
 
-          return [
-            {
-              id: event.id,
-              tripId: trip.id,
-              tripName: trip.name,
-              label: event.title,
-              latitude: event.latitude,
-              longitude: event.longitude,
-              kind: "timeline" as const,
-              occurredAt: event.occurredAt,
-            },
-          ];
-        }),
+              return [
+                {
+                  id: event.id,
+                  tripId: trip.id,
+                  tripName: trip.name,
+                  label: event.title,
+                  latitude: event.latitude,
+                  longitude: event.longitude,
+                  kind: "timeline" as const,
+                  occurredAt: event.occurredAt,
+                },
+              ];
+            }),
+          );
+
+          await localStore.replaceTripKind(accountUserId, trip.id, "timeline", points, canPersist, {
+            tripVersion: trip.version ?? null,
+            tripUpdatedAt: trip.updatedAt ?? null,
+          });
+          return points;
+        },
       );
-
-      await localStore.replaceTripKind(accountUserId, trip.id, "timeline", points, canPersist, {
-        tripVersion: trip.version ?? null,
-        tripUpdatedAt: trip.updatedAt ?? null,
-      });
-      return points;
     },
   };
 }
