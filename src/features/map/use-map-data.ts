@@ -15,6 +15,12 @@ import type { TripSummary } from "@/src/features/trips/trips.types";
 import { ApiError } from "@/src/lib/api/api-error";
 import { useAuth } from "@/src/providers/auth-provider";
 
+import { localMapStore, type MapSnapshotMetadata } from "./local-map-store";
+import {
+  createAllMapSources,
+  selectStaleMapSources,
+  type MapSourceRefresh,
+} from "./map-snapshot-freshness";
 import { createMapStopsRepository } from "./map-stops-repository";
 import { createMapTimelineRepository } from "./map-timeline-repository";
 import type { MapDataState, TripMapPoint } from "./map.types";
@@ -106,10 +112,11 @@ export function MapDataProvider({ children }: PropsWithChildren) {
     const activeRepositories = repositories;
     const activeTrips = trips;
     const activeLoadKey = loadKey;
+    const activeAccountUserId = user.id;
     const offlineOnly = status === "offline_auth_pending";
     dispatch({
       type: "load-started",
-      accountUserId: user.id,
+      accountUserId: activeAccountUserId,
       tripsKey: activeLoadKey,
       refreshing: false,
     });
@@ -134,9 +141,11 @@ export function MapDataProvider({ children }: PropsWithChildren) {
         });
       }
 
+      const snapshots = await listMapSnapshotsSafe(activeAccountUserId);
+      const staleSources = selectStaleMapSources(activeTrips, snapshots);
       const result = await collectRemoteMapData(
         activeRepositories,
-        activeTrips,
+        staleSources,
         cachedResult.successfulPoints,
       );
       dispatch({ type: "load-finished", tripsKey: activeLoadKey, result });
@@ -190,7 +199,11 @@ export function MapDataProvider({ children }: PropsWithChildren) {
       ...pointsFromState(runtime.data),
       ...cachedResult.successfulPoints,
     ]);
-    const result = await collectRemoteMapData(repositories, activeTrips, fallbackPoints);
+    const result = await collectRemoteMapData(
+      repositories,
+      createAllMapSources(activeTrips),
+      fallbackPoints,
+    );
     dispatch({ type: "load-finished", tripsKey: activeLoadKey, result });
   }, [
     hasLocalContentSession,
@@ -303,20 +316,21 @@ function createCachedTasks(
 
 function createRemoteTasks(
   repositories: MapRepositories,
-  trips: readonly TripSummary[],
+  sources: readonly MapSourceRefresh[],
 ): MapSourceLoadTask[] {
-  return trips.flatMap((trip) => [
-    {
-      tripId: trip.id,
-      kind: "stop" as const,
-      load: () => repositories.stops.listTripStops(trip),
-    },
-    {
-      tripId: trip.id,
-      kind: "timeline" as const,
-      load: () => repositories.timeline.listTripEvents(trip),
-    },
-  ]);
+  return sources.map(({ trip, kind }) =>
+    kind === "stop"
+      ? {
+          tripId: trip.id,
+          kind,
+          load: () => repositories.stops.listTripStops(trip),
+        }
+      : {
+          tripId: trip.id,
+          kind,
+          load: () => repositories.timeline.listTripEvents(trip),
+        },
+  );
 }
 
 function collectCachedMapData(
@@ -326,12 +340,24 @@ function collectCachedMapData(
   return collectMapTasks(createCachedTasks(repositories, trips), []);
 }
 
-function collectRemoteMapData(
+async function collectRemoteMapData(
   repositories: MapRepositories,
-  trips: readonly TripSummary[],
+  sources: readonly MapSourceRefresh[],
   fallbackPoints: readonly TripMapPoint[],
 ): Promise<MapLoadResult> {
-  return collectMapTasks(createRemoteTasks(repositories, trips), fallbackPoints);
+  if (sources.length === 0) {
+    return { successfulPoints: fallbackPoints, failures: [] };
+  }
+
+  const sourceKeys = new Set(sources.map(({ trip, kind }) => `${trip.id}:${kind}`));
+  const retainedFreshPoints = fallbackPoints.filter(
+    (point) => !sourceKeys.has(`${point.tripId}:${point.kind}`),
+  );
+  const refreshed = await collectMapTasks(createRemoteTasks(repositories, sources), fallbackPoints);
+  return {
+    successfulPoints: deduplicatePoints([...retainedFreshPoints, ...refreshed.successfulPoints]),
+    failures: refreshed.failures,
+  };
 }
 
 async function collectMapTasks(
@@ -360,6 +386,14 @@ async function collectMapTasks(
     successfulPoints: deduplicatePoints(results.flatMap((result) => result.points)),
     failures: results.flatMap((result) => (result.failure === null ? [] : [result.failure])),
   };
+}
+
+async function listMapSnapshotsSafe(accountUserId: string): Promise<MapSnapshotMetadata[]> {
+  try {
+    return await localMapStore.listSnapshots(accountUserId);
+  } catch {
+    return [];
+  }
 }
 
 function stateFromOfflineCache(result: MapLoadResult): MapDataState {
