@@ -9,7 +9,7 @@ export type MapSourceRefresh = Readonly<{
   kind: RefreshableMapSourceKind;
 }>;
 
-const MAP_SOURCE_KINDS: readonly RefreshableMapSourceKind[] = ["stop", "timeline"];
+const MAP_SOURCE_KINDS = ["stop", "timeline"] as const;
 
 export function selectStaleMapSources(
   trips: readonly TripSummary[],
@@ -22,7 +22,8 @@ export function selectStaleMapSources(
   return trips.flatMap((trip) =>
     MAP_SOURCE_KINDS.flatMap((kind) => {
       const snapshot = snapshotBySource.get(`${trip.id}:${kind}`);
-      return snapshot && isSnapshotFreshForTrip(snapshot, trip) ? [] : [{ trip, kind }];
+      if (snapshot && isSnapshotFreshForTrip(snapshot, trip)) return [];
+      return [{ trip, kind }];
     }),
   );
 }
