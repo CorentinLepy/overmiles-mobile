@@ -22,6 +22,7 @@ import {
 } from "../external-navigation";
 import { MapCurrentTripFocus } from "../map-current-trip-focus";
 import { createVisitedPointsFeatureCollection } from "../map-geojson";
+import { requestForegroundMapLocation } from "../map-location-permission";
 import { MapOverlappingPointNavigation } from "../map-overlapping-point-navigation";
 import { MapPointDistance } from "../map-point-distance";
 import { MapTerrainActions } from "../map-terrain-actions";
@@ -61,8 +62,12 @@ export function MapScreen() {
 
     setIsRequestingLocation(true);
     try {
-      const granted = await LocationManager.requestPermissions();
-      if (!granted) {
+      const result = await requestForegroundMapLocation({
+        getCurrentPosition: () => LocationManager.getCurrentPosition(),
+        requestPermissions: () => LocationManager.requestPermissions(),
+      });
+
+      if (result === "denied") {
         Alert.alert(
           "Localisation désactivée",
           "Autorisez la localisation pendant l’utilisation pour afficher votre position sur la carte.",
@@ -70,12 +75,15 @@ export function MapScreen() {
         return;
       }
 
+      if (result === "unavailable") {
+        Alert.alert(
+          "Localisation indisponible",
+          "OverMiles n’a pas pu accéder à votre position pour le moment.",
+        );
+        return;
+      }
+
       setIsUserLocationEnabled(true);
-    } catch {
-      Alert.alert(
-        "Localisation indisponible",
-        "OverMiles n’a pas pu accéder à votre position pour le moment.",
-      );
     } finally {
       setIsRequestingLocation(false);
     }
