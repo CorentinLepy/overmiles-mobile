@@ -114,11 +114,12 @@ test("COR-195 write tokens only belong to the active server session", () => {
   assert.equal(guard.canCommit(secondToken), true);
 });
 
-test("COR-195 invalidates local writes before logout revocation", () => {
+test("COR-195 invalidates local writes before logout cleanup and revocation", () => {
   const logoutIndex = authSession.indexOf("async logout()");
   const endingIndex = authSession.indexOf("this.endingSession = true", logoutIndex);
   const invalidateIndex = authSession.indexOf("localDataSessionGuard.invalidate()", logoutIndex);
-  const revokeIndex = authSession.indexOf("this.logoutTransport", logoutIndex);
+  const clearIndex = authSession.indexOf("await this.clearLocalSession()", logoutIndex);
+  const revokeIndex = authSession.indexOf("this.revokeAccessTokenBestEffort", logoutIndex);
   const networkIndex = authSession.indexOf('error.kind === "network"');
   const offlineInvalidateIndex = authSession.indexOf(
     "localDataSessionGuard.invalidate()",
@@ -132,7 +133,8 @@ test("COR-195 invalidates local writes before logout revocation", () => {
     logoutIndex >= 0 &&
       endingIndex > logoutIndex &&
       invalidateIndex > endingIndex &&
-      revokeIndex > invalidateIndex,
+      clearIndex > invalidateIndex &&
+      revokeIndex > clearIndex,
   );
 });
 
@@ -188,10 +190,11 @@ test("COR-195 stale refresh cannot restore access after clear", async () => {
   assert.deepEqual(events, ["invalidate"]);
 });
 
-test("COR-195 logout refresh never reactivates local writes", async () => {
+test("COR-195 logout never refreshes solely to obtain a revocation token", async () => {
   const events = [];
   let storedRefreshToken = "refresh-old";
-  let revokedAccessToken = null;
+  let refreshCalls = 0;
+  let revokeCalls = 0;
   const guard = {
     activate() {
       events.push("activate");
@@ -214,18 +217,23 @@ test("COR-195 logout refresh never reactivates local writes", async () => {
   const AuthSessionManager = loadAuthManager(guard);
   const manager = new AuthSessionManager(
     tokenStore,
-    async () => ({ accessToken: "access-new", refreshToken: "refresh-new" }),
-    async (accessToken) => {
-      revokedAccessToken = accessToken;
+    async () => {
+      refreshCalls += 1;
+      return { accessToken: "access-new", refreshToken: "refresh-new" };
+    },
+    async () => {
+      revokeCalls += 1;
     },
   );
 
   await manager.logout();
 
-  assert.equal(revokedAccessToken, "access-new");
+  assert.equal(refreshCalls, 0);
+  assert.equal(revokeCalls, 0);
   assert.equal(manager.getAccessToken(), null);
   assert.equal(storedRefreshToken, null);
   assert.equal(events.includes("activate"), false);
+  assert.ok(events.filter((event) => event === "invalidate").length >= 1);
 });
 
 test("COR-195 remote hydration uses guarded database opens", () => {
