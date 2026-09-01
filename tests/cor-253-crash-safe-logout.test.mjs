@@ -124,9 +124,7 @@ test("COR-253 local logout becomes durable before remote revocation settles", as
   assert.equal(manager.getAccessToken(), null);
   assert.equal(store.refreshToken, null);
   assert.equal(store.logoutTombstone, true);
-  assert.ok(
-    store.events.indexOf("write-tombstone") < store.events.indexOf("clear-refresh"),
-  );
+  assert.ok(store.events.indexOf("write-tombstone") < store.events.indexOf("clear-refresh"));
 
   const restarted = new AuthSessionManager(
     store,
@@ -212,19 +210,13 @@ test("COR-253 production token store persists a same-service logout tombstone", 
   assert.match(tokenStoreContract, /writeLogoutTombstone\?/);
   assert.match(tokenStoreContract, /clearLogoutTombstone\?/);
   assert.match(secureStoreTokenStore, /LOGOUT_TOMBSTONE_KEY/);
-  assert.match(
-    secureStoreTokenStore,
-    /KEYCHAIN_SERVICE = "app\.overmiles\.mobile\.auth"/,
-  );
+  assert.match(secureStoreTokenStore, /KEYCHAIN_SERVICE = "app\.overmiles\.mobile\.auth"/);
   assert.match(secureStoreTokenStore, /WHEN_UNLOCKED_THIS_DEVICE_ONLY/);
 });
 
 test("COR-253 AuthProvider purges private data immediately after local session logout", () => {
   const logoutIndex = authProvider.indexOf("const logout = useCallback");
-  const sessionLogoutIndex = authProvider.indexOf(
-    "await sessionManager.logout()",
-    logoutIndex,
-  );
+  const sessionLogoutIndex = authProvider.indexOf("await sessionManager.logout()", logoutIndex);
   const purgeIndex = authProvider.indexOf("await purgeLocalPrivateData()", sessionLogoutIndex);
   const anonymousIndex = authProvider.indexOf('setStatus("anonymous")', purgeIndex);
 
