@@ -44,27 +44,55 @@ test("COR-254 reuses an already available MapLibre position", async () => {
         return true;
       },
     },
-    { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
+    { currentPositionTimeoutMs: 5, nativeBridgeWarmupMs: 1, permissionTimeoutMs: 5 },
   );
 
   assert.equal(result, "granted");
   assert.equal(permissionRequests, 0);
 });
 
-test("COR-254 requests permission when no position is available", async () => {
+test("COR-254 retries position once after native bridge warmup", async () => {
   const requestForegroundMapLocation = loadPermissionHelper();
+  let reads = 0;
+  let permissionRequests = 0;
+
   const result = await requestForegroundMapLocation(
     {
       async getCurrentPosition() {
+        reads += 1;
+        return reads === 1 ? undefined : { coords: { latitude: 48.8566, longitude: 2.3522 } };
+      },
+      async requestPermissions() {
+        permissionRequests += 1;
+        return true;
+      },
+    },
+    { currentPositionTimeoutMs: 5, nativeBridgeWarmupMs: 1, permissionTimeoutMs: 5 },
+  );
+
+  assert.equal(result, "granted");
+  assert.equal(reads, 2);
+  assert.equal(permissionRequests, 0);
+});
+
+test("COR-254 requests permission when no position is available after warmup", async () => {
+  const requestForegroundMapLocation = loadPermissionHelper();
+  let reads = 0;
+
+  const result = await requestForegroundMapLocation(
+    {
+      async getCurrentPosition() {
+        reads += 1;
         return undefined;
       },
       async requestPermissions() {
         return true;
       },
     },
-    { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
+    { currentPositionTimeoutMs: 5, nativeBridgeWarmupMs: 1, permissionTimeoutMs: 5 },
   );
 
+  assert.equal(reads, 2);
   assert.equal(result, "granted");
 });
 
@@ -79,7 +107,7 @@ test("COR-254 keeps an explicit denial non-destructive", async () => {
         return false;
       },
     },
-    { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
+    { currentPositionTimeoutMs: 5, nativeBridgeWarmupMs: 1, permissionTimeoutMs: 5 },
   );
 
   assert.equal(result, "denied");
@@ -92,7 +120,7 @@ test("COR-254 bounds a stalled native permission bridge", async () => {
       getCurrentPosition: never,
       requestPermissions: never,
     },
-    { currentPositionTimeoutMs: 5, permissionTimeoutMs: 5 },
+    { currentPositionTimeoutMs: 5, nativeBridgeWarmupMs: 1, permissionTimeoutMs: 5 },
   );
 
   assert.equal(result, "unavailable");
