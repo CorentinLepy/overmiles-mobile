@@ -13,10 +13,20 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.overmiles.mobile"
+      "bundleIdentifier": "app.overmiles.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Utiliser l’appareil photo pour capturer un moment de voyage dans OverMiles.",
+        "NSPhotoLibraryUsageDescription": "Choisir les photos à ajouter à vos voyages OverMiles.",
+        "NSLocationWhenInUseUsageDescription": "Afficher votre position sur la carte pendant l’utilisation d’OverMiles.",
+        "LSApplicationQueriesSchemes": ["maps", "comgooglemaps", "waze"]
+      }
     },
     "android": {
       "package": "app.overmiles.mobile",
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F4EBDD"
@@ -37,6 +47,26 @@
         }
       ],
       "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Utiliser Face ID pour déverrouiller OverMiles sur cet appareil."
+        }
+      ],
+      [
+        "expo-sqlite",
+        {
+          "useSQLCipher": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choisir les photos à ajouter à vos voyages OverMiles.",
+          "cameraPermission": "Utiliser l’appareil photo pour capturer un moment de voyage dans OverMiles.",
+          "microphonePermission": false
+        }
+      ],
       "@maplibre/maplibre-react-native"
     ],
     "experiments": {

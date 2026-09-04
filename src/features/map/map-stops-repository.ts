@@ -1,11 +1,15 @@
 import type { ApiClient } from "@/src/lib/api/api-client";
+import { localDataSessionGuard } from "@/src/lib/storage/local-data-session-guard";
 
+import { localMapStore, type LocalMapStore } from "./local-map-store";
 import { projectTripMapPoints } from "./map-projection";
 import type { TripMapPoint } from "./map.types";
 
 type TripIdentity = Readonly<{
   id: string;
   name: string;
+  version?: number;
+  updatedAt?: string;
 }>;
 
 type TripStopResponse = Readonly<{
@@ -18,19 +22,30 @@ type TripStopResponse = Readonly<{
 }>;
 
 export type MapStopsRepository = Readonly<{
+  listCachedTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]>;
   listTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]>;
 }>;
 
-export function createMapStopsRepository(apiClient: ApiClient): MapStopsRepository {
+export function createMapStopsRepository(
+  apiClient: ApiClient,
+  accountUserId: string,
+  localStore: LocalMapStore = localMapStore,
+): MapStopsRepository {
   return {
+    listCachedTripStops(trip: TripIdentity) {
+      return localStore.list(accountUserId, trip.id, "stop");
+    },
+
     async listTripStops(trip: TripIdentity): Promise<readonly TripMapPoint[]> {
+      const writeToken = localDataSessionGuard.capture();
+      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
       const stops = await apiClient.request<TripStopResponse[]>({
         path: `/trips/${encodeURIComponent(trip.id)}/stops`,
         kind: "json",
         auth: "required",
       });
 
-      return projectTripMapPoints(
+      const points = projectTripMapPoints(
         stops
           .filter((stop) => stop.tripId === trip.id)
           .map((stop) => ({
@@ -44,6 +59,12 @@ export function createMapStopsRepository(apiClient: ApiClient): MapStopsReposito
             occurredAt: stop.startsAt ?? null,
           })),
       );
+
+      await localStore.replaceTripKind(accountUserId, trip.id, "stop", points, canPersist, {
+        tripVersion: trip.version ?? null,
+        tripUpdatedAt: trip.updatedAt ?? null,
+      });
+      return points;
     },
   };
 }

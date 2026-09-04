@@ -1,30 +1,93 @@
 import type { ApiClient } from "@/src/lib/api/api-client";
+import { localDataSessionGuard } from "@/src/lib/storage/local-data-session-guard";
+import {
+  PendingOperationsStore,
+  type PendingOperation,
+} from "@/src/lib/sync/pending-operations-store";
 
-import type { TripSummary } from "./trips.types";
+import { localTripsStore, type LocalTripsStore } from "./local-trips-store";
+import type { TripSummary, TripUpdatePatch } from "./trips.types";
 
 export type TripsRepository = Readonly<{
-  list(): Promise<TripSummary[]>;
+  listCached(): Promise<TripSummary[]>;
+  refresh(): Promise<TripSummary[]>;
+  getCachedById(tripId: string): Promise<TripSummary | null>;
   getById(tripId: string): Promise<TripSummary>;
+  enqueueUpdate(tripId: string, patch: TripUpdatePatch): Promise<PendingOperation>;
 }>;
 
-export function createTripsRepository(apiClient: ApiClient): TripsRepository {
+export function createTripsRepository(
+  apiClient: ApiClient,
+  accountUserId: string,
+  localStore: LocalTripsStore = localTripsStore,
+  pendingStore: PendingOperationsStore = new PendingOperationsStore(),
+): TripsRepository {
   return {
-    list() {
-      return apiClient.request<TripSummary[]>({
+    listCached(): Promise<TripSummary[]> {
+      return localStore.list(accountUserId);
+    },
+
+    async refresh(): Promise<TripSummary[]> {
+      const writeToken = localDataSessionGuard.capture();
+      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
+      const trips = await apiClient.request<TripSummary[]>({
         path: "/trips",
         method: "GET",
         kind: "json",
         auth: "required",
       });
+
+      await localStore.replaceAll(accountUserId, trips, canPersist);
+      return canPersist() ? localStore.list(accountUserId) : trips;
     },
 
-    getById(tripId: string) {
-      return apiClient.request<TripSummary>({
+    getCachedById(tripId: string): Promise<TripSummary | null> {
+      return localStore.getById(accountUserId, tripId);
+    },
+
+    async getById(tripId: string): Promise<TripSummary> {
+      const writeToken = localDataSessionGuard.capture();
+      const canPersist = () => localDataSessionGuard.canCommit(writeToken);
+      const remoteTrip = await apiClient.request<TripSummary>({
         path: `/trips/${encodeURIComponent(tripId)}`,
         method: "GET",
         kind: "json",
         auth: "required",
       });
+
+      await localStore.upsert(accountUserId, remoteTrip, canPersist);
+      return remoteTrip;
+    },
+
+    async enqueueUpdate(tripId: string, patch: TripUpdatePatch): Promise<PendingOperation> {
+      const current = await localStore.getById(accountUserId, tripId);
+      if (!current) {
+        throw new Error("Le voyage doit être disponible localement avant modification hors-ligne.");
+      }
+      if (!isServerVersion(current.version)) {
+        throw new Error("La version serveur du voyage est requise avant modification hors-ligne.");
+      }
+
+      const payload = cleanUpdatePatch(patch);
+      if (Object.keys(payload).length === 0) {
+        throw new Error("Aucune modification de voyage à synchroniser.");
+      }
+
+      return pendingStore.enqueue({
+        entityType: "Trip",
+        entityId: tripId,
+        operationKind: "update",
+        payload,
+        baseVersion: current.version,
+      });
     },
   };
+}
+
+function cleanUpdatePatch(patch: TripUpdatePatch): Readonly<Record<string, unknown>> {
+  return Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined));
+}
+
+function isServerVersion(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 1;
 }

@@ -72,3 +72,11 @@ jobs:
 
       - name: Validate iOS native prebuild
         run: npx expo prebuild --platform ios --no-install --clean
+
+      - name: Validate iOS privacy and navigation schemes
+        run: |
+          grep -q '<key>NSCameraUsageDescription</key>' ios/OVERMILES/Info.plist
+          grep -q '<key>NSPhotoLibraryUsageDescription</key>' ios/OVERMILES/Info.plist
+          grep -q '<key>LSApplicationQueriesSchemes</key>' ios/OVERMILES/Info.plist
+          grep -q '<string>comgooglemaps</string>' ios/OVERMILES/Info.plist
+          grep -q '<string>waze</string>' ios/OVERMILES/Info.plist

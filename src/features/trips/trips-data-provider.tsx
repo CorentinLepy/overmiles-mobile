@@ -29,11 +29,13 @@ type TripsDataContextValue = Readonly<{
 const TripsDataContext = createContext<TripsDataContextValue | null>(null);
 
 export function TripsDataProvider({ children }: PropsWithChildren) {
-  const { apiClient, status } = useAuth();
+  const { apiClient, status, user, retryRestore } = useAuth();
   const repository = useMemo(
-    () => (apiClient ? createTripsRepository(apiClient) : null),
-    [apiClient],
+    () => (apiClient && user ? createTripsRepository(apiClient, user.id) : null),
+    [apiClient, user],
   );
+  const hasLocalContentSession =
+    status === "authenticated" || (status === "offline_auth_pending" && user !== null);
   const [trips, setTrips] = useState<TripSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -41,16 +43,37 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status !== "authenticated" || !repository) return;
+    if (!hasLocalContentSession || !repository) return;
 
     const activeRepository = repository;
+    const offlineOnly = status === "offline_auth_pending";
     let active = true;
 
     async function loadInitialTrips() {
+      setIsLoading(true);
+
       try {
-        const nextTrips = await activeRepository.list();
+        const cachedTrips = await activeRepository.listCached();
         if (!active) return;
-        setTrips(sortTrips(nextTrips));
+        setTrips(sortTrips(cachedTrips));
+        if (cachedTrips.length > 0) setIsLoading(false);
+      } catch {
+        if (!active) return;
+        setTrips([]);
+      }
+
+      if (offlineOnly) {
+        if (!active) return;
+        setIsOffline(true);
+        setErrorMessage("Mode hors-ligne · données enregistrées sur cet appareil.");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const hydratedTrips = await activeRepository.refresh();
+        if (!active) return;
+        setTrips(sortTrips(hydratedTrips));
         setErrorMessage(null);
         setIsOffline(false);
       } catch (error) {
@@ -66,15 +89,20 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
     return () => {
       active = false;
     };
-  }, [repository, status]);
+  }, [hasLocalContentSession, repository, status]);
 
   const refresh = useCallback(async () => {
-    if (!repository || status !== "authenticated") return;
+    if (!repository || !hasLocalContentSession) return;
 
     setIsRefreshing(true);
     try {
-      const nextTrips = await repository.list();
-      setTrips(sortTrips(nextTrips));
+      if (status === "offline_auth_pending") {
+        await retryRestore();
+        return;
+      }
+
+      const hydratedTrips = await repository.refresh();
+      setTrips(sortTrips(hydratedTrips));
       setErrorMessage(null);
       setIsOffline(false);
     } catch (error) {
@@ -83,7 +111,7 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
       setIsRefreshing(false);
       setIsLoading(false);
     }
-  }, [repository, status]);
+  }, [hasLocalContentSession, repository, retryRestore, status]);
 
   const findTrip = useCallback(
     (tripId: string) => trips.find((trip) => trip.id === tripId) ?? null,
@@ -92,11 +120,19 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
 
   const ensureTrip = useCallback(
     async (tripId: string): Promise<TripSummary | null> => {
-      const cached = trips.find((trip) => trip.id === tripId);
-      if (cached) return cached;
-      if (!repository || status !== "authenticated") return null;
+      const inMemory = trips.find((trip) => trip.id === tripId);
+      if (inMemory) return inMemory;
+      if (!repository || !hasLocalContentSession) return null;
 
       try {
+        const cached = await repository.getCachedById(tripId);
+        if (cached) {
+          setTrips((current) => sortTrips(upsertTrip(current, cached)));
+          return cached;
+        }
+
+        if (status !== "authenticated") return null;
+
         const loaded = await repository.getById(tripId);
         setTrips((current) => sortTrips(upsertTrip(current, loaded)));
         setErrorMessage(null);
@@ -107,7 +143,7 @@ export function TripsDataProvider({ children }: PropsWithChildren) {
         return null;
       }
     },
-    [repository, status, trips],
+    [hasLocalContentSession, repository, status, trips],
   );
 
   const nextTrip = useMemo(() => findNextTrip(trips), [trips]);

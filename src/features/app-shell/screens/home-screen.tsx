@@ -3,11 +3,14 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
+import { CurrentTripQuickActions } from "@/src/features/capture/current-trip-quick-actions";
+import { CompanionAvailabilityBadge } from "@/src/features/offline-companion/availability-badge";
 import { TripCover } from "@/src/features/trips/components/trip-cover";
 import {
   daysUntilTrip,
   formatCountries,
   formatTripDateRange,
+  isTripInProgress,
 } from "@/src/features/trips/trip-formatters";
 import { useTripsData } from "@/src/features/trips/trips-data-provider";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
@@ -17,6 +20,7 @@ export function HomeScreen() {
   const { trips, nextTrip, isLoading, isRefreshing, isOffline, errorMessage, refresh } =
     useTripsData();
   const daysUntil = nextTrip ? daysUntilTrip(nextTrip) : null;
+  const isCurrentTrip = nextTrip ? isTripInProgress(nextTrip) : false;
   const moments = trips.reduce(
     (total, trip) =>
       total +
@@ -124,10 +128,14 @@ export function HomeScreen() {
                   fontWeight: "800",
                 }}
               >
-                PROCHAIN DÉPART
+                {isCurrentTrip ? "VOYAGE EN COURS" : "PROCHAIN DÉPART"}
               </Text>
             </View>
-            {daysUntil !== null ? (
+            {isCurrentTrip ? (
+              <Text selectable style={{ color: theme.color.ink, fontSize: 13, fontWeight: "800" }}>
+                En voyage
+              </Text>
+            ) : daysUntil !== null ? (
               <Text
                 selectable
                 style={{
@@ -161,6 +169,12 @@ export function HomeScreen() {
               {formatTripDateRange(nextTrip)}
             </Text>
           </View>
+
+          <CompanionAvailabilityBadge trip={nextTrip} />
+
+          {isCurrentTrip ? (
+            <CurrentTripQuickActions tripId={nextTrip.id} tripName={nextTrip.name} />
+          ) : null}
 
           <Link
             href={{

@@ -7,17 +7,28 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
+import { AppState } from "react-native";
 
 import { readPublicRuntimeConfig } from "@/src/config/env";
 import { createApiClient, type ApiClient } from "@/src/lib/api/api-client";
 import { ApiError } from "@/src/lib/api/api-error";
 import { AuthSessionManager, type AuthRestoreState } from "@/src/lib/auth/auth-session-manager";
+import { localAuthProfileStore } from "@/src/lib/auth/local-auth-profile-store";
 import {
   createMobileAuthTransport,
   type MobileAuthUser,
   type MobileMfaFactor,
 } from "@/src/lib/auth/mobile-auth-transport";
 import { createSecureStoreTokenStore } from "@/src/lib/auth/secure-store-token-store";
+import {
+  BiometricLockController,
+  type BiometricLockState,
+} from "@/src/lib/security/biometric-lock-controller";
+import { biometricLockService } from "@/src/lib/security/biometric-lock";
+import {
+  activatePrivateMediaForAccount,
+  purgePrivateLocalData,
+} from "@/src/lib/storage/private-data-lifecycle";
 
 export type AuthStatus = "restoring" | AuthRestoreState | "mfa_required";
 
@@ -33,11 +44,18 @@ type AuthContextValue = Readonly<{
   errorMessage: string | null;
   isBusy: boolean;
   apiClient: ApiClient | null;
+  biometricState: BiometricLockState;
+  biometricBusy: boolean;
+  biometricMessage: string | null;
   login(email: string, password: string): Promise<boolean>;
   completeMfa(factor: MobileMfaFactor, code: string): Promise<boolean>;
   cancelMfa(): void;
   logout(): Promise<void>;
   retryRestore(): Promise<void>;
+  enableBiometricLock(): Promise<void>;
+  disableBiometricLock(): Promise<void>;
+  unlockBiometricLock(): Promise<void>;
+  reauthenticateFromBiometricLock(): Promise<void>;
 }>;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -62,27 +80,79 @@ export function AuthProvider({ children }: PropsWithChildren) {
         : null,
     [runtimeConfig.apiBaseUrl, sessionManager],
   );
+  const biometricController = useMemo(() => new BiometricLockController(biometricLockService), []);
 
   const [status, setStatus] = useState<AuthStatus>("restoring");
   const [user, setUser] = useState<MobileAuthUser | null>(null);
   const [pendingMfa, setPendingMfa] = useState<PendingMfaChallenge | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [biometricState, setBiometricState] = useState<BiometricLockState>("disabled");
+  const [biometricBusy, setBiometricBusy] = useState(false);
+  const [biometricMessage, setBiometricMessage] = useState<string | null>(null);
 
-  const applyRestoreState = useCallback((nextState: AuthRestoreState) => {
-    setStatus(nextState);
-    setPendingMfa(null);
+  const resetBiometricRuntimeState = useCallback(() => {
+    setBiometricState(biometricController.clearAfterLogout());
+    setBiometricBusy(false);
+    setBiometricMessage(null);
+  }, [biometricController]);
 
-    if (nextState !== "authenticated") {
-      setUser(null);
+  const readCachedUser = useCallback(async (): Promise<MobileAuthUser | null> => {
+    try {
+      return await localAuthProfileStore.read();
+    } catch {
+      return null;
     }
-
-    setErrorMessage(
-      nextState === "offline_auth_pending"
-        ? "Votre session est conservée sur cet appareil, mais le réseau est nécessaire pour la vérifier."
-        : null,
-    );
   }, []);
+
+  const persistCurrentUser = useCallback(async (nextUser: MobileAuthUser): Promise<void> => {
+    try {
+      await localAuthProfileStore.write(nextUser);
+    } catch {
+      // Online authentication remains authoritative. A local cache failure must
+      // not manufacture an auth failure; it only disables future offline entry.
+    }
+  }, []);
+
+  const activatePrivateMedia = useCallback(async (nextUser: MobileAuthUser): Promise<void> => {
+    try {
+      await activatePrivateMediaForAccount(nextUser.id);
+    } catch {
+      // Authentication remains authoritative. If reconciliation fails, media capture
+      // stays a local capability that can retry on the next authenticated restore.
+    }
+  }, []);
+
+  const purgeLocalPrivateData = useCallback(async (): Promise<void> => {
+    try {
+      await purgePrivateLocalData();
+    } catch {
+      // SQLCipher key destruction and the media-root wipe are both attempted by the
+      // coordinator. Auth must fail closed even if one physical deletion reports an error.
+    }
+  }, []);
+
+  const applyRestoreState = useCallback(
+    (nextState: AuthRestoreState) => {
+      setStatus(nextState);
+      setPendingMfa(null);
+
+      if (nextState !== "authenticated") {
+        setUser(null);
+      }
+
+      if (nextState === "anonymous") {
+        resetBiometricRuntimeState();
+      }
+
+      setErrorMessage(
+        nextState === "offline_auth_pending"
+          ? "Mode hors-ligne : vos données locales restent disponibles. La session serveur sera revérifiée au retour du réseau."
+          : null,
+      );
+    },
+    [resetBiometricRuntimeState],
+  );
 
   const loadCurrentUser = useCallback(async (): Promise<MobileAuthUser | null> => {
     if (!apiClient) return null;
@@ -100,13 +170,19 @@ export function AuthProvider({ children }: PropsWithChildren) {
       }
 
       await sessionManager.clearLocalSession();
+      await purgeLocalPrivateData();
       setUser(null);
       setPendingMfa(null);
       setStatus("anonymous");
+      resetBiometricRuntimeState();
       return true;
     },
-    [sessionManager],
+    [purgeLocalPrivateData, resetBiometricRuntimeState, sessionManager],
   );
+
+  const restoreBiometricForLocalContent = useCallback(async (): Promise<void> => {
+    setBiometricState(await biometricController.restoreForAuthenticatedSession());
+  }, [biometricController]);
 
   useEffect(() => {
     let active = true;
@@ -116,18 +192,44 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (!active) return;
         setStatus("anonymous");
         setErrorMessage(runtimeConfig.errors[0] ?? "Configuration API mobile invalide.");
+        resetBiometricRuntimeState();
         return;
       }
 
       const nextState = await sessionManager.restore();
       if (!active) return;
+
+      if (nextState === "authenticated" || nextState === "offline_auth_pending") {
+        await restoreBiometricForLocalContent();
+        if (!active) return;
+      }
+
       applyRestoreState(nextState);
 
-      if (nextState !== "authenticated") return;
+      if (nextState === "anonymous") {
+        await purgeLocalPrivateData();
+        return;
+      }
+
+      const cachedUser = await readCachedUser();
+      if (!active) return;
+      if (cachedUser) {
+        await activatePrivateMedia(cachedUser);
+        if (!active) return;
+        setUser(cachedUser);
+      }
+
+      if (nextState === "offline_auth_pending") {
+        if (!cachedUser) resetBiometricRuntimeState();
+        return;
+      }
 
       try {
         const restoredUser = await loadCurrentUser();
-        if (active && restoredUser) setUser(restoredUser);
+        if (!active || !restoredUser) return;
+        await persistCurrentUser(restoredUser);
+        await activatePrivateMedia(restoredUser);
+        if (active) setUser(restoredUser);
       } catch (error) {
         if (!active) return;
         await invalidateUnauthorizedProfile(error);
@@ -140,37 +242,87 @@ export function AuthProvider({ children }: PropsWithChildren) {
       active = false;
     };
   }, [
+    activatePrivateMedia,
     applyRestoreState,
     invalidateUnauthorizedProfile,
     loadCurrentUser,
+    persistCurrentUser,
+    purgeLocalPrivateData,
+    readCachedUser,
+    resetBiometricRuntimeState,
+    restoreBiometricForLocalContent,
     runtimeConfig.errors,
     sessionManager,
   ]);
+
+  useEffect(() => {
+    const hasLocalContentSession =
+      status === "authenticated" || (status === "offline_auth_pending" && user !== null);
+    if (!hasLocalContentSession) return;
+
+    const subscription = AppState.addEventListener("change", (nextAppState) => {
+      if (nextAppState !== "active") {
+        setBiometricState(biometricController.lock());
+        setBiometricMessage(null);
+      }
+    });
+
+    return () => subscription.remove();
+  }, [biometricController, status, user]);
 
   const retryRestore = useCallback(async () => {
     if (!sessionManager) {
       setStatus("anonymous");
       setErrorMessage(runtimeConfig.errors[0] ?? "Configuration API mobile invalide.");
+      resetBiometricRuntimeState();
       return;
     }
 
     setStatus("restoring");
     setErrorMessage(null);
     const nextState = await sessionManager.restore();
+
+    if (nextState === "authenticated" || nextState === "offline_auth_pending") {
+      await restoreBiometricForLocalContent();
+    }
+
     applyRestoreState(nextState);
 
-    if (nextState !== "authenticated") return;
+    if (nextState === "anonymous") {
+      await purgeLocalPrivateData();
+      return;
+    }
+
+    const cachedUser = await readCachedUser();
+    if (cachedUser) {
+      await activatePrivateMedia(cachedUser);
+      setUser(cachedUser);
+    }
+
+    if (nextState === "offline_auth_pending") {
+      if (!cachedUser) resetBiometricRuntimeState();
+      return;
+    }
 
     try {
       const restoredUser = await loadCurrentUser();
-      if (restoredUser) setUser(restoredUser);
+      if (!restoredUser) return;
+      await persistCurrentUser(restoredUser);
+      await activatePrivateMedia(restoredUser);
+      setUser(restoredUser);
     } catch (error) {
       await invalidateUnauthorizedProfile(error);
     }
   }, [
+    activatePrivateMedia,
     applyRestoreState,
     invalidateUnauthorizedProfile,
     loadCurrentUser,
+    persistCurrentUser,
+    purgeLocalPrivateData,
+    readCachedUser,
+    resetBiometricRuntimeState,
+    restoreBiometricForLocalContent,
     runtimeConfig.errors,
     sessionManager,
   ]);
@@ -205,6 +357,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
         }
 
         await sessionManager.acceptSession(response);
+        await persistCurrentUser(response.user);
+        await activatePrivateMedia(response.user);
+        setBiometricState(await biometricController.acceptExplicitAuthentication());
+        setBiometricMessage(null);
         setUser(response.user);
         setStatus("authenticated");
         return true;
@@ -212,6 +368,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setStatus("anonymous");
         setUser(null);
         setPendingMfa(null);
+        resetBiometricRuntimeState();
         if (error instanceof ApiError && error.kind === "unauthorized") {
           setErrorMessage("E-mail ou mot de passe incorrect.");
         } else if (error instanceof ApiError) {
@@ -224,7 +381,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setIsBusy(false);
       }
     },
-    [runtimeConfig.errors, sessionManager, transport],
+    [
+      activatePrivateMedia,
+      biometricController,
+      persistCurrentUser,
+      resetBiometricRuntimeState,
+      runtimeConfig.errors,
+      sessionManager,
+      transport,
+    ],
   );
 
   const completeMfa = useCallback(
@@ -256,6 +421,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
           code: normalizedCode,
         });
         await sessionManager.acceptSession(response);
+        await persistCurrentUser(response.user);
+        await activatePrivateMedia(response.user);
+        setBiometricState(await biometricController.acceptExplicitAuthentication());
+        setBiometricMessage(null);
         setPendingMfa(null);
         setUser(response.user);
         setStatus("authenticated");
@@ -289,7 +458,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setIsBusy(false);
       }
     },
-    [pendingMfa, sessionManager, transport],
+    [
+      activatePrivateMedia,
+      biometricController,
+      pendingMfa,
+      persistCurrentUser,
+      sessionManager,
+      transport,
+    ],
   );
 
   const cancelMfa = useCallback(() => {
@@ -297,13 +473,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setUser(null);
     setErrorMessage(null);
     setStatus("anonymous");
-  }, []);
+    resetBiometricRuntimeState();
+  }, [resetBiometricRuntimeState]);
 
   const logout = useCallback(async () => {
     if (!sessionManager) {
+      await purgeLocalPrivateData();
       setStatus("anonymous");
       setUser(null);
       setPendingMfa(null);
+      resetBiometricRuntimeState();
       return;
     }
 
@@ -311,13 +490,87 @@ export function AuthProvider({ children }: PropsWithChildren) {
     try {
       await sessionManager.logout();
     } finally {
+      await purgeLocalPrivateData();
       setUser(null);
       setPendingMfa(null);
       setStatus("anonymous");
       setErrorMessage(null);
       setIsBusy(false);
+      resetBiometricRuntimeState();
     }
-  }, [sessionManager]);
+  }, [purgeLocalPrivateData, resetBiometricRuntimeState, sessionManager]);
+
+  const enableBiometricLock = useCallback(async () => {
+    setBiometricBusy(true);
+    setBiometricMessage(null);
+    try {
+      const result = await biometricLockService.enable();
+      switch (result.status) {
+        case "unlocked":
+          setBiometricState(biometricController.markEnabledAndUnlocked());
+          setBiometricMessage("Verrou biométrique activé.");
+          return;
+        case "cancelled":
+          setBiometricMessage("Activation annulée.");
+          return;
+        case "unavailable":
+          setBiometricMessage("Aucune biométrie forte n’est disponible sur cet appareil.");
+          return;
+        case "requires_reauth":
+          setBiometricMessage("Réauthentifiez-vous avant de réessayer l’activation.");
+          return;
+        case "not_enabled":
+        case "failed":
+          setBiometricMessage("Impossible d’activer le verrou biométrique pour le moment.");
+      }
+    } finally {
+      setBiometricBusy(false);
+    }
+  }, [biometricController]);
+
+  const disableBiometricLock = useCallback(async () => {
+    setBiometricBusy(true);
+    setBiometricMessage(null);
+    try {
+      await biometricLockService.disable();
+      setBiometricState(biometricController.markDisabled());
+      setBiometricMessage("Verrou biométrique désactivé.");
+    } catch {
+      setBiometricMessage("Impossible de désactiver le verrou biométrique pour le moment.");
+    } finally {
+      setBiometricBusy(false);
+    }
+  }, [biometricController]);
+
+  const unlockBiometricLock = useCallback(async () => {
+    setBiometricBusy(true);
+    setBiometricMessage(null);
+    try {
+      const nextState = await biometricController.unlock();
+      setBiometricState(nextState);
+      if (nextState === "locked") {
+        setBiometricMessage("Déverrouillage annulé ou refusé. Réessayez.");
+      } else if (nextState === "reauth_required") {
+        setBiometricMessage("Une reconnexion OverMiles est nécessaire.");
+      }
+    } finally {
+      setBiometricBusy(false);
+    }
+  }, [biometricController]);
+
+  const reauthenticateFromBiometricLock = useCallback(async () => {
+    setBiometricBusy(true);
+    try {
+      await sessionManager?.clearLocalSession();
+      await purgeLocalPrivateData();
+    } finally {
+      setUser(null);
+      setPendingMfa(null);
+      setStatus("anonymous");
+      setErrorMessage(null);
+      resetBiometricRuntimeState();
+    }
+  }, [purgeLocalPrivateData, resetBiometricRuntimeState, sessionManager]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -327,23 +580,37 @@ export function AuthProvider({ children }: PropsWithChildren) {
       errorMessage,
       isBusy,
       apiClient,
+      biometricState,
+      biometricBusy,
+      biometricMessage,
       login,
       completeMfa,
       cancelMfa,
       logout,
       retryRestore,
+      enableBiometricLock,
+      disableBiometricLock,
+      unlockBiometricLock,
+      reauthenticateFromBiometricLock,
     }),
     [
       apiClient,
+      biometricBusy,
+      biometricMessage,
+      biometricState,
       cancelMfa,
       completeMfa,
+      disableBiometricLock,
+      enableBiometricLock,
       errorMessage,
       isBusy,
       login,
       logout,
       pendingMfa,
+      reauthenticateFromBiometricLock,
       retryRestore,
       status,
+      unlockBiometricLock,
       user,
     ],
   );

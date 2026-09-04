@@ -46,10 +46,15 @@ test("map route renders the native product screen instead of a placeholder", () 
   assert.match(screen, /type="circle"/);
 });
 
-test("native map renders only OverMiles data and never calls geocoding providers directly", () => {
+test("native map renders only OverMiles data and isolates failures per business source", () => {
   assert.match(mapData, /createMapStopsRepository/);
   assert.match(mapData, /createMapTimelineRepository/);
-  assert.match(mapData, /Promise\.allSettled/);
+  assert.match(mapData, /async function collectMapTasks/);
+  assert.match(mapData, /const results = await Promise\.all\(/);
+  assert.match(mapData, /tasks\.map\(async \(task\) =>/);
+  assert.match(mapData, /points: await task\.load\(\)/);
+  assert.match(mapData, /catch \(error\)/);
+  assert.match(mapData, /fallbackPoints\.filter/);
   assert.doesNotMatch(screen, /geoapify|google maps|webview|fetch\(|axios/i);
   assert.doesNotMatch(mapData, /geoapify|google maps|webview|fetch\(|axios/i);
 });
@@ -66,8 +71,12 @@ test("map detail fan-out is gated by active pathname and cached above native tab
   assert.match(screen, /useMapData\(\)/);
   assert.doesNotMatch(screen, /usePathname/);
   assert.match(mapData, /useReducer\(mapRuntimeReducer, initialRuntimeState\)/);
-  assert.match(mapData, /runtime\.loadedTripsKey === tripsKey/);
-  assert.match(mapData, /runtime\.inFlightTripsKey === tripsKey/);
+  assert.match(
+    mapData,
+    /const loadKey = `\$\{user\?\.id \?\? "anonymous"\}:\$\{status\}:\$\{tripsKey\}`/,
+  );
+  assert.match(mapData, /runtime\.loadedTripsKey === loadKey/);
+  assert.match(mapData, /runtime\.inFlightTripsKey === loadKey/);
   assert.match(mapData, /state\.inFlightTripsKey !== action\.tripsKey/);
   assert.match(mapData, /createTripsKey/);
   assert.match(mapData, /trip\.updatedAt/);
@@ -105,10 +114,11 @@ test("camera framing handles empty single-point and multi-point histories withou
   assert.doesNotMatch(mapData, /clusterRadius|clusterMaxZoom|clusterMinPoints/);
 });
 
-test("Phase B does not request live device location or GPS permissions", () => {
+test("live location stays inside MapLibre and never enables background tracking", () => {
   assert.equal(packageJson.dependencies["expo-location"], undefined);
-  assert.doesNotMatch(screen, /UserLocation|trackUserLocation|requestForegroundPermissionsAsync/);
-  assert.doesNotMatch(JSON.stringify(appJson), /ACCESS_FINE_LOCATION|ACCESS_COARSE_LOCATION/);
+  assert.match(screen, /LocationManager/);
+  assert.match(screen, /UserLocation/);
+  assert.doesNotMatch(JSON.stringify(appJson), /ACCESS_BACKGROUND_LOCATION/);
 });
 
 test("partial network failures retain successful map data instead of blanking the map", () => {

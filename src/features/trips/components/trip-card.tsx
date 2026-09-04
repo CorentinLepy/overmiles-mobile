@@ -2,6 +2,7 @@ import { Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 
 import { SectionCard } from "@/src/components/ui/section-card";
+import { CompanionAvailabilityBadge } from "@/src/features/offline-companion/availability-badge";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 import { formatCountries, formatTripDateRange, tripTemporalLabel } from "../trip-formatters";
@@ -71,6 +72,8 @@ export function TripCard({ trip }: { trip: TripSummary }) {
               {formatTripDateRange(trip)}
             </Text>
           </View>
+
+          <CompanionAvailabilityBadge trip={trip} />
 
           <View
             style={{

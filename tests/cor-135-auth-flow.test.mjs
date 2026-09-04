@@ -35,29 +35,35 @@ test("auth provider composes the approved secure token store and mobile transpor
   assert.doesNotMatch(provider, /AsyncStorage|localStorage/);
 });
 
-test("successful session restore hydrates the current user from the protected profile endpoint", () => {
+test("successful session restore hydrates and caches the current user from the protected profile endpoint", () => {
   assert.match(provider, /loadCurrentUser/);
   assert.match(provider, /path: "\/users\/me"/);
   assert.match(provider, /auth: "required"/);
-  assert.match(provider, /if \(active && restoredUser\) setUser\(restoredUser\)/);
-  assert.match(provider, /if \(restoredUser\) setUser\(restoredUser\)/);
+  assert.match(provider, /await persistCurrentUser\(restoredUser\)/);
+  assert.match(provider, /setUser\(restoredUser\)/);
   assert.doesNotMatch(provider, /decode.*jwt|jwt.*decode/i);
 });
 
-test("offline restore keeps a non-destructive pending state", () => {
+test("offline restore keeps a non-destructive pending state with encrypted cached identity", () => {
   assert.match(provider, /offline_auth_pending/);
   assert.match(provider, /const retryRestore = useCallback/);
+  assert.match(provider, /readCachedUser/);
+  assert.match(provider, /if \(cachedUser\) \{/);
+  assert.match(provider, /await activatePrivateMedia\(cachedUser\)/);
+  assert.match(provider, /setUser\(cachedUser\)/);
   assert.match(provider, /retryRestore,/);
   assert.doesNotMatch(provider, /offline_auth_pending[\s\S]{0,200}clearLocalSession/);
 });
 
-test("root and tabs routes gate product navigation behind authentication and MFA", () => {
+test("root and tabs routes gate product navigation behind server or cached offline identity", () => {
   assert.match(rootRoute, /status === "authenticated"/);
+  assert.match(rootRoute, /status === "offline_auth_pending" && user/);
   assert.match(rootRoute, /Redirect href="\/home"/);
   assert.match(rootRoute, /status === "mfa_required"/);
   assert.match(rootRoute, /Redirect href="\/mfa"/);
   assert.match(rootRoute, /Redirect href="\/login"/);
-  assert.match(tabsLayout, /status !== "authenticated"/);
+  assert.match(tabsLayout, /status === "offline_auth_pending" && user !== null/);
+  assert.match(tabsLayout, /if \(!hasLocalContentSession\)/);
   assert.match(tabsLayout, /Redirect href="\/login"/);
 });
 
@@ -70,6 +76,7 @@ test("login screen uses accessible native credential controls and normalized ema
   assert.match(loginScreen, /const normalizedEmail = email\.trim\(\)/);
   assert.match(loginScreen, /await login\(normalizedEmail, password\)/);
   assert.match(loginScreen, /status === "mfa_required"/);
+  assert.match(loginScreen, /status === "offline_auth_pending" && user/);
   assert.match(loginScreen, /router\.replace\("\/mfa"\)/);
   assert.match(loginScreen, /Votre mot de passe n’est pas conservé/);
   assert.doesNotMatch(loginScreen, /Google et Apple seront ajoutés/);
@@ -108,6 +115,7 @@ test("MFA completion persists tokens only after the server returns an authentica
   assert.match(provider, /transport\.completeMfa\(\{/);
   assert.match(provider, /challengeId: pendingMfa\.challengeId/);
   assert.match(provider, /await sessionManager\.acceptSession\(response\)/);
+  assert.match(provider, /await persistCurrentUser\(response\.user\)/);
   assert.match(provider, /setPendingMfa\(null\)/);
   assert.match(provider, /setStatus\("authenticated"\)/);
   assert.doesNotMatch(provider, /SecureStore.*challenge|challenge.*SecureStore/i);
@@ -125,7 +133,8 @@ test("profile exposes hydrated identity and explicit server-revoking logout", ()
   assert.match(profileScreen, /user\?\.displayName \|\| user\?\.email/);
   assert.match(profileScreen, /secondaryIdentity/);
   assert.match(profileScreen, /accessibilityLabel="Se déconnecter"/);
-  assert.match(profileScreen, /accessibilityState=\{\{ disabled: isBusy, busy: isBusy \}\}/);
+  assert.match(profileScreen, /const securityBusy = isBusy \|\| biometricBusy/);
+  assert.match(profileScreen, /accessibilityState=\{\{ disabled: securityBusy, busy: isBusy \}\}/);
   assert.match(profileScreen, /void logout\(\)/);
   assert.match(profileScreen, /useAuth\(\)/);
   assert.doesNotMatch(profileScreen, /COR-58/);

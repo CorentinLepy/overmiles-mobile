@@ -1,8 +1,11 @@
+import { Link } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AppScreen } from "@/src/components/ui/app-screen";
 import { SectionCard } from "@/src/components/ui/section-card";
+import { PendingCapturesCard } from "@/src/features/capture/pending-captures-card";
+import { CompanionAvailabilityBadge } from "@/src/features/offline-companion/availability-badge";
 import { useOverMilesTheme } from "@/src/theme/use-overmiles-theme";
 
 import { formatCountries, formatTripDateRange, tripTemporalLabel } from "../trip-formatters";
@@ -165,6 +168,7 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
         <Text selectable style={{ color: theme.color.ink, fontSize: 15, lineHeight: 22 }}>
           {formatTripDateRange(trip)}
         </Text>
+        <CompanionAvailabilityBadge trip={trip} />
       </View>
 
       {trip.description ? (
@@ -177,6 +181,75 @@ export function TripDetailScreen({ tripId }: { tripId: string }) {
           </Text>
         </SectionCard>
       ) : null}
+
+      <PendingCapturesCard tripId={trip.id} />
+
+      <SectionCard>
+        <Text selectable style={{ color: theme.color.ink, fontSize: 18, fontWeight: "800" }}>
+          Enrichir sur le terrain
+        </Text>
+        <Text selectable style={{ color: theme.color.muted, fontSize: 15, lineHeight: 22 }}>
+          Capturez une note, un moment ou des photos en quelques secondes, même hors ligne.
+        </Text>
+        <Link href={{ pathname: "/trips/[tripId]/journal", params: { tripId: trip.id } }} asChild>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Écrire dans le Carnet de ${trip.name}`}
+            style={({ pressed }) => ({
+              minHeight: 48,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: theme.radius.pill,
+              backgroundColor: theme.color.ink,
+              opacity: pressed ? 0.8 : 1,
+            })}
+          >
+            <Text style={{ color: theme.color.surface, fontSize: 14, fontWeight: "800" }}>
+              Écrire dans le Carnet
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href={{ pathname: "/trips/[tripId]/moment", params: { tripId: trip.id } }} asChild>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Ajouter un moment à ${trip.name}`}
+            style={({ pressed }) => ({
+              minHeight: 48,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: theme.radius.pill,
+              borderWidth: 1,
+              borderColor: theme.color.border,
+              backgroundColor: theme.color.surface,
+              opacity: pressed ? 0.75 : 1,
+            })}
+          >
+            <Text style={{ color: theme.color.ink, fontSize: 14, fontWeight: "800" }}>
+              Ajouter un moment
+            </Text>
+          </Pressable>
+        </Link>
+        <Link href={{ pathname: "/trips/[tripId]/photos", params: { tripId: trip.id } }} asChild>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Ajouter des photos à ${trip.name}`}
+            style={({ pressed }) => ({
+              minHeight: 48,
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: theme.radius.pill,
+              borderWidth: 1,
+              borderColor: theme.color.border,
+              backgroundColor: theme.color.surface,
+              opacity: pressed ? 0.75 : 1,
+            })}
+          >
+            <Text style={{ color: theme.color.ink, fontSize: 14, fontWeight: "800" }}>
+              Ajouter des photos
+            </Text>
+          </Pressable>
+        </Link>
+      </SectionCard>
 
       <View style={{ gap: theme.spacing.md }}>
         <Text selectable style={{ color: theme.color.ink, fontSize: 20, fontWeight: "800" }}>

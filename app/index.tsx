@@ -4,13 +4,13 @@ import { AuthLoadingScreen } from "@/src/features/auth/screens/auth-loading-scre
 import { useAuth } from "@/src/providers/auth-provider";
 
 export default function IndexRoute() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
 
   if (status === "restoring") {
     return <AuthLoadingScreen />;
   }
 
-  if (status === "authenticated") {
+  if (status === "authenticated" || (status === "offline_auth_pending" && user)) {
     return <Redirect href="/home" />;
   }
 

@@ -9,11 +9,20 @@ export type ApiErrorKind =
   | "network"
   | "timeout";
 
+export type SyncConflictDetails = Readonly<{
+  entityType: string;
+  entityId: string;
+  expectedVersion: number;
+  currentVersion: number;
+  serverSnapshot: Readonly<Record<string, unknown>>;
+}>;
+
 export type ApiErrorDetails = Readonly<{
   kind: ApiErrorKind;
   status: number;
   code?: string | undefined;
   retryAfterMs?: number | undefined;
+  syncConflict?: SyncConflictDetails | undefined;
   retryable: boolean;
   userMessage: string;
 }>;
@@ -23,6 +32,7 @@ export class ApiError extends Error {
   readonly status: number;
   readonly code: string | undefined;
   readonly retryAfterMs: number | undefined;
+  readonly syncConflict: SyncConflictDetails | undefined;
   readonly retryable: boolean;
   readonly userMessage: string;
 
@@ -33,6 +43,7 @@ export class ApiError extends Error {
     this.status = details.status;
     this.code = details.code;
     this.retryAfterMs = details.retryAfterMs;
+    this.syncConflict = details.syncConflict;
     this.retryable = details.retryable;
     this.userMessage = details.userMessage;
   }
@@ -41,6 +52,11 @@ export class ApiError extends Error {
 export type ApiErrorBody = Readonly<{
   code?: unknown;
   message?: unknown;
+  entityType?: unknown;
+  entityId?: unknown;
+  expectedVersion?: unknown;
+  currentVersion?: unknown;
+  serverSnapshot?: unknown;
 }>;
 
 export function mapHttpError(
@@ -83,6 +99,7 @@ export function mapHttpError(
       kind: "conflict",
       status,
       code,
+      syncConflict: code === "SYNC_VERSION_CONFLICT" ? parseSyncConflict(body) : undefined,
       retryable: false,
       userMessage: "Les données ont changé. Actualisez puis réessayez.",
     });
@@ -132,6 +149,32 @@ export function timeoutError(): ApiError {
     retryable: true,
     userMessage: "La requête a expiré. Réessayez.",
   });
+}
+
+function parseSyncConflict(body: ApiErrorBody): SyncConflictDetails | undefined {
+  if (
+    typeof body.entityType !== "string" ||
+    typeof body.entityId !== "string" ||
+    typeof body.expectedVersion !== "number" ||
+    typeof body.currentVersion !== "number" ||
+    !Number.isSafeInteger(body.expectedVersion) ||
+    !Number.isSafeInteger(body.currentVersion) ||
+    !isPlainRecord(body.serverSnapshot)
+  ) {
+    return undefined;
+  }
+
+  return {
+    entityType: body.entityType,
+    entityId: body.entityId,
+    expectedVersion: body.expectedVersion,
+    currentVersion: body.currentVersion,
+    serverSnapshot: body.serverSnapshot,
+  };
+}
+
+function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function parseRetryAfter(value?: string | null): number | undefined {
