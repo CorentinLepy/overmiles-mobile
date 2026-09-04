@@ -108,14 +108,24 @@ export class AuthSessionManager {
     localDataSessionGuard.invalidate();
     this.accessToken = null;
 
+    let tombstoneWritten = false;
+    try {
+      if (this.tokenStore.writeLogoutTombstoneSync) {
+        this.tokenStore.writeLogoutTombstoneSync();
+        tombstoneWritten = true;
+      }
+    } catch {
+      // Async tombstone persistence and refresh-token deletion remain fallbacks below.
+    }
+
     await this.enqueueCredentialMutation(async () => {
-      let tombstoneWritten = false;
+      let durableTombstoneWritten = tombstoneWritten;
       let refreshTokenCleared = false;
 
       try {
-        if (this.tokenStore.writeLogoutTombstone) {
+        if (!durableTombstoneWritten && this.tokenStore.writeLogoutTombstone) {
           await this.tokenStore.writeLogoutTombstone();
-          tombstoneWritten = true;
+          durableTombstoneWritten = true;
         }
       } catch {
         // Refresh-token deletion below is an independent fail-closed path.
@@ -128,7 +138,7 @@ export class AuthSessionManager {
         // A durable logout tombstone blocks restore even if deletion is interrupted.
       }
 
-      if (!tombstoneWritten && !refreshTokenCleared) {
+      if (!durableTombstoneWritten && !refreshTokenCleared) {
         throw new Error("Impossible d’invalider les credentials locaux.");
       }
     });

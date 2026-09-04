@@ -46,6 +46,10 @@ export class SecureStoreTokenStore implements TokenStore {
     );
   }
 
+  writeLogoutTombstoneSync(): void {
+    SecureStore.setItem(LOGOUT_TOMBSTONE_KEY, "pending", SECURE_STORE_OPTIONS);
+  }
+
   async writeLogoutTombstone(): Promise<void> {
     await SecureStore.setItemAsync(LOGOUT_TOMBSTONE_KEY, "pending", SECURE_STORE_OPTIONS);
   }

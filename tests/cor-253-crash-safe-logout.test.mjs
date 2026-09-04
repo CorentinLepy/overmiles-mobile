@@ -56,7 +56,7 @@ function loadAuthManager(localDataSessionGuard) {
   return module.exports.AuthSessionManager;
 }
 
-function createTokenStore(initialRefreshToken = null) {
+function createTokenStore(initialRefreshToken = null, { clearRefreshGate = null } = {}) {
   let refreshToken = initialRefreshToken;
   let logoutTombstone = false;
   const events = [];
@@ -79,11 +79,16 @@ function createTokenStore(initialRefreshToken = null) {
     },
     async clearRefreshToken() {
       events.push("clear-refresh");
+      if (clearRefreshGate) await clearRefreshGate.promise;
       refreshToken = null;
     },
     async hasLogoutTombstone() {
       events.push("read-tombstone");
       return logoutTombstone;
+    },
+    writeLogoutTombstoneSync() {
+      events.push("write-tombstone-sync");
+      logoutTombstone = true;
     },
     async writeLogoutTombstone() {
       events.push("write-tombstone");
@@ -102,6 +107,28 @@ function silentGuard() {
     invalidate() {},
   };
 }
+
+test("COR-253 installs the crash guard before async credential cleanup can suspend", async () => {
+  const clearRefreshGate = deferred();
+  const store = createTokenStore(null, { clearRefreshGate });
+  const AuthSessionManager = loadAuthManager(silentGuard());
+  const manager = new AuthSessionManager(
+    store,
+    async () => ({ accessToken: "refresh-access", refreshToken: "refresh-next" }),
+    async () => {},
+  );
+
+  await manager.acceptSession({ accessToken: "access-old", refreshToken: "refresh-old" });
+  const logout = manager.logout();
+
+  assert.equal(store.logoutTombstone, true);
+  assert.equal(store.refreshToken, "refresh-old");
+  assert.equal(store.events.includes("write-tombstone-sync"), true);
+
+  clearRefreshGate.resolve();
+  await logout;
+  assert.equal(store.refreshToken, null);
+});
 
 test("COR-253 local logout becomes durable before remote revocation settles", async () => {
   const store = createTokenStore();
@@ -124,7 +151,7 @@ test("COR-253 local logout becomes durable before remote revocation settles", as
   assert.equal(manager.getAccessToken(), null);
   assert.equal(store.refreshToken, null);
   assert.equal(store.logoutTombstone, true);
-  assert.ok(store.events.indexOf("write-tombstone") < store.events.indexOf("clear-refresh"));
+  assert.ok(store.events.indexOf("write-tombstone-sync") < store.events.indexOf("clear-refresh"));
 
   const restarted = new AuthSessionManager(
     store,
@@ -207,9 +234,11 @@ test("COR-253 explicit new authentication clears a previous logout tombstone", a
 
 test("COR-253 production token store persists a same-service logout tombstone", () => {
   assert.match(tokenStoreContract, /hasLogoutTombstone\?/);
+  assert.match(tokenStoreContract, /writeLogoutTombstoneSync\?/);
   assert.match(tokenStoreContract, /writeLogoutTombstone\?/);
   assert.match(tokenStoreContract, /clearLogoutTombstone\?/);
   assert.match(secureStoreTokenStore, /LOGOUT_TOMBSTONE_KEY/);
+  assert.match(secureStoreTokenStore, /SecureStore\.setItem\(LOGOUT_TOMBSTONE_KEY/);
   assert.match(secureStoreTokenStore, /KEYCHAIN_SERVICE = "app\.overmiles\.mobile\.auth"/);
   assert.match(secureStoreTokenStore, /WHEN_UNLOCKED_THIS_DEVICE_ONLY/);
 });

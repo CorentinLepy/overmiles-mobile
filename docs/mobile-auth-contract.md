@@ -37,7 +37,7 @@ Le client applique donc les invariants suivants :
 
 1. l’Access Token courant est capturé uniquement s’il existe déjà en mémoire ;
 2. la génération de session et les écritures locales sont invalidées immédiatement ;
-3. un tombstone de logout est persisté dans le même SecureStore device-bound que le Refresh Token ;
+3. un tombstone de logout est persisté **synchroniquement dans SecureStore avant la première attente asynchrone** afin qu’un kill process juste après le tap échoue du côté sûr ;
 4. le Refresh Token est supprimé localement ;
 5. `restore()` refuse toute restauration tant que le tombstone est présent et retente le nettoyage du Refresh Token si nécessaire ;
 6. les mutations de credentials sont sérialisées pour empêcher un refresh en vol de réécrire un token après le logout ;
@@ -78,6 +78,7 @@ La CI doit notamment garantir :
 - le chemin `mfaRequired` ne passe jamais par `acceptSession` ;
 - le challenge MFA reste mémoire-only ;
 - la session n’est acceptée qu’après la réponse authentifiée de `/auth/mobile/login/mfa` ;
+- le tombstone de logout production est écrit synchroniquement avant que le nettoyage asynchrone des credentials puisse suspendre ;
 - un logout local termine sans attendre une révocation distante bloquée ;
 - un refresh en vol ne peut pas réécrire un Refresh Token après invalidation ;
 - un cold start avec tombstone retourne `anonymous` sans tenter de restaurer l’ancienne session.
