@@ -25,9 +25,26 @@ Les états sont explicites :
 - `mfa_required` → mot de passe validé mais aucun token de session n’a encore été émis ;
 - `offline_auth_pending` → le credential local n’est pas détruit et l’utilisateur peut relancer la vérification lorsque le réseau revient.
 
-La connexion utilise exclusivement le transport centralisé COR-55. Le formulaire ne réalise aucun `fetch` direct et l’Access Token reste mémoire-only. La déconnexion appelle la révocation serveur puis efface les credentials locaux même si le serveur devient indisponible pendant l’opération.
+La connexion utilise exclusivement le transport centralisé COR-55. Le formulaire ne réalise aucun `fetch` direct et l’Access Token reste mémoire-only. La déconnexion invalide d’abord durablement la session locale puis tente la révocation serveur en best effort avec l’Access Token déjà présent en mémoire ; l’attente réseau ne peut jamais retarder le retour local à un état déconnecté.
 
 Google et Apple restent gérés par le chantier SSO dédié ; COR-135 ne simule aucun fournisseur externe.
+
+## Logout local-first et crash-safe — COR-253
+
+Un tap explicite sur **Se déconnecter** est une frontière de sécurité locale. Dès cette action, l’ancienne session doit devenir irrécupérable, même si le réseau est absent, si la révocation serveur est lente ou si le processus est interrompu juste après.
+
+Le client applique donc les invariants suivants :
+
+1. l’Access Token courant est capturé uniquement s’il existe déjà en mémoire ;
+2. la génération de session et les écritures locales sont invalidées immédiatement ;
+3. un tombstone de logout est persisté **synchroniquement dans SecureStore avant la première attente asynchrone** afin qu’un kill process juste après le tap échoue du côté sûr ;
+4. le Refresh Token est supprimé localement ;
+5. `restore()` refuse toute restauration tant que le tombstone est présent et retente le nettoyage du Refresh Token si nécessaire ;
+6. les mutations de credentials sont sérialisées pour empêcher un refresh en vol de réécrire un token après le logout ;
+7. la révocation distante est ensuite tentée en best effort avec l’Access Token déjà capturé, sans refresh supplémentaire uniquement pour obtenir un token de révocation ;
+8. `AuthProvider` enchaîne immédiatement avec la purge SQLCipher / média privé et le retour UI `anonymous`.
+
+Le tombstone n’est effacé qu’après une **nouvelle authentification explicite réussie** et la persistance de son nouveau Refresh Token. Ainsi, une interruption pendant un logout ou pendant une réauthentification échoue du côté sûr : un prochain démarrage demande une nouvelle connexion au lieu de ressusciter l’ancienne session.
 
 ## MFA mobile — COR-176
 
@@ -49,7 +66,7 @@ Dans le second cas :
 
 Un challenge expiré ou déjà consommé impose de recommencer la connexion par mot de passe. Un mauvais code ne doit jamais produire de token. Les valeurs MFA et les challenges ne doivent pas être journalisés.
 
-## Validation automatisée COR-135 / COR-176
+## Validation automatisée COR-135 / COR-176 / COR-253
 
 La CI doit notamment garantir :
 
@@ -60,7 +77,11 @@ La CI doit notamment garantir :
 - absence de `fetch` direct dans les écrans d’authentification ;
 - le chemin `mfaRequired` ne passe jamais par `acceptSession` ;
 - le challenge MFA reste mémoire-only ;
-- la session n’est acceptée qu’après la réponse authentifiée de `/auth/mobile/login/mfa`.
+- la session n’est acceptée qu’après la réponse authentifiée de `/auth/mobile/login/mfa` ;
+- le tombstone de logout production est écrit synchroniquement avant que le nettoyage asynchrone des credentials puisse suspendre ;
+- un logout local termine sans attendre une révocation distante bloquée ;
+- un refresh en vol ne peut pas réécrire un Refresh Token après invalidation ;
+- un cold start avec tombstone retourne `anonymous` sans tenter de restaurer l’ancienne session.
 
 ## Appareils connectés
 

@@ -36,12 +36,15 @@ test("access token stays out of persistent TokenStore contract", () => {
   assert.match(sessionManager, /private accessToken: string \| null = null/);
 });
 
-test("SecureStore adapter persists only the refresh token in device-bound secure storage", () => {
+test("SecureStore adapter persists only auth recovery state in device-bound secure storage", () => {
   assert.match(secureStoreTokenStore, /from "expo-secure-store"/);
   assert.match(secureStoreTokenStore, /WHEN_UNLOCKED_THIS_DEVICE_ONLY/);
   assert.match(secureStoreTokenStore, /getItemAsync\(REFRESH_TOKEN_KEY/);
   assert.match(secureStoreTokenStore, /setItemAsync\(REFRESH_TOKEN_KEY, token/);
   assert.match(secureStoreTokenStore, /deleteItemAsync\(REFRESH_TOKEN_KEY/);
+  assert.match(secureStoreTokenStore, /LOGOUT_TOMBSTONE_KEY/);
+  assert.match(secureStoreTokenStore, /writeLogoutTombstone/);
+  assert.match(secureStoreTokenStore, /clearLogoutTombstone/);
   assert.doesNotMatch(secureStoreTokenStore, /accessToken/);
   assert.doesNotMatch(secureStoreTokenStore, /requireAuthentication\s*:\s*true/);
   assert.doesNotMatch(secureStoreTokenStore, /const normalized = token\.trim/);
@@ -72,12 +75,21 @@ test("auth POST transport has a bounded timeout and no automatic retry loop", ()
   assert.doesNotMatch(mobileAuthTransport, /retryDelayMs|shouldRetry|for\s*\(/);
 });
 
-test("logout attempts server revocation and always clears local credentials", () => {
-  assert.match(sessionManager, /await this\.logoutTransport\(accessToken\)/);
+test("logout invalidates local credentials before best-effort server revocation", () => {
   const logoutIndex = sessionManager.indexOf("async logout(): Promise<void>");
-  const finallyIndex = sessionManager.indexOf("finally", logoutIndex);
-  const clearIndex = sessionManager.indexOf("await this.clearLocalSession()", finallyIndex);
-  assert.ok(logoutIndex >= 0 && finallyIndex > logoutIndex && clearIndex > finallyIndex);
+  const clearIndex = sessionManager.indexOf("await this.clearLocalSession()", logoutIndex);
+  const revokeIndex = sessionManager.indexOf(
+    "this.revokeAccessTokenBestEffort(accessToken)",
+    logoutIndex,
+  );
+  const logoutBody = sessionManager.slice(
+    logoutIndex,
+    sessionManager.indexOf("async clearLocalSession", logoutIndex),
+  );
+
+  assert.ok(logoutIndex >= 0 && clearIndex > logoutIndex && revokeIndex > clearIndex);
+  assert.doesNotMatch(logoutBody, /getOrRefreshAccessToken|await this\.logoutTransport/);
+  assert.match(sessionManager, /void this\.logoutTransport\(accessToken\)\.catch/);
 });
 
 test("automatic auth replay is restricted by idempotency or explicit opt-in", () => {
